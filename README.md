@@ -224,6 +224,34 @@ AstroScout can integrate with multiple data sources depending on feature availab
 - Playwright
 - GitHub Actions
 
+## Getting Started
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create an environment file:
+
+```bash
+cp .env.example .env.local
+```
+
+Run the development server:
+
+```bash
+npm run dev
+```
+
+Open the app:
+
+```text
+http://localhost:3000
+```
+
+The MVP can run without paid API keys. Open-Meteo is used for weather data and does not require a key. Routing, maps, transport, and extra astronomy providers can be enabled by adding keys to `.env.local`.
+
 ## Data Model
 
 ### observing_spots
@@ -515,5 +543,4 @@ NASA_API_KEY=
 
 ## Project Status
 
-AstroScout is currently in the planning and MVP design stage. The initial build focuses on a functional web dashboard that combines observing locations, weather conditions, astronomy calculations, and travel context into one clear planning experience.
-
+AstroScout is in early MVP development. The current build establishes the core web dashboard, observing spot data, API route structure, weather integration path, astronomy summaries, travel estimates, and location scoring flow.
