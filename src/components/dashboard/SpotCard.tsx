@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clock, Cloud, MapPin, Moon } from "lucide-react";
-import { Badge } from "@/components/ui/Badge";
+import { ArrowRight, Clock, Cloud, Moon, Route, Telescope } from "lucide-react";
 import { formatDistance, formatMinutes, formatPercent } from "@/lib/format";
 import type { SpotPlan } from "@/types/spot";
 
@@ -12,21 +11,24 @@ type SpotCardProps = {
 export function SpotCard({ plan, rank }: SpotCardProps) {
   return (
     <article className="spot-card">
-      <div className="spot-card__rank">{rank}</div>
+      <div className={`spot-card__rank spot-card__rank--${plan.condition}`}>
+        <span>{rank}</span>
+        <strong>{plan.score}</strong>
+      </div>
       <div className="spot-card__content">
         <div className="spot-card__top">
           <div>
             <h3>{plan.name}</h3>
-            <p>{plan.region}</p>
+            <p>{plan.region} - {plan.darknessLabel}</p>
           </div>
-          <Badge tone={plan.condition}>{plan.score}</Badge>
+          <span className={`condition-label condition-label--${plan.condition}`}>{conditionCopy(plan.condition)}</span>
         </div>
 
         <p className="spot-card__description">{plan.description}</p>
 
         <div className="spot-card__stats">
           <span>
-            <MapPin size={14} aria-hidden="true" />
+            <Route size={14} aria-hidden="true" />
             {formatDistance(plan.distanceKm)}
           </span>
           <span>
@@ -43,8 +45,17 @@ export function SpotCard({ plan, rank }: SpotCardProps) {
           </span>
         </div>
 
+        <div className="reason-list">
+          {plan.scoreReasons.slice(0, 2).map((reason) => (
+            <span key={reason}>{reason}</span>
+          ))}
+        </div>
+
         <div className="spot-card__footer">
-          <span>{plan.visibleHighlights.slice(0, 3).join(" / ")}</span>
+          <span>
+            <Telescope size={14} aria-hidden="true" />
+            {plan.visibleHighlights.slice(0, 3).join(" / ")}
+          </span>
           <Link href={`/spot/${plan.id}`}>
             Details <ArrowRight size={14} aria-hidden="true" />
           </Link>
@@ -52,4 +63,10 @@ export function SpotCard({ plan, rank }: SpotCardProps) {
       </div>
     </article>
   );
+}
+
+function conditionCopy(condition: SpotPlan["condition"]) {
+  if (condition === "good") return "Strong";
+  if (condition === "mixed") return "Check clouds";
+  return "Limited";
 }

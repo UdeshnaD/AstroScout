@@ -1,4 +1,4 @@
-import { CloudMoon, Moon, Telescope } from "lucide-react";
+import { CloudMoon, Eye, Moon, Telescope, Wind } from "lucide-react";
 import { Card } from "@/components/ui/Card";
 import { formatPercent } from "@/lib/format";
 import type { SpotPlan } from "@/types/spot";
@@ -12,6 +12,7 @@ export function SkySummary({ plan }: SkySummaryProps) {
     return (
       <Card className="summary-grid">
         <Metric icon={CloudMoon} label="Cloud cover" value="--" />
+        <Metric icon={Eye} label="Visibility" value="--" />
         <Metric icon={Moon} label="Moon" value="--" />
         <Metric icon={Telescope} label="Viewing window" value="--" />
       </Card>
@@ -21,12 +22,13 @@ export function SkySummary({ plan }: SkySummaryProps) {
   return (
     <Card className="summary-grid">
       <Metric icon={CloudMoon} label="Cloud cover" value={formatPercent(plan.weather.cloudCover)} />
+      <Metric icon={Eye} label="Visibility" value={`${plan.weather.visibilityKm} km`} />
       <Metric
         icon={Moon}
         label={plan.astronomy.moonPhase}
         value={`${formatPercent(plan.astronomy.moonIllumination)} lit`}
       />
-      <Metric icon={Telescope} label="Viewing window" value={plan.astronomy.bestViewingWindow} />
+      <Metric icon={Wind} label="Wind" value={`${plan.weather.windKph} km/h`} />
     </Card>
   );
 }

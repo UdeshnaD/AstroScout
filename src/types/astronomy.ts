@@ -7,6 +7,8 @@ export type NightSkyHighlight = {
   equipment: string;
   confidence: "high" | "medium" | "low";
   description: string;
+  altitude?: number;
+  azimuth?: number;
 };
 
 export type AstronomySummary = {
@@ -17,4 +19,6 @@ export type AstronomySummary = {
   moonset: string;
   bestViewingWindow: string;
   highlights: NightSkyHighlight[];
+  sunAltitude?: number;
+  source?: "astronomy-engine";
 };

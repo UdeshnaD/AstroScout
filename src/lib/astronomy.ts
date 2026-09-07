@@ -1,87 +1,110 @@
-import { baseNightSkyHighlights } from "@/data/astronomy-events";
-import type { AstronomySummary } from "@/types/astronomy";
+import {
+  Body,
+  Equator,
+  Horizon,
+  Illumination,
+  MoonPhase,
+  Observer,
+  SearchAltitude,
+  SearchRiseSet,
+} from "astronomy-engine";
+import type { AstronomySummary, NightSkyHighlight } from "@/types/astronomy";
 
-const SYNODIC_MONTH_DAYS = 29.530588853;
-const KNOWN_NEW_MOON_UTC = Date.UTC(2000, 0, 6, 18, 14);
+const bodies = [Body.Moon, Body.Venus, Body.Mars, Body.Jupiter, Body.Saturn];
+const descriptions: Record<string, string> = {
+  Moon: "Look along the boundary between light and shadow for craters and mountain relief. Binoculars reveal far more detail than the unaided eye.",
+  Venus:
+    "A brilliant planet that shows phases through a telescope. Observe only after the Sun is below the horizon; never point optics near the Sun.",
+  Mars: "Its warm colour is visible to the unaided eye. Surface markings require a telescope and depend on distance and atmospheric steadiness.",
+  Jupiter:
+    "Binoculars can reveal the four bright Galilean moons. A telescope may resolve cloud bands when the atmosphere is steady.",
+  Saturn:
+    "A telescope reveals the rings, with their appearance changing as their tilt varies. A steady view and a higher altitude help resolve detail.",
+};
 
-export function getAstronomySummary(startTime: string): AstronomySummary {
+export function getAstronomySummary(
+  startTime: string,
+  latitude = -33.7738,
+  longitude = 151.1126,
+): AstronomySummary {
   const date = new Date(startTime);
-  const moonAge = getMoonAge(date);
+  const observer = new Observer(latitude, longitude, 0);
+  const phase = MoonPhase(date);
   const moonIllumination = Math.round(
-    ((1 - Math.cos((2 * Math.PI * moonAge) / SYNODIC_MONTH_DAYS)) / 2) * 100
+    Illumination(Body.Moon, date).phase_fraction * 100,
   );
-  const moonPhase = getMoonPhaseLabel(moonAge);
-
-  const sunset = withLocalTime(date, seasonalHour(date.getMonth(), 18, 20));
-  const astronomicalTwilight = addMinutes(sunset, 85);
-  const moonset = addMinutes(sunset, estimateMoonsetOffset(moonAge));
-  const bestStart = addMinutes(astronomicalTwilight, moonIllumination > 65 ? 45 : 0);
-  const bestEnd = addMinutes(bestStart, 150);
-
+  // Start at local solar noon to find evening events for the selected NSW night.
+  const solarDate = new Date(
+    date.getTime() + (longitude / 15) * 3600000 - 12 * 3600000,
+  );
+  const noon = new Date(
+    Date.UTC(
+      solarDate.getUTCFullYear(),
+      solarDate.getUTCMonth(),
+      solarDate.getUTCDate(),
+      12,
+    ) -
+      (longitude / 15) * 3600000,
+  );
+  const sunset = SearchRiseSet(Body.Sun, observer, -1, noon, 1);
+  const twilight = SearchAltitude(Body.Sun, observer, -1, noon, 1, -18);
+  const moonset = SearchRiseSet(Body.Moon, observer, -1, noon, 1);
+  const sun = Equator(Body.Sun, date, observer, true, true);
+  const sunAltitude = Horizon(date, observer, sun.ra, sun.dec).altitude;
+  const highlights: NightSkyHighlight[] = bodies.map((body) => {
+    const equator = Equator(body, date, observer, true, true);
+    const horizon = Horizon(date, observer, equator.ra, equator.dec, "normal");
+    const directions = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+    return {
+      id: body.toLowerCase(),
+      name: body,
+      type: body === Body.Moon ? "moon" : "planet",
+      bestTime: clock(date),
+      direction: directions[Math.round(horizon.azimuth / 45) % 8],
+      equipment:
+        body === Body.Moon ? "Naked eye / binoculars" : "Telescope for detail",
+      confidence:
+        horizon.altitude > 25
+          ? "high"
+          : horizon.altitude > 10
+            ? "medium"
+            : "low",
+      description: descriptions[body],
+      altitude: Math.round(horizon.altitude),
+      azimuth: Math.round(horizon.azimuth),
+    };
+  });
   return {
-    moonPhase,
+    moonPhase: phaseLabel(phase),
     moonIllumination,
-    sunset: formatTime(sunset),
-    astronomicalTwilight: formatTime(astronomicalTwilight),
-    moonset: formatTime(moonset),
-    bestViewingWindow: `${formatTime(bestStart)} - ${formatTime(bestEnd)}`,
-    highlights: tuneHighlights(moonIllumination)
+    sunset: sunset ? clock(sunset.date) : "No sunset",
+    astronomicalTwilight: twilight ? clock(twilight.date) : "No full darkness",
+    moonset: moonset ? clock(moonset.date) : "No moonset this evening",
+    bestViewingWindow: twilight
+      ? `Dark from ${clock(twilight.date)}`
+      : "No full darkness",
+    highlights,
+    sunAltitude: Math.round(sunAltitude),
+    source: "astronomy-engine",
   };
 }
 
-function getMoonAge(date: Date) {
-  const daysSinceKnownNewMoon = (date.getTime() - KNOWN_NEW_MOON_UTC) / 86400000;
-  return ((daysSinceKnownNewMoon % SYNODIC_MONTH_DAYS) + SYNODIC_MONTH_DAYS) % SYNODIC_MONTH_DAYS;
-}
-
-function getMoonPhaseLabel(age: number) {
-  if (age < 1.85) return "New Moon";
-  if (age < 5.54) return "Waxing Crescent";
-  if (age < 9.23) return "First Quarter";
-  if (age < 12.92) return "Waxing Gibbous";
-  if (age < 16.61) return "Full Moon";
-  if (age < 20.3) return "Waning Gibbous";
-  if (age < 23.99) return "Last Quarter";
-  if (age < 27.68) return "Waning Crescent";
-  return "New Moon";
-}
-
-function seasonalHour(month: number, baseHour: number, summerHour: number) {
-  if (month === 11 || month <= 1) return summerHour;
-  if (month >= 4 && month <= 6) return 17;
-  return baseHour;
-}
-
-function estimateMoonsetOffset(moonAge: number) {
-  if (moonAge < 3) return 90;
-  if (moonAge < 8) return 240;
-  if (moonAge < 14) return 420;
-  if (moonAge < 19) return 610;
-  if (moonAge < 24) return 120;
-  return 45;
-}
-
-function tuneHighlights(moonIllumination: number) {
-  if (moonIllumination > 70) {
-    return baseNightSkyHighlights.filter((highlight) => highlight.id !== "milky-way");
-  }
-
-  return baseNightSkyHighlights;
-}
-
-function withLocalTime(date: Date, hour: number) {
-  const next = new Date(date);
-  next.setHours(hour, 0, 0, 0);
-  return next;
-}
-
-function addMinutes(date: Date, minutes: number) {
-  return new Date(date.getTime() + minutes * 60000);
-}
-
-function formatTime(date: Date) {
+function clock(date: Date) {
   return new Intl.DateTimeFormat("en-AU", {
     hour: "numeric",
-    minute: "2-digit"
+    minute: "2-digit",
+    timeZone: "Australia/Sydney",
   }).format(date);
+}
+function phaseLabel(phase: number) {
+  return [
+    "New Moon",
+    "Waxing Crescent",
+    "First Quarter",
+    "Waxing Gibbous",
+    "Full Moon",
+    "Waning Gibbous",
+    "Last Quarter",
+    "Waning Crescent",
+  ][Math.floor((phase + 22.5) / 45) % 8];
 }

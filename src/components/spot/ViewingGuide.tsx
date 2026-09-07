@@ -24,7 +24,7 @@ export function ViewingGuide({ astronomy, spot }: ViewingGuideProps) {
         </div>
         <div>
           <Telescope size={18} aria-hidden="true" />
-          <span>Best window</span>
+          <span>Astronomical darkness</span>
           <strong>{astronomy.bestViewingWindow}</strong>
         </div>
       </div>
@@ -35,6 +35,12 @@ export function ViewingGuide({ astronomy, spot }: ViewingGuideProps) {
           {astronomy.highlights.map((highlight) => (
             <li key={highlight.id}>
               <strong>{highlight.name}</strong>
+              <span>
+                {highlight.direction} / {highlight.altitude} degrees /{" "}
+                {(highlight.altitude ?? -90) > 0
+                  ? "Above horizon"
+                  : "Below horizon"}
+              </span>
               <span>{highlight.description}</span>
             </li>
           ))}

@@ -6,6 +6,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const spotId = searchParams.get("spotId");
   const startTime = searchParams.get("startTime") ?? new Date().toISOString();
+  if (!Number.isFinite(Date.parse(startTime))) {
+    return NextResponse.json(
+      { error: "A valid startTime is required." },
+      { status: 400 },
+    );
+  }
 
   if (!spotId) {
     return NextResponse.json({ error: "spotId is required." }, { status: 400 });

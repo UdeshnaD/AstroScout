@@ -20,7 +20,29 @@ export function formatPercent(value: number) {
   return `${Math.round(value)}%`;
 }
 
+export function formatClock(value: string | Date) {
+  const date = typeof value === "string" ? new Date(value) : value;
+
+  return new Intl.DateTimeFormat("en-AU", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Australia/Sydney",
+  }).format(date);
+}
+
+export function departureTimeFor(
+  startTime: string,
+  travelTimeMinutes: number,
+  setupMinutes = 20,
+) {
+  const date = new Date(startTime);
+  date.setMinutes(date.getMinutes() - travelTimeMinutes - setupMinutes);
+  return formatClock(date);
+}
+
 export function toDateTimeLocalValue(date: Date) {
-  const offsetDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+  const offsetDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60000,
+  );
   return offsetDate.toISOString().slice(0, 16);
 }

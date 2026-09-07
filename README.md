@@ -1,546 +1,154 @@
 # AstroScout
 
-AstroScout is a night-sky trip planner that helps people find nearby places to observe astronomy events. It combines location, travel time, sky conditions, and astronomy data so users can plan where to go, when to leave, and what they may be able to see.
+**An interactive observing desk for MQ Astronomy Night.**
 
-## Overview
+AstroScout connects the practical question of where to observe with hourly weather, calculated celestial positions, and an explainable preference model. Start from Macquarie University or another location, compare nearby sites, and explore how your priorities change the ranking.
 
-AstroScout is designed for casual stargazing, and event-based sky watching. A user can enter their current location, choose a viewing time, and explore nearby observing spots with practical details such as distance, travel duration, cloud cover, moon phase, and visible sky highlights.
+## The Observing Desk
 
-The project focuses on making astronomy easier to access. Instead of requiring users to interpret technical charts or scattered forecasts, AstroScout presents clear location-based guidance in a simple dashboard.
+- **Explore:** an interactive OpenStreetMap map linked to ranked locations, regional filtering, device location, travel modes, and search radius.
+- **Through the night:** select an hourly forecast to update conditions, rankings, and local planet positions.
+- **In your sky:** expand Moon and planet entries for observing notes, equipment, compass direction, altitude, and horizon status.
+- **Compare:** inspect up to three sites side by side, including weather provenance and access notes.
+- **Model lab:** adjust four priorities, inspect score contributions, and see the coefficients learned from your ratings.
+- **Saved plans:** retain locations and observing times on this device, with directions available from each saved entry.
 
-## Key Features
+The interface uses a consistent reading order, map/list selection, inline feedback, keyboard-accessible tabs, native dialogs, visible focus states, and responsive layouts. Motion respects the device's reduced-motion setting.
 
-- Location-based astronomy spot discovery
-- Nearby observing locations with distance and travel time
-- Weather and sky-condition summaries
-- Moon phase, moonrise, and moonset information
-- Visible planets and notable night-sky events
-- Spot quality scoring based on viewing conditions
-- Map view with observing locations
-- Detailed spot pages with access notes and sky highlights
-- Beginner-friendly explanations of what to look for
+## AI And Data Science
 
-## User Flow
+AstroScout combines an explicit decision model with a small supervised learning model. It does not require a chatbot or a paid AI API.
 
-1. The user opens AstroScout.
-2. The user shares their location or enters a suburb/postcode.
-3. The user selects a viewing time, such as tonight, tomorrow night, or a custom date.
-4. AstroScout shows nearby astronomy-friendly locations.
-5. The dashboard ranks locations using travel time, sky conditions, moon brightness, and visible events.
-6. The user opens a location page to view trip details, conditions, and observing notes.
+### Feature Engineering
 
-## Frontend
+Each site is represented by four features normalized to the range 0-1:
 
-The frontend provides a responsive dashboard experience for desktop and mobile users.
+| Feature       | Transformation                                                                     |
+| ------------- | ---------------------------------------------------------------------------------- |
+| Clear skies   | 65% inverse cloud cover + 20% inverse rain probability + 15% normalized visibility |
+| Darkness      | `(9 - estimated Bortle class) / 8`                                                 |
+| Easy travel   | `max(0, 1 - estimated minutes / 180)`                                              |
+| Low moonlight | `1 - illuminated fraction`                                                         |
 
-### Main Dashboard
+The baseline score is the normalized weighted sum, multiplied by 100. The default weights are 40%, 25%, 25%, and 10%. Deep-sky, quick-trip, and Moon/planet profiles provide other weight settings. Sliders support sensitivity analysis: changing a priority immediately updates the ranking and contribution chart.
 
-The dashboard is the primary screen of the application. It gives users a quick overview of nearby viewing options and current sky conditions.
+### Preference Learning
 
-Dashboard elements include:
-
-- Location search
-- Date and time selector
-- Travel mode selector
-- Search radius control
-- Ranked observing location list
-- Map preview
-- Weather summary
-- Moon and twilight summary
-- Night-sky highlight cards
-
-### Map View
-
-The map view displays observing locations near the user.
-
-Map features include:
-
-- User location marker
-- Observing spot markers
-- Condition-based marker styling
-- Route preview
-- Distance and travel-time labels
-- Optional overlays for future sky-quality or light-pollution data
-
-### Spot Detail Page
-
-Each observing location has a detail page with:
-
-- Location name and description
-- Distance from the user
-- Estimated travel time
-- Travel mode summary
-- Parking and access notes
-- Safety and facility details
-- Hourly sky-condition forecast
-- Moon phase and moon timing
-- Best viewing window
-- Visible objects and events
-- Practical viewing tips
-
-### Event Detail Page
-
-Astronomy events and visible objects include plain-language detail pages.
-
-Event details include:
-
-- Event or object name
-- Description
-- Best viewing time
-- Direction in the sky
-- Approximate altitude
-- Equipment guidance
-- Visibility confidence
-- Beginner-friendly observing notes
-
-## Backend
-
-The backend handles data collection, astronomy calculations, routing, location search, scoring, and API responses.
-
-Core backend responsibilities:
-
-- Process user location and selected viewing time
-- Search nearby observing spots
-- Fetch weather and visibility forecasts
-- Calculate astronomy conditions
-- Estimate travel distance and duration
-- Score each observing location
-- Return structured data to the frontend
-
-## Architecture
+Helpful / not-for-me ratings provide binary labels. A logistic regression model trains in the browser on the four centered features, using batch gradient descent and L2 regularization. Re-rating a location replaces its previous label and feature snapshot.
 
 ```text
-User
-  |
-  v
-Frontend Dashboard
-  |
-  v
-Backend API
-  |
-  |-- Location Service
-  |-- Spot Service
-  |-- Weather Service
-  |-- Astronomy Service
-  |-- Trip Planner Service
-  |-- Scoring Service
-  |-- Content Service
-  |
-  v
-Database + External Data Providers
+preference = sigmoid(bias + weights . centered_features)
+learned_share = min(0.30, 0.05 * number_of_rated_locations)
+final_score = (1 - learned_share) * baseline + learned_share * preference * 100
 ```
 
-## Services
+Learning can be disabled or reset. With no feedback, rankings use only the baseline. Model lab displays the learned coefficients and every baseline score contribution.
 
-### Location Service
+This is a personal preference model, not a weather predictor. Its scores are not calibrated probabilities of observing success, and it has no held-out accuracy evaluation. Small, self-selected feedback sets provide limited evidence.
 
-Handles location input, coordinates, distance calculations, and place lookup.
+## Data And Provenance
 
-### Spot Service
+| Source                                                                                             | Use                                                                                    | Behaviour                                                                                                    |
+| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| [Open-Meteo](https://open-meteo.com/)                                                              | Cloud cover, visibility, rain probability, wind and temperature                        | Seven-day forecast request; up to eight hourly samples; 15-minute server cache; seven-second request timeout |
+| [Astronomy Engine](https://github.com/cosinekitty/astronomy)                                       | Moon illumination, sunset, astronomical twilight, moonset, local Moon/planet positions | Calculated for location and time, independently of weather                                                   |
+| [OpenStreetMap](https://www.openstreetmap.org/copyright) through [Leaflet](https://leafletjs.com/) | Interactive map and location markers                                                   | Browser-loaded map tiles with attribution                                                                    |
+| Curated NSW site catalogue                                                                         | Coordinates, descriptions, Bortle estimates, facilities and access notes               | Local data, not live access verification                                                                     |
+| Distance-based travel model                                                                        | Estimated journey time for driving, walking and public transport                       | Not road routing, a timetable, or live traffic data                                                          |
+| Google Maps directions                                                                             | External trip planning                                                                 | Opens the selected destination, origin and travel mode                                                       |
 
-Stores and retrieves astronomy-friendly locations, including access notes, facilities, safety details, coordinates, and sky-quality metadata.
+Incomplete, unavailable, or out-of-range weather produces deterministic **demo weather**, explicitly labelled in the interface. The forecast is never presented as a live observation. Times are displayed in `Australia/Sydney`.
 
-### Weather Service
+The score does not account for wind, road access, astronomical darkness, or the Moon's altitude. These limitations are visible in Model lab; site access and daylight conditions are shown separately. The sky list covers the Moon, Venus, Mars, Jupiter and Saturn, not a live meteor-shower or astronomy-event feed.
 
-Collects hourly sky and weather conditions such as cloud cover, visibility, wind, humidity, and precipitation chance.
+## Technology
 
-### Astronomy Service
+| Layer             | Implementation                                             |
+| ----------------- | ---------------------------------------------------------- |
+| Application       | Next.js 14 App Router, React 18, TypeScript                |
+| Interface         | CSS, Tailwind toolchain, Lucide icons                      |
+| Maps              | Leaflet 1.9, OpenStreetMap tiles                           |
+| Astronomy         | Astronomy Engine 2.1                                       |
+| Backend           | Next.js route handlers and server-side provider requests   |
+| Learning          | Browser-side regularized logistic regression               |
+| Local persistence | Browser localStorage for ratings, weights, and saved plans |
+| Verification      | Next.js production build and focused Node.js tests         |
 
-Calculates moon phase, moon illumination, moonrise, moonset, sunset, twilight, planet visibility, and local sky positions.
+## Run Locally
 
-### Trip Planner Service
+Install dependencies and run the development server:
 
-Calculates travel distance, estimated duration, travel mode details, route summaries, and transport-related information.
-
-### Scoring Service
-
-Combines sky conditions, visible events, travel time, moon brightness, and site quality into a single location score.
-
-### Content Service
-
-Provides clear descriptions of astronomy events, visible objects, and viewing tips for users with different experience levels.
-
-## API Providers
-
-AstroScout can integrate with multiple data sources depending on feature availability and deployment needs.
-
-### Transport And Routing
-
-- Transport for NSW Open Data: public transport routes, departures, service alerts, and trip planning
-- Mapbox Directions API: driving routes, traffic-aware travel time, route geometry, and map support
-- OpenRouteService: OpenStreetMap-based routing, driving, walking, cycling, and isochrones
-
-### Weather And Sky Conditions
-
-- Open-Meteo: hourly cloud cover, visibility, precipitation, wind, humidity, and temperature forecasts
-- Meteoblue Astronomy Seeing: advanced astronomy seeing data and atmospheric condition indicators
-
-### Astronomy Data
-
-- Skyfield: moon, twilight, planet positions, rise/set times, and local sky calculations
-- AstronomyAPI: astronomy events, body positions, and star chart generation
-- timeanddate Astronomy API: moon phases, rise/set data, and commercial astronomy data
-- International Meteor Organization: meteor shower calendar and observing information
-- NASA APIs: educational astronomy data and Astronomy Picture of the Day
-- JPL Horizons API: advanced ephemeris data for solar system objects
-
-### Places And Viewing Spots
-
-- Curated observing spot database
-- Google Places API
-- Geoapify Places API
-- OpenStreetMap and Overpass API
-- Local council and open-data sources
-
-## Technology Stack
-
-### Frontend
-
-- Next.js
-- TypeScript
-- Tailwind CSS
-- Mapbox GL JS or MapLibre GL JS
-- React Query or SWR
-- Zustand or Redux Toolkit
-- Recharts or Nivo
-
-### Backend
-
-- Python
-- FastAPI
-- PostgreSQL
-- PostGIS
-- Redis
-- SQLAlchemy or SQLModel
-- Pydantic
-- Skyfield
-
-### Development And Testing
-
-- Docker Compose
-- Pytest
-- Ruff
-- ESLint
-- Playwright
-- GitHub Actions
-
-## Getting Started
-
-Install dependencies:
-
-```bash
+```powershell
 npm install
-```
-
-Create an environment file:
-
-```bash
-cp .env.example .env.local
-```
-
-Run the development server:
-
-```bash
 npm run dev
 ```
 
-Open the app:
+Open [localhost:3000](http://localhost:3000). No API key is needed for the current implementation. Maps and forecasts require an internet connection; provider usage policies apply.
 
-```text
-http://localhost:3000
+For a production build:
+
+```powershell
+npm run build
+npm start
 ```
 
-The MVP can run without paid API keys. Open-Meteo is used for weather data and does not require a key. Routing, maps, transport, and extra astronomy providers can be enabled by adding keys to `.env.local`.
+`npm start` requires a completed production build in `.next`.
 
-## Data Model
+Optional configuration in `.env.local`:
 
-### observing_spots
-
-```text
-id
-name
-description
-latitude
-longitude
-region
-spot_type
-bortle_rating
-parking_notes
-access_notes
-safety_notes
-facilities
-is_public
-created_at
-updated_at
+```env
+OPEN_METEO_BASE_URL=https://api.open-meteo.com
 ```
 
-### astronomy_events
+Other provider keys in `.env.example` are reserved and are not used by the current integrations.
 
-```text
-id
-name
-event_type
-start_time
-end_time
-peak_time
-description
-source
-equipment_guidance
-created_at
-updated_at
-```
+## API
 
-### spot_forecasts
+| Endpoint                                                   | Purpose                                                                   |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------- |
+| `POST /api/plans/search`                                   | Nearby sites, forecasts, astronomy, travel estimates, and baseline scores |
+| `GET /api/spots`                                           | Site catalogue                                                            |
+| `GET /api/spots/:id`                                       | Individual site                                                           |
+| `GET /api/weather?spotId=...&startTime=...`                | Forecast for a site                                                       |
+| `GET /api/astronomy/tonight?lat=...&lon=...&startTime=...` | Calculated astronomy summary                                              |
+| `POST /api/trips`                                          | Distance-based travel estimate                                            |
 
-```text
-id
-spot_id
-forecast_time
-cloud_cover
-cloud_cover_low
-cloud_cover_mid
-cloud_cover_high
-visibility_m
-precipitation_probability
-humidity
-wind_speed
-temperature
-source
-created_at
-```
-
-### trip_options
-
-```text
-id
-origin_latitude
-origin_longitude
-destination_spot_id
-travel_mode
-departure_time
-arrival_time
-duration_seconds
-distance_meters
-provider
-route_summary
-alerts
-created_at
-```
-
-### saved_plans
-
-```text
-id
-user_id
-spot_id
-planned_time
-travel_mode
-notes
-created_at
-updated_at
-```
-
-## API Design
-
-### Plan Locations
-
-```http
-POST /api/plans/search
-```
-
-Example request:
+Example planning request:
 
 ```json
 {
-  "latitude": -33.8688,
-  "longitude": 151.2093,
-  "startTime": "2026-09-01T20:00:00+10:00",
-  "radiusKm": 80,
+  "latitude": -33.7738,
+  "longitude": 151.1126,
+  "startTime": "2026-09-07T20:00:00+10:00",
+  "radiusKm": 120,
   "travelMode": "driving"
 }
 ```
 
-Example response:
+The response contains a `locations` array. Each location includes weather provenance, hourly samples, astronomy, estimated travel time, and a baseline match score. Personalized ranking happens locally and does not send ratings to the server.
 
-```json
-{
-  "locations": [
-    {
-      "spotId": "blue-mountains-lookout",
-      "name": "Blue Mountains Lookout",
-      "distanceKm": 76.2,
-      "travelTimeMinutes": 82,
-      "score": 87,
-      "scoreReasons": [
-        "Low cloud cover after 9 PM",
-        "Moon sets early",
-        "Good western horizon"
-      ],
-      "visibleHighlights": [
-        "Saturn",
-        "Milky Way",
-        "Moon"
-      ]
-    }
-  ]
-}
-```
-
-### Spots
-
-```http
-GET /api/spots?lat=-33.8688&lon=151.2093&radiusKm=80
-GET /api/spots/:id
-```
-
-### Weather
-
-```http
-GET /api/weather/spot/:id?date=2026-09-01
-```
-
-### Astronomy
-
-```http
-GET /api/astronomy/tonight?lat=-33.8688&lon=151.2093&date=2026-09-01
-GET /api/astronomy/events?from=2026-09-01&to=2026-09-07
-```
-
-### Trips
-
-```http
-POST /api/trips/route
-```
-
-Example request:
-
-```json
-{
-  "origin": {
-    "latitude": -33.8688,
-    "longitude": 151.2093
-  },
-  "destinationSpotId": "blue-mountains-lookout",
-  "departureTime": "2026-09-01T18:30:00+10:00",
-  "travelMode": "public_transport"
-}
-```
-
-## Scoring Model
-
-AstroScout calculates a score for each observing location using multiple conditions.
+## Repository
 
 ```text
-score =
-  sky_clarity_score * 0.35 +
-  event_visibility_score * 0.25 +
-  travel_convenience_score * 0.20 +
-  moon_darkness_score * 0.10 +
-  site_quality_score * 0.10
+src/
+  app/                  Pages, shared styles, API routes
+  components/
+    dashboard/          Observing desk, map, comparison, model lab
+    spot/               Location detail components
+    ui/                 Shared interface primitives
+  data/                 Curated observing catalogue
+  lib/
+    astronomy.ts        Ephemeris calculations
+    weather.ts          Forecast retrieval and labelled fallback
+    distance.ts         Distance and travel estimates
+    scoring.ts          Server-side plan assembly
+    recommender.ts      Features, scoring and preference learning
+  types/                Shared contracts
+tests/                  Ranking, astronomy and provider checks
 ```
 
-Score factors:
+Run focused checks with `npm test`; `npm run build` also checks TypeScript and lint rules.
 
-- Sky clarity
-- Cloud cover
-- Visibility
-- Moon brightness
-- Object altitude
-- Event timing
-- Travel duration
-- Distance
-- Site quality
-- Access confidence
+## Project Context
 
-## Repository Structure
-
-```text
-AstroScout/
-  apps/
-    web/
-      src/
-        app/
-        components/
-        features/
-        lib/
-        styles/
-  services/
-    api/
-      astroscout/
-        main.py
-        api/
-        core/
-        models/
-        services/
-        providers/
-        scoring/
-        jobs/
-      tests/
-  data/
-    seed/
-      observing_spots.csv
-      meteor_showers.json
-  docs/
-    architecture.md
-    api-providers.md
-    scoring.md
-  docker-compose.yml
-  README.md
-```
-
-## Roadmap
-
-### Phase 1: Foundation
-
-- Project structure
-- Core dashboard UI
-- Curated observing locations
-- Basic spot search
-- Weather integration
-- Moon and twilight calculations
-
-### Phase 2: Planning Experience
-
-- Map view
-- Spot detail pages
-- Travel-time estimates
-- Viewing-window summaries
-- Sky-condition scoring
-- Visible planet and event data
-
-### Phase 3: Enhanced Astronomy
-
-- Meteor shower calendar
-- Milky Way visibility estimates
-- Star chart generation
-- Advanced object visibility
-- More detailed observing notes
-
-### Phase 4: Production Features
-
-- Saved plans
-- User accounts
-- Notifications
-- Public transport alerts
-- Community spot reports
-- Light-pollution layers
-
-## Environment Variables
-
-```env
-DATABASE_URL=
-REDIS_URL=
-OPEN_METEO_BASE_URL=https://api.open-meteo.com
-TFNSW_API_KEY=
-MAPBOX_ACCESS_TOKEN=
-OPENROUTESERVICE_API_KEY=
-ASTRONOMY_API_APP_ID=
-ASTRONOMY_API_APP_SECRET=
-TIMEANDDATE_ACCESS_KEY=
-TIMEANDDATE_SECRET_KEY=
-NASA_API_KEY=
-```
-
-## Project Status
-
-AstroScout is in early MVP development. The current build establishes the core web dashboard, observing spot data, API route structure, weather integration path, astronomy summaries, travel estimates, and location scoring flow.
+Built as a student project for MQ Astronomy Night. AstroScout is an educational planning prototype and is not an official Macquarie University service. Saved plans and ratings remain in the browser where they were created; there are no accounts or cloud synchronization.

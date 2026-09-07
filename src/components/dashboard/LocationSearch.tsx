@@ -10,6 +10,7 @@ export type LocationPreset = {
 };
 
 export const locationPresets: LocationPreset[] = [
+  { label: "Macquarie University", latitude: -33.7738, longitude: 151.1126 },
   { label: "Sydney CBD", latitude: -33.8688, longitude: 151.2093 },
   { label: "Parramatta", latitude: -33.8136, longitude: 151.0034 },
   { label: "Penrith", latitude: -33.751, longitude: 150.6942 },
@@ -23,6 +24,10 @@ type LocationSearchProps = {
 };
 
 export function LocationSearch({ value, onChange }: LocationSearchProps) {
+  const options = locationPresets.some((location) => location.label === value.label)
+    ? locationPresets
+    : [value, ...locationPresets];
+
   return (
     <label className="control">
       <span className="control__label">
@@ -32,11 +37,11 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
       <Select
         value={value.label}
         onChange={(event) => {
-          const selected = locationPresets.find((location) => location.label === event.target.value);
+          const selected = options.find((location) => location.label === event.target.value);
           if (selected) onChange(selected);
         }}
       >
-        {locationPresets.map((location) => (
+        {options.map((location) => (
           <option key={location.label} value={location.label}>
             {location.label}
           </option>

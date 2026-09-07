@@ -45,12 +45,16 @@ export function SpotForecast({ weather }: SpotForecastProps) {
           </div>
         ))}
       </div>
+      <p className="data-note">
+        Weather source: {weather.source === "open-meteo" ? "Open-Meteo live forecast" : "demo fallback forecast"}
+      </p>
     </Card>
   );
 }
 
 function formatHour(time: string) {
   return new Intl.DateTimeFormat("en-AU", {
-    hour: "numeric"
+    hour: "numeric",
+    timeZone: "Australia/Sydney"
   }).format(new Date(time));
 }
