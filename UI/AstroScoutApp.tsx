@@ -1,13 +1,19 @@
 "use client";
 
+import "./AstroScout.css";
+
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { TonightView } from "./TonightView";
+import { CalendarView } from "./CalendarView";
+import { m, AnimatePresence } from "motion/react";
+import { Hint } from "./Hint";
 import {
   ArrowRight,
   Bookmark,
   Car,
   Check,
-  ChevronRight,
   Cloud,
   Compass,
   FlaskConical,
@@ -23,6 +29,10 @@ import {
   ThumbsDown,
   ThumbsUp,
   X,
+  CalendarDays,
+  BookOpen,
+  Settings2,
+  Menu,
 } from "lucide-react";
 import {
   LocationSearch,
@@ -30,17 +40,15 @@ import {
   type LocationPreset,
 } from "@/components/dashboard/LocationSearch";
 import { MapPreview } from "@/components/dashboard/MapPreview";
+import { ObservationPlanner } from "@ui/ObservationPlanner";
 import {
   Comparison,
   ForecastTimeline,
   ModelLab,
-  SkyTargets,
 } from "@/components/dashboard/ObservingAnalysis";
-import { TabButton } from "@/components/ui/Tabs";
 import { getAstronomySummary } from "@/lib/astronomy";
 import {
   defaultPriorities,
-  factorNames,
   observingProfiles,
   rankPlans,
   type Feedback,
@@ -49,6 +57,7 @@ import {
 import { departureTimeFor, formatClock, formatMinutes } from "@/lib/format";
 import type { SpotPlan } from "@/types/spot";
 import type { TravelMode } from "@/types/trip";
+import type { TargetId } from "@/lib/observation-model";
 
 type Session = {
   location: LocationPreset;
@@ -66,13 +75,32 @@ type SavedPlan = {
 };
 const storageKey = "astroscout.observing-desk.v1";
 const views = [
-  { id: "explore", label: "Explore", icon: Compass },
-  { id: "compare", label: "Compare", icon: GitCompareArrows },
-  { id: "model", label: "Model lab", icon: FlaskConical },
+  { id: "tonight", path: "/", label: "Tonight", icon: Moon },
+  { id: "explore", path: "/places", label: "Places", icon: Compass },
+  { id: "calendar", path: "/calendar", label: "Calendar", icon: CalendarDays },
+  { id: "observe", path: "/observe", label: "Observe", icon: Telescope },
+  { id: "journal", path: "/journal", label: "Journal", icon: BookOpen },
+  { id: "model", path: "/method", label: "The science", icon: FlaskConical },
+  {
+    id: "compare",
+    path: "/compare",
+    label: "Compare places",
+    icon: GitCompareArrows,
+  },
 ] as const;
 type View = (typeof views)[number]["id"];
 
-export function NightPlannerDashboard() {
+export function AstroScoutApp() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const view = views.find((item) => item.path === pathname)?.id ?? "tonight";
+  const [showSettings, setShowSettings] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
+  const [requestedTarget, setRequestedTarget] = useState<TargetId>("saturn");
   const [session, setSession] = useState<Session>({
     location: locationPresets[0],
     startTime: "",
@@ -82,7 +110,6 @@ export function NightPlannerDashboard() {
   const [applied, setApplied] = useState<Session>();
   const [plans, setPlans] = useState<SpotPlan[]>([]);
   const [selectedId, setSelectedId] = useState("");
-  const [view, setView] = useState<View>("explore");
   const [hour, setHour] = useState(0);
   const [query, setQuery] = useState("");
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
@@ -97,6 +124,7 @@ export function NightPlannerDashboard() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [updated, setUpdated] = useState("");
+  const [unavailableSites, setUnavailableSites] = useState<string[]>([]);
   const requestRef = useRef<AbortController>();
   const savedPanel = useRef<HTMLDialogElement>(null);
 
@@ -122,12 +150,14 @@ export function NightPlannerDashboard() {
       const data = (await response.json()) as {
         locations?: SpotPlan[];
         error?: string;
+        unavailableSites?: string[];
       };
       if (!response.ok)
         throw new Error(data.error ?? "Unable to load locations.");
       if (requestRef.current !== controller) return;
       const locations = data.locations ?? [];
       setPlans(locations);
+      setUnavailableSites(data.unavailableSites ?? []);
       setApplied(input);
       setHour(0);
       setSelectedId((id) =>
@@ -268,7 +298,6 @@ export function NightPlannerDashboard() {
     Object.entries(observingProfiles).find(([, p]) =>
       p.every((v, i) => v === priorities[i]),
     )?.[0] ?? "Custom";
-  const demoCount = plans.filter((p) => p.weather.source === "fallback").length;
   const selectedFeedback = feedback.find((f) => f.id === selected?.id);
   const isSaved = saved.some(
     (p) => p.id === selected?.id && p.time === selectedTime,
@@ -347,139 +376,240 @@ export function NightPlannerDashboard() {
     );
   }
   function changeView(next: View) {
-    setView(next);
+    router.push(views.find((item) => item.id === next)?.path ?? "/");
   }
 
   return (
-    <div className="observing-app">
+    <div className={`observing-app astro-site view-${view}`}>
       <a className="skip-link" href="#observing-content">
-        Skip to observing locations
+        Skip to content
       </a>
-      <header className="masthead">
-        <a className="brand" href="/" aria-label="AstroScout home">
-          <Telescope size={27} strokeWidth={1.6} />
+      <header
+        className="astro-header"
+        onKeyDown={(event) => {
+          if (event.key === "Escape" && menuOpen) {
+            setMenuOpen(false);
+            menuButton.current?.focus();
+          }
+        }}
+      >
+        <Link className="astro-brand" href="/" aria-label="AstroScout home">
+          <Telescope size={27} strokeWidth={1.5} />
           <span>
             AstroScout<span className="brand-period">.</span>
           </span>
-        </a>
-        <div className="event-mark">
-          <span className="event-line" />
-          <div>
-            <strong>MQ Astronomy Night</strong>
-            <span>Student observing project</span>
-          </div>
-        </div>
-        <button
-          className="saved-button"
-          type="button"
-          onClick={() => setShowSaved(true)}
+        </Link>
+        <nav
+          id="primary-navigation"
+          aria-label="Main navigation"
+          data-open={menuOpen}
         >
-          <Bookmark size={17} />
-          Saved plans <span>{saved.length}</span>
-        </button>
-      </header>
-      <main className="desk-main">
-        <div className="desk-heading">
-          <div>
-            <span className="kicker">FIELD NOTES / NEW SOUTH WALES</span>
-            <h1>Observing desk</h1>
-          </div>
-          <div className="data-status">
-            <span className={`status-dot ${demoCount ? "demo" : ""}`} />
-            {loading
-              ? "Checking conditions"
-              : plans.length
-                ? demoCount
-                  ? `${demoCount} sites using demo weather`
-                  : "Open-Meteo forecast"
-                : "No forecast loaded"}
-            {updated && <small>Updated {updated}</small>}
-          </div>
-        </div>
-        <form
-          className="session-toolbar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            void search(session);
-          }}
-        >
-          <div className="origin-control">
-            <LocationSearch
-              value={session.location}
-              onChange={(location) => setSession({ ...session, location })}
-            />
-            <button
-              className="icon-button"
-              type="button"
-              onClick={useLocation}
-              disabled={locating}
-              title="Use current location"
-              aria-label="Use current location"
+          {views.slice(0, 6).map(({ id, label, path }) => (
+            <Link
+              key={id}
+              href={path}
+              aria-current={view === id ? "page" : undefined}
             >
-              {locating ? (
-                <Loader2 size={18} className="spin" />
-              ) : (
-                <LocateFixed size={18} />
-              )}
-            </button>
-          </div>
-          <label className="control">
-            <span className="control__label">Observing time / Sydney</span>
-            <input
-              required
-              className="field"
-              type="datetime-local"
-              value={session.startTime}
-              onChange={(e) =>
-                setSession({ ...session, startTime: e.target.value })
-              }
-            />
-          </label>
-          <label className="control radius-control">
-            <span className="control__label">
-              Search radius <strong>{session.radiusKm} km</strong>
-            </span>
-            <input
-              type="range"
-              min="20"
-              max="220"
-              step="10"
-              value={session.radiusKm}
-              onChange={(e) =>
-                setSession({ ...session, radiusKm: Number(e.target.value) })
-              }
-            />
-          </label>
-          <label className="control">
-            <span className="control__label">Travel mode</span>
-            <select
-              className="field"
-              value={session.travelMode}
-              onChange={(e) =>
-                setSession({
-                  ...session,
-                  travelMode: e.target.value as TravelMode,
-                })
-              }
-            >
-              <option value="driving">Driving</option>
-              <option value="public_transport">Public transport</option>
-              <option value="walking">Walking</option>
-            </select>
-          </label>
+              {label}
+              <m.span
+                className="navigation-indicator"
+                aria-hidden="true"
+                initial={false}
+                animate={{ scaleX: view === id ? 1 : 0 }}
+                transition={{ duration: 0.2 }}
+              />
+            </Link>
+          ))}
+        </nav>
+        <Hint label="Saved places">
           <button
-            className="button button--primary update-button"
-            disabled={loading || !session.startTime}
-            type="submit"
+            className="icon-button"
+            type="button"
+            aria-label="Saved places"
+            onClick={() => setShowSaved(true)}
           >
-            {loading ? (
-              <Loader2 size={17} className="spin" />
-            ) : (
-              <RefreshCw size={16} />
-            )}
-            Update plan
+            <Bookmark size={19} />
           </button>
-        </form>
+        </Hint>
+        <Hint label={menuOpen ? "Close navigation" : "Open navigation"}>
+          <button
+            ref={menuButton}
+            className="icon-button menu-toggle"
+            type="button"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={menuOpen}
+            aria-controls="primary-navigation"
+            onClick={() => setMenuOpen((open) => !open)}
+          >
+            {menuOpen ? <X size={21} /> : <Menu size={21} />}
+          </button>
+        </Hint>
+      </header>
+      <div className="astro-context">
+        <span>
+          <MapPin size={14} />
+          {selected?.name ?? session.location.label}
+          <span className="context-divider">/</span>
+          {selectedTime
+            ? new Intl.DateTimeFormat("en-AU", {
+                timeZone: "Australia/Sydney",
+                day: "numeric",
+                month: "short",
+                hour: "numeric",
+                minute: "2-digit",
+              }).format(new Date(selectedTime))
+            : "Tonight"}
+        </span>
+        <button
+          type="button"
+          aria-expanded={showSettings}
+          aria-controls="session-settings"
+          onClick={() => setShowSettings((open) => !open)}
+        >
+          <Settings2 size={15} />
+          Date & location
+        </button>
+      </div>
+      <main className="desk-main">
+        {view !== "tonight" && (
+          <div className="astro-page-heading">
+            <span className="kicker">ASTROSCOUT / NEW SOUTH WALES</span>
+            <h1>
+              {
+                {
+                  explore: "Find your observing spot.",
+                  calendar: "A date with the night sky.",
+                  observe: "Your next observation.",
+                  journal: "Nights worth remembering.",
+                  model: "Behind the prediction.",
+                  compare: "Find your better view.",
+                }[view]
+              }
+            </h1>
+            <p>
+              {
+                {
+                  explore:
+                    "Lookouts, coastlines and dark-sky escapes around Sydney.",
+                  calendar:
+                    "Moon phases and seasonal milestones, in Sydney time.",
+                  observe:
+                    "One object. Your equipment. The conditions that matter.",
+                  journal:
+                    "Your planned attempts and the things you actually saw.",
+                  model:
+                    "The evidence, assumptions and limits behind each result.",
+                  compare: "Your shortlisted places, side by side.",
+                }[view]
+              }
+            </p>
+          </div>
+        )}
+        <AnimatePresence initial={false}>
+          {showSettings && (
+            <m.section
+              id="session-settings"
+              className="astro-settings"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.16 }}
+            >
+              <form
+                className="session-toolbar"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void search(session);
+                  setShowSettings(false);
+                }}
+              >
+                <div className="origin-control">
+                  <LocationSearch
+                    value={session.location}
+                    onChange={(location) =>
+                      setSession({ ...session, location })
+                    }
+                  />
+                  <button
+                    className="icon-button"
+                    type="button"
+                    onClick={useLocation}
+                    disabled={locating}
+                    title="Use current location"
+                    aria-label="Use current location"
+                  >
+                    {locating ? (
+                      <Loader2 size={18} className="spin" />
+                    ) : (
+                      <LocateFixed size={18} />
+                    )}
+                  </button>
+                </div>
+                <label className="control">
+                  <span className="control__label">
+                    Observing time / Sydney
+                  </span>
+                  <input
+                    required
+                    className="field"
+                    type="datetime-local"
+                    value={session.startTime}
+                    onChange={(e) =>
+                      setSession({ ...session, startTime: e.target.value })
+                    }
+                  />
+                </label>
+                <label className="control radius-control">
+                  <span className="control__label">
+                    Search radius <strong>{session.radiusKm} km</strong>
+                  </span>
+                  <input
+                    type="range"
+                    min="20"
+                    max="220"
+                    step="10"
+                    value={session.radiusKm}
+                    onChange={(e) =>
+                      setSession({
+                        ...session,
+                        radiusKm: Number(e.target.value),
+                      })
+                    }
+                  />
+                </label>
+                <label className="control">
+                  <span className="control__label">Travel mode</span>
+                  <select
+                    className="field"
+                    value={session.travelMode}
+                    onChange={(e) =>
+                      setSession({
+                        ...session,
+                        travelMode: e.target.value as TravelMode,
+                      })
+                    }
+                  >
+                    <option value="driving">Driving</option>
+                    <option value="public_transport">Public transport</option>
+                    <option value="walking">Walking</option>
+                  </select>
+                </label>
+                <button
+                  className="button button--primary update-button"
+                  disabled={loading || !session.startTime}
+                  type="submit"
+                >
+                  {loading ? (
+                    <Loader2 size={17} className="spin" />
+                  ) : (
+                    <RefreshCw size={16} />
+                  )}
+                  Update plan
+                </button>
+              </form>
+            </m.section>
+          )}
+        </AnimatePresence>
         <div aria-live="polite">
           {dirty && (
             <p className="pending-note">
@@ -507,67 +637,85 @@ export function NightPlannerDashboard() {
             </div>
           )}
         </div>
-        <div className="workspace-nav">
-          <div
-            className="view-tabs"
-            role="tablist"
-            aria-label="Observing views"
-          >
-            {views.map(({ id, label, icon: Icon }, index) => (
-              <TabButton
-                key={id}
-                active={view === id}
-                id={`tab-${id}`}
-                role="tab"
-                aria-selected={view === id}
-                aria-controls={`panel-${id}`}
-                tabIndex={view === id ? 0 : -1}
-                onClick={() => changeView(id)}
-                onKeyDown={(e) => {
-                  if (
-                    ["ArrowLeft", "ArrowRight", "Home", "End"].includes(e.key)
-                  ) {
-                    e.preventDefault();
-                    const next =
-                      e.key === "Home"
-                        ? 0
-                        : e.key === "End"
-                          ? views.length - 1
-                          : (index +
-                              (e.key === "ArrowRight" ? 1 : -1) +
-                              views.length) %
-                            views.length;
-                    changeView(views[next].id);
-                    document.getElementById(`tab-${views[next].id}`)?.focus();
+        {view === "explore" && (
+          <div className="places-toolbar">
+            <span>
+              {loading
+                ? "Checking forecasts..."
+                : `${filtered.length} places / forecasts retrieved ${updated}`}
+            </span>
+            <div>
+              <label>
+                Sort by{" "}
+                <select
+                  value={currentProfile}
+                  onChange={(e) =>
+                    setPriorities(observingProfiles[e.target.value])
                   }
-                }}
-              >
-                <Icon size={17} />
-                {label}
-                {id === "compare" && <span>{comparisonIds.length}</span>}
-              </TabButton>
-            ))}
+                >
+                  {currentProfile === "Custom" && <option>Custom</option>}
+                  {Object.keys(observingProfiles).map((p) => (
+                    <option key={p}>{p}</option>
+                  ))}
+                </select>
+              </label>
+              <Link href="/compare">
+                Compare ({comparisonIds.length}) <GitCompareArrows size={16} />
+              </Link>
+            </div>
           </div>
-          <label className="profile-select">
-            <span>Observing focus</span>
-            <select
-              value={currentProfile}
-              onChange={(e) => setPriorities(observingProfiles[e.target.value])}
-            >
-              {currentProfile === "Custom" && <option>Custom</option>}
-              {Object.keys(observingProfiles).map((p) => (
-                <option key={p}>{p}</option>
-              ))}
-            </select>
-          </label>
-        </div>
+        )}
         <div id="observing-content" tabIndex={-1}>
-          <div
-            role="tabpanel"
-            id={`panel-${view}`}
-            aria-labelledby={`tab-${view}`}
-            aria-busy={loading}
-          >
+          <div id={`panel-${view}`} aria-busy={loading}>
+            {view === "tonight" && (
+              <TonightView
+                time={
+                  selectedTime ||
+                  (session.startTime ? sydneyIso(session.startTime) : "")
+                }
+                latitude={selected?.latitude ?? session.location.latitude}
+                longitude={selected?.longitude ?? session.location.longitude}
+                location={selected?.name ?? session.location.label}
+                plan={selected}
+                hour={hour}
+                onHour={setHour}
+                onObserve={(id) => {
+                  setRequestedTarget(id);
+                  changeView("observe");
+                }}
+              />
+            )}
+            {view === "calendar" && <CalendarView />}
+            <div hidden={!["observe", "journal", "model"].includes(view)}>
+              {selected ? (
+                <ObservationPlanner
+                  plan={selected}
+                  hour={hour}
+                  onHour={setHour}
+                  mode={
+                    view === "journal"
+                      ? "journal"
+                      : view === "model"
+                        ? "evidence"
+                        : "observe"
+                  }
+                  requestedTarget={requestedTarget}
+                />
+              ) : (
+                ["observe", "journal", "model"].includes(view) && (
+                  <div className="empty-state">
+                    <Telescope size={28} />
+                    <h2>
+                      {loading ? "Checking the sky..." : "Forecast unavailable"}
+                    </h2>
+                    <p>
+                      Select an upcoming time in Date & location to check
+                      observing conditions.
+                    </p>
+                  </div>
+                )
+              )}
+            </div>
             {view === "explore" && (
               <div className="explore-layout">
                 <aside className="locations-pane">
@@ -642,16 +790,16 @@ export function NightPlannerDashboard() {
                               </span>
                             </span>
                           </span>
-                          <span className={`match-score ${p.condition}`}>
+                          <span
+                            className={`match-score ${p.condition}`}
+                            title={`Location preference match: ${p.score} out of 100`}
+                            aria-label={`Preference match ${p.score} out of 100`}
+                          >
                             {p.score}
                           </span>
                         </button>
                         <div className="location-row-footer">
-                          <span>
-                            {p.weather.source === "fallback"
-                              ? "Demo weather"
-                              : `Bortle ${p.bortleRating} (est.)`}
-                          </span>
+                          <span>{`Bortle ${p.bortleRating} (est.)`}</span>
                           <label>
                             <input
                               type="checkbox"
@@ -674,6 +822,13 @@ export function NightPlannerDashboard() {
                   </p>
                 </aside>
                 <div className="observing-pane">
+                  {!!unavailableSites.length && (
+                    <p className="source-warning">
+                      Forecast unavailable; excluded from results:{" "}
+                      {unavailableSites.join(", ")}.
+                    </p>
+                  )}
+
                   <MapPreview
                     plans={filtered}
                     selectedId={selected?.id ?? ""}
@@ -681,174 +836,56 @@ export function NightPlannerDashboard() {
                     origin={applied?.location ?? session.location}
                   />
                   {selected && currentWeather && (
-                    <section className="selected-location">
-                      <div className="selected-title">
-                        <div>
-                          <span className="kicker">
-                            {ranked[0]?.id === selected.id
-                              ? "HIGHEST MATCH"
-                              : "SELECTED LOCATION"}{" "}
-                            / {selected.region}
-                          </span>
-                          <h2>{selected.name}</h2>
-                        </div>
-                        <button
-                          className={`icon-button bookmark-button ${isSaved ? "active" : ""}`}
-                          type="button"
-                          onClick={savePlan}
-                          title={
-                            isSaved ? "Remove saved plan" : "Save this plan"
-                          }
-                          aria-label={
-                            isSaved ? "Remove saved plan" : "Save this plan"
-                          }
-                          aria-pressed={isSaved}
+                    <section className="place-preview">
+                      <div>
+                        <span className="kicker">{selected.region}</span>
+                        <h2>{selected.name}</h2>
+                      </div>
+                      <button
+                        className="icon-button"
+                        type="button"
+                        onClick={savePlan}
+                        aria-pressed={isSaved}
+                        title={isSaved ? "Remove saved place" : "Save place"}
+                        aria-label={
+                          isSaved ? "Remove saved place" : "Save place"
+                        }
+                      >
+                        <Bookmark
+                          size={20}
+                          fill={isSaved ? "currentColor" : "none"}
+                        />
+                      </button>
+                      <p>{selected.description}</p>
+                      <div className="place-facts">
+                        <span>
+                          <Cloud size={16} />
+                          {currentWeather.cloudCover}% cloud
+                        </span>
+                        <span>
+                          <Navigation size={16} />
+                          {formatMinutes(selected.travelTimeMinutes)} estimated
+                        </span>
+                        <span>
+                          <Moon size={16} />
+                          Bortle {selected.bortleRating} (est.)
+                        </span>
+                      </div>
+                      <div className="place-actions">
+                        <Link
+                          className="button button--primary"
+                          href="/observe"
                         >
-                          <Bookmark
-                            size={20}
-                            fill={isSaved ? "currentColor" : "none"}
-                          />
-                        </button>
-                      </div>
-                      <p className="selected-description">
-                        {selected.description}
-                      </p>
-                      <div className="selected-metrics">
-                        <div>
-                          <span>
-                            <Cloud size={15} />
-                            Cloud cover
-                          </span>
-                          <strong>
-                            {currentWeather.cloudCover}
-                            <small>%</small>
-                          </strong>
-                        </div>
-                        <div>
-                          <span>
-                            <Moon size={15} />
-                            Moon lit
-                          </span>
-                          <strong>
-                            {selected.astronomy.moonIllumination}
-                            <small>%</small>
-                          </strong>
-                        </div>
-                        <div>
-                          <span>
-                            <Navigation size={15} />
-                            Travel estimate
-                          </span>
-                          <strong>
-                            {formatMinutes(selected.travelTimeMinutes)}
-                          </strong>
-                        </div>
-                        <div>
-                          <span>
-                            <Telescope size={15} />
-                            Full darkness
-                          </span>
-                          <strong>
-                            {selected.astronomy.astronomicalTwilight}
-                          </strong>
-                        </div>
-                      </div>
-                      <div className="match-explanation">
-                        <div className="match-explanation-heading">
-                          <strong>Why this location?</strong>
-                          <button
-                            className="text-button"
-                            type="button"
-                            onClick={() => setView("model")}
-                          >
-                            Score breakdown <ArrowRight size={14} />
-                          </button>
-                        </div>
-                        <p>
-                          {
-                            factorNames[
-                              selected.contributions.indexOf(
-                                Math.max(...selected.contributions),
-                              )
-                            ]
-                          }{" "}
-                          contributes most to its {selected.score}/100 match.
-                          {selected.learnedShare > 0
-                            ? ` Your ratings contribute ${Math.round(selected.learnedShare * 100)}% of the final score.`
-                            : " Based on your observing priorities."}
-                        </p>
-                        <div className="rating-actions">
-                          <span>Does this suit your night?</span>
-                          <button
-                            className="icon-button"
-                            type="button"
-                            aria-label="This location suits me"
-                            title="This location suits me"
-                            aria-pressed={selectedFeedback?.liked === true}
-                            onClick={() => rate(true)}
-                          >
-                            <ThumbsUp size={16} />
-                          </button>
-                          <button
-                            className="icon-button"
-                            type="button"
-                            aria-label="This location is not for me"
-                            title="This location is not for me"
-                            aria-pressed={selectedFeedback?.liked === false}
-                            onClick={() => rate(false)}
-                          >
-                            <ThumbsDown size={16} />
-                          </button>
-                        </div>
-                      </div>
-                      {selected.weather.source === "fallback" && (
-                        <p className="source-warning">
-                          Demo weather: the provider did not supply a complete
-                          forecast for this time. Scores and hourly conditions
-                          are illustrative.
-                        </p>
-                      )}
-                      {(selected.astronomy.sunAltitude ?? -90) > -18 && (
-                        <p className="source-warning">
-                          The selected hour is before full astronomical
-                          darkness.
-                        </p>
-                      )}
-                      <ForecastTimeline
-                        plan={selected}
-                        hour={hour}
-                        onHour={setHour}
-                      />
-                      <SkyTargets astronomy={selected.astronomy} />
-                      <details className="access-details">
-                        <summary>
-                          Access, facilities & horizon{" "}
-                          <ChevronRight size={16} />
-                        </summary>
-                        <p>{selected.accessNotes}</p>
-                        <p>{selected.safetyNotes}</p>
-                        <p>{selected.horizonNotes}</p>
-                        <p>{selected.facilities.join(" / ")}</p>
-                      </details>
-                      <div className="plan-actions">
-                        <div>
-                          <span>Estimated departure</span>
-                          <strong>
-                            {departureTimeFor(
-                              selectedTime,
-                              selected.travelTimeMinutes,
-                            )}
-                          </strong>
-                          <small>Includes 20 min setup</small>
-                        </div>
+                          Observe here <ArrowRight size={16} />
+                        </Link>
                         <Link
                           className="text-button"
                           href={`/spot/${selected.id}?startTime=${encodeURIComponent(selectedTime)}&lat=${applied?.location.latitude}&lon=${applied?.location.longitude}&mode=${applied?.travelMode}`}
                         >
-                          Location details <ArrowRight size={16} />
+                          Site guide <ArrowRight size={16} />
                         </Link>
                         <a
-                          className="button button--primary"
+                          className="text-button"
                           href={directions(
                             selected.latitude,
                             selected.longitude,
@@ -860,6 +897,46 @@ export function NightPlannerDashboard() {
                         >
                           Directions <Navigation size={16} />
                         </a>
+                      </div>
+                      <details className="place-extra">
+                        <summary>Hourly forecast</summary>
+                        <p className="footnote">
+                          Estimated departure:{" "}
+                          {departureTimeFor(
+                            selectedTime,
+                            selected.travelTimeMinutes,
+                          )}
+                          . Includes 20 minutes for setup.
+                        </p>
+                        <ForecastTimeline
+                          plan={selected}
+                          hour={hour}
+                          onHour={setHour}
+                        />
+                      </details>
+                      <div className="place-feedback">
+                        <span>Does this spot suit you?</span>
+                        <button
+                          className="icon-button"
+                          type="button"
+                          title="This location suits me"
+                          aria-label="This location suits me"
+                          aria-pressed={selectedFeedback?.liked === true}
+                          onClick={() => rate(true)}
+                        >
+                          <ThumbsUp size={16} />
+                        </button>
+                        <button
+                          className="icon-button"
+                          type="button"
+                          title="This location is not for me"
+                          aria-label="This location is not for me"
+                          aria-pressed={selectedFeedback?.liked === false}
+                          onClick={() => rate(false)}
+                        >
+                          <ThumbsDown size={16} />
+                        </button>
+                        <Link href="/method">Why this ranking?</Link>
                       </div>
                     </section>
                   )}
@@ -875,25 +952,30 @@ export function NightPlannerDashboard() {
               />
             )}
             {view === "model" && (
-              <ModelLab
-                plans={ranked}
-                priorities={priorities}
-                onPriorities={setPriorities}
-                feedback={feedback}
-                learn={learn}
-                onLearn={setLearn}
-                onReset={() => {
-                  setPriorities(defaultPriorities);
-                  setFeedback([]);
-                  setLearn(true);
-                  setNotice("Preferences and ratings reset.");
-                }}
-              />
+              <details className="preference-method">
+                <summary>Location preferences and ranking</summary>
+                <ModelLab
+                  plans={ranked}
+                  priorities={priorities}
+                  onPriorities={setPriorities}
+                  feedback={feedback}
+                  learn={learn}
+                  onLearn={setLearn}
+                  onReset={() => {
+                    setPriorities(defaultPriorities);
+                    setFeedback([]);
+                    setLearn(true);
+                    setNotice("Preferences and ratings reset.");
+                  }}
+                />
+              </details>
             )}
           </div>
         </div>
         <footer className="desk-footer">
-          <span>AstroScout / MQ Astronomy Night</span>
+          <span>
+            <strong>AstroScout.</strong> / MQ Astronomy Night
+          </span>
           <div>
             <a href="https://open-meteo.com/" target="_blank" rel="noreferrer">
               Weather: Open-Meteo

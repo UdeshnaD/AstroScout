@@ -3,6 +3,8 @@ export type HourlySkyPoint = {
   cloudCover: number;
   visibilityKm: number;
   precipitationChance: number;
+  windKph: number;
+  temperatureC: number;
 };
 
 export type WeatherSummary = {
@@ -12,6 +14,7 @@ export type WeatherSummary = {
   windKph: number;
   temperatureC: number;
   conditionLabel: string;
-  source: "open-meteo" | "fallback";
+  source: "open-meteo";
+  fetchedAt: string;
   hourly: HourlySkyPoint[];
 };

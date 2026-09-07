@@ -9,6 +9,7 @@ export type NightSkyHighlight = {
   description: string;
   altitude?: number;
   azimuth?: number;
+  magnitude?: number;
 };
 
 export type AstronomySummary = {

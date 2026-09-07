@@ -5,15 +5,14 @@ import { getWeatherForSpot } from "@/lib/weather";
 import { defaultPriorities, factorNames, rankPlans } from "@/lib/recommender";
 import type { PlanSearchRequest, SpotPlan } from "@/types/spot";
 
-export async function buildPlanResults(
-  input: PlanSearchRequest,
-): Promise<SpotPlan[]> {
+export async function buildPlanResults(input: PlanSearchRequest) {
   const nearby = observingSpots
     .map((spot) => ({ spot, distance: distanceKm(input, spot) }))
     .filter(({ distance }) => distance <= input.radiusKm);
-  const plans = await Promise.all(
+  const results = await Promise.all(
     nearby.map(async ({ spot, distance }) => {
       const weather = await getWeatherForSpot(spot, input.startTime);
+      if (!weather) return null;
       const astronomy = getAstronomySummary(
         weather.hourly[0]?.time ?? input.startTime,
         spot.latitude,
@@ -40,6 +39,12 @@ export async function buildPlanResults(
       } satisfies SpotPlan;
     }),
   );
+  const plans = results.filter(
+    (plan): plan is NonNullable<typeof plan> => plan !== null,
+  );
+  const unavailableSites = nearby
+    .filter((_, index) => results[index] === null)
+    .map(({ spot }) => spot.name);
   // All sites must expose the same number of hours for a fair time comparison.
   const sharedHours = plans.reduce(
     (count, plan) => Math.min(count, plan.weather.hourly.length),
@@ -52,10 +57,13 @@ export async function buildPlanResults(
       hourly: plan.weather.hourly.slice(0, sharedHours),
     },
   }));
-  return rankPlans(aligned, defaultPriorities, [], false).map((plan) => ({
-    ...plan,
-    scoreReasons: plan.contributions.map(
-      (value, i) => `${factorNames[i]}: ${value.toFixed(1)} baseline points`,
-    ),
-  }));
+  const locations = rankPlans(aligned, defaultPriorities, [], false).map(
+    (plan) => ({
+      ...plan,
+      scoreReasons: plan.contributions.map(
+        (value, i) => `${factorNames[i]}: ${value.toFixed(1)} baseline points`,
+      ),
+    }),
+  );
+  return { locations, unavailableSites };
 }

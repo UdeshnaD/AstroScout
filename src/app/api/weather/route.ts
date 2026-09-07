@@ -24,5 +24,10 @@ export async function GET(request: Request) {
   }
 
   const weather = await getWeatherForSpot(spot, startTime);
+  if (!weather)
+    return NextResponse.json(
+      { weather: null, error: "Forecast unavailable for this site and time." },
+      { status: 503 },
+    );
   return NextResponse.json({ weather });
 }

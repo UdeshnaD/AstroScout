@@ -4,10 +4,17 @@ import { formatPercent } from "@/lib/format";
 import type { WeatherSummary } from "@/types/weather";
 
 type SpotForecastProps = {
-  weather: WeatherSummary;
+  weather: WeatherSummary | null;
 };
 
 export function SpotForecast({ weather }: SpotForecastProps) {
+  if (!weather)
+    return (
+      <Card>
+        <h2>Sky Conditions</h2>
+        <p>Forecast unavailable for this site and time.</p>
+      </Card>
+    );
   return (
     <Card>
       <div className="section-title">
@@ -45,9 +52,7 @@ export function SpotForecast({ weather }: SpotForecastProps) {
           </div>
         ))}
       </div>
-      <p className="data-note">
-        Weather source: {weather.source === "open-meteo" ? "Open-Meteo live forecast" : "demo fallback forecast"}
-      </p>
+      <p className="data-note">Weather source: Open-Meteo forecast</p>
     </Card>
   );
 }
@@ -55,6 +60,6 @@ export function SpotForecast({ weather }: SpotForecastProps) {
 function formatHour(time: string) {
   return new Intl.DateTimeFormat("en-AU", {
     hour: "numeric",
-    timeZone: "Australia/Sydney"
+    timeZone: "Australia/Sydney",
   }).format(new Date(time));
 }

@@ -81,7 +81,7 @@ export function BestSpotPanel({ plan, startTime, locationLabel, lastUpdated, isL
 
         <p className="data-note">
           <Compass size={14} aria-hidden="true" />
-          {plan.weather.source === "open-meteo" ? "Live weather" : "Demo weather"} - Updated {lastUpdated ?? "now"}
+          Open-Meteo forecast - Updated {lastUpdated ?? "now"}
         </p>
       </aside>
     </Card>

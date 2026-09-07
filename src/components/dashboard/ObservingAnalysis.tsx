@@ -27,9 +27,7 @@ export function ForecastTimeline({
       <div className="section-heading">
         <h3>Through the night</h3>
         <span>
-          {plan.weather.source === "fallback"
-            ? "Demo conditions"
-            : "Hourly forecast"}
+          Hourly forecast
         </span>
       </div>
       <div className="forecast-hours" role="group" aria-label="Forecast hour">
@@ -344,9 +342,7 @@ export function Comparison({
                 [
                   "Weather source",
                   (p: RankedPlan) =>
-                    p.weather.source === "fallback"
-                      ? "Demo data"
-                      : "Open-Meteo forecast",
+                    "Open-Meteo forecast",
                 ],
                 ["Access", (p: RankedPlan) => p.accessNotes],
               ].map(([label, render]) => (

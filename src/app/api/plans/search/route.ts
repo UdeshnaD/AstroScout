@@ -17,8 +17,18 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: parsed.error }, { status: 400 });
     }
 
-    const locations = await buildPlanResults(parsed.value);
-    return NextResponse.json({ locations });
+    const result = await buildPlanResults(parsed.value);
+    if (!result.locations.length && result.unavailableSites.length) {
+      return NextResponse.json(
+        {
+          ...result,
+          error:
+            "Forecast unavailable for this time. Choose a time within the next seven days or retry shortly.",
+        },
+        { status: 503 },
+      );
+    }
+    return NextResponse.json(result);
   } catch (error) {
     if (error instanceof SyntaxError)
       return NextResponse.json(

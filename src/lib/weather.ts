@@ -15,7 +15,7 @@ type OpenMeteoResponse = {
 export async function getWeatherForSpot(
   spot: Pick<ObservingSpot, "latitude" | "longitude" | "id">,
   startTime: string,
-): Promise<WeatherSummary> {
+): Promise<WeatherSummary | null> {
   const baseUrl =
     process.env.OPEN_METEO_BASE_URL ?? "https://api.open-meteo.com";
   const url = new URL("/v1/forecast", baseUrl);
@@ -36,15 +36,13 @@ export async function getWeatherForSpot(
     });
 
     if (!response.ok) {
-      return fallbackWeather(spot.id, startTime);
+      return null;
     }
 
     const data = (await response.json()) as OpenMeteoResponse;
-    return (
-      normaliseOpenMeteo(data, startTime) ?? fallbackWeather(spot.id, startTime)
-    );
+    return normaliseOpenMeteo(data, startTime);
   } catch {
-    return fallbackWeather(spot.id, startTime);
+    return null;
   }
 }
 
@@ -59,6 +57,11 @@ function normaliseOpenMeteo(
   }
 
   const target = new Date(startTime).getTime();
+  if (
+    !Number.isFinite(target) ||
+    hourly.time.some((time) => !Number.isFinite(parseForecastTime(time)))
+  )
+    return null;
   if (
     target < parseForecastTime(hourly.time[0]) ||
     target > parseForecastTime(hourly.time[hourly.time.length - 1])
@@ -88,72 +91,50 @@ function normaliseOpenMeteo(
     )
   )
     return null;
+  if (
+    indices.some(
+      (i) =>
+        [hourly.cloud_cover![i], hourly.precipitation_probability![i]].some(
+          (v) => v < 0 || v > 100,
+        ) ||
+        hourly.visibility![i] < 0 ||
+        hourly.wind_speed_10m![i] < 0,
+    )
+  )
+    return null;
   const window = hourly.time
     .slice(nearestIndex, nearestIndex + 8)
     .map((time, offset) => {
       const index = nearestIndex + offset;
       return {
         time: new Date(parseForecastTime(time)).toISOString(),
-        cloudCover: clamp(hourly.cloud_cover?.[index] ?? 45),
-        visibilityKm:
-          Math.round(((hourly.visibility?.[index] ?? 18000) / 1000) * 10) / 10,
-        precipitationChance: clamp(
-          hourly.precipitation_probability?.[index] ?? 10,
-        ),
+        cloudCover: clamp(hourly.cloud_cover![index]),
+        visibilityKm: Math.round((hourly.visibility![index] / 1000) * 10) / 10,
+        precipitationChance: clamp(hourly.precipitation_probability![index]),
+        windKph: hourly.wind_speed_10m![index],
+        temperatureC: hourly.temperature_2m![index],
       };
     });
 
-  const cloudCover = clamp(hourly.cloud_cover?.[nearestIndex] ?? 45);
+  const cloudCover = clamp(hourly.cloud_cover![nearestIndex]);
   const visibilityKm =
-    Math.round(((hourly.visibility?.[nearestIndex] ?? 18000) / 1000) * 10) / 10;
+    Math.round((hourly.visibility![nearestIndex] / 1000) * 10) / 10;
 
   return {
     cloudCover,
     visibilityKm,
-    precipitationChance: clamp(
-      hourly.precipitation_probability?.[nearestIndex] ?? 10,
-    ),
-    windKph: Math.round(hourly.wind_speed_10m?.[nearestIndex] ?? 12),
-    temperatureC: Math.round(hourly.temperature_2m?.[nearestIndex] ?? 14),
+    precipitationChance: clamp(hourly.precipitation_probability![nearestIndex]),
+    windKph: Math.round(hourly.wind_speed_10m![nearestIndex]),
+    temperatureC: Math.round(hourly.temperature_2m![nearestIndex]),
     conditionLabel: labelConditions(cloudCover, visibilityKm),
     source: "open-meteo",
+    fetchedAt: new Date().toISOString(),
     hourly: window,
   };
 }
 
 function parseForecastTime(time: string) {
   return new Date(time.endsWith("Z") ? time : `${time}Z`).getTime();
-}
-
-function fallbackWeather(seed: string, startTime: string): WeatherSummary {
-  const seedValue = seed
-    .split("")
-    .reduce((sum, char) => sum + char.charCodeAt(0), 0);
-  const cloudCover = 18 + (seedValue % 58);
-  const visibilityKm = 12 + (seedValue % 14);
-  const precipitationChance = seedValue % 28;
-  const date = new Date(
-    Math.round(new Date(startTime).getTime() / 3600000) * 3600000,
-  );
-
-  return {
-    cloudCover,
-    visibilityKm,
-    precipitationChance,
-    windKph: 8 + (seedValue % 18),
-    temperatureC: 9 + (seedValue % 10),
-    conditionLabel: labelConditions(cloudCover, visibilityKm),
-    source: "fallback",
-    hourly: Array.from({ length: 8 }, (_, index) => {
-      const hour = new Date(date.getTime() + index * 3600000);
-      return {
-        time: hour.toISOString(),
-        cloudCover: clamp(cloudCover + index * 3 - 6),
-        visibilityKm,
-        precipitationChance: clamp(precipitationChance + index * 2),
-      };
-    }),
-  };
 }
 
 function labelConditions(cloudCover: number, visibilityKm: number) {

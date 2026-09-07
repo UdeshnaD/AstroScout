@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { interfaceFont, editorialFont } from "@ui/fonts";
+import "@ui/Typography.css";
 
 export const metadata: Metadata = {
   title: "AstroScout | MQ Astronomy Night",
@@ -13,7 +15,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html
+      lang="en"
+      className={`${interfaceFont.variable} ${editorialFont.variable}`}
+    >
       <body>{children}</body>
     </html>
   );

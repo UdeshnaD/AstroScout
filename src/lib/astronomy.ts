@@ -70,8 +70,9 @@ export function getAstronomySummary(
             ? "medium"
             : "low",
       description: descriptions[body],
-      altitude: Math.round(horizon.altitude),
+      altitude: Math.round(horizon.altitude * 100) / 100,
       azimuth: Math.round(horizon.azimuth),
+      magnitude: Illumination(body, date).mag,
     };
   });
   return {
