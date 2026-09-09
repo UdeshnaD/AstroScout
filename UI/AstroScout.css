@@ -928,6 +928,54 @@
   }
 }
 
+.postcode-lookup {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.postcode-lookup > label {
+  color: var(--muted, #52615d);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.postcode-lookup > div {
+  display: flex;
+  gap: 8px;
+}
+
+.postcode-lookup input {
+  min-width: 0;
+  width: 105px;
+  padding: 8px 10px;
+}
+
+.postcode-lookup button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 11px;
+  border: 1px solid var(--line, #d5dfd9);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--ink, #172021);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.postcode-lookup button:hover:not(:disabled) {
+  border-color: var(--green, #1f674f);
+  background: var(--surface-subtle, #f3f6f3);
+  color: var(--green, #1f674f);
+}
+
+.postcode-lookup > span {
+  color: var(--accent-strong, #7d1c35);
+  font-size: 12px;
+}
+
 /* --------------------------------------------------------------------------
    Visual polish — merged into this standalone replacement stylesheet
    -------------------------------------------------------------------------- */

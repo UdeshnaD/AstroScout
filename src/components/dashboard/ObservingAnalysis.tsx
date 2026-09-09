@@ -184,8 +184,8 @@ export function ModelLab({
         </button>
       </section>
       <section className="model-explanation">
-        <span className="kicker">02 / Explainable ranking</span>
-        <h2>Every point has a reason.</h2>
+        <span className="kicker">02 / How locations are ranked</span>
+        <h2>See why each site is recommended.</h2>
         <div className="contribution-legend">
           {factorNames.map((name, i) => (
             <span key={name}>
@@ -232,16 +232,15 @@ export function ModelLab({
           </p>
         </details>
         <div className="learning-summary">
-          <span className="kicker">03 / Preference learning</span>
+          <span className="kicker">03 / Your preferences</span>
           <h3>
             {feedback.length
-              ? "Learning from your choices"
-              : "Waiting for your first rating"}
+              ? "Recommendations based on your ratings"
+              : "Rate a few locations to get tailored recommendations"}
           </h3>
           <p>
-            A small logistic regression model learns from your helpful /
-            not-for-me ratings. Its influence grows by 5% per rated location, up
-            to 30%. It predicts preference, not observing success.
+            Your ratings can refine future recommendations. They cannot guarantee
+            observing conditions or a successful session.
           </p>
           <div className="learned-factors">
             {factorNames.map((name, i) => (
@@ -257,11 +256,12 @@ export function ModelLab({
             ))}
           </div>
           <p className="footnote">
-            {learn ? "Personalization is on." : "Personalization is off."}{" "}
+            {learn
+              ? "Recommendations use your location ratings."
+              : "Recommendations use the default ranking."}{" "}
             {feedback.length < 6
-              ? "Early feedback: the learned model has limited evidence."
-              : "Personal feedback only; no held-out accuracy evaluation."}{" "}
-            Ratings stay in this browser.
+              ? "Rate a few locations to receive tailored recommendations."
+              : "Your ratings are stored only on this device."}
           </p>
         </div>
       </section>
@@ -284,7 +284,7 @@ export function Comparison({
   return (
     <section className="comparison-section">
       <div className="section-heading">
-        <h2>Side by side</h2>
+        <h2>Compare sites and sky conditions</h2>
         <span>{comparison.length} of 3 locations</span>
       </div>
       <div className="comparison-picker">

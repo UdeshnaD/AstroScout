@@ -6,9 +6,17 @@ import { defaultPriorities, factorNames, rankPlans } from "@/lib/recommender";
 import type { PlanSearchRequest, SpotPlan } from "@/types/spot";
 
 export async function buildPlanResults(input: PlanSearchRequest) {
-  const nearby = observingSpots
+  const withinRadius = observingSpots
     .map((spot) => ({ spot, distance: distanceKm(input, spot) }))
     .filter(({ distance }) => distance <= input.radiusKm);
+  // A postcode lookup should always surface the closest curated spot, even
+  // where the user's chosen radius contains no locations yet.
+  const nearby = withinRadius.length
+    ? withinRadius
+    : observingSpots
+        .map((spot) => ({ spot, distance: distanceKm(input, spot) }))
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 1);
   const results = await Promise.all(
     nearby.map(async ({ spot, distance }) => {
       const weather = await getWeatherForSpot(spot, input.startTime);

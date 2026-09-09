@@ -80,7 +80,7 @@ const views = [
   { id: "calendar", path: "/calendar", label: "Calendar", icon: CalendarDays },
   { id: "observe", path: "/observe", label: "Observe", icon: Telescope },
   { id: "journal", path: "/journal", label: "Journal", icon: BookOpen },
-  { id: "model", path: "/method", label: "The science", icon: FlaskConical },
+  { id: "model", path: "/method", label: "How it works", icon: FlaskConical },
   {
     id: "compare",
     path: "/compare",
@@ -312,7 +312,7 @@ export function AstroScoutApp() {
     setNotice(
       learn
         ? "Rating saved. Your location rankings have been updated."
-        : "Rating saved. Enable learning in Model lab to personalize rankings.",
+        : "Rating saved. Turn on recommendations based on your ratings to use it.",
     );
   }
   function toggleCompare(id: string) {
@@ -477,12 +477,12 @@ export function AstroScoutApp() {
             <h1>
               {
                 {
-                  explore: "Find your observing spot.",
-                  calendar: "A date with the night sky.",
-                  observe: "Your next observation.",
-                  journal: "Nights worth remembering.",
-                  model: "Behind the prediction.",
-                  compare: "Find your better view.",
+                  explore: "Find a stargazing site near you.",
+                  calendar: "Plan around the night sky.",
+                  observe: "Prepare for your next observation.",
+                  journal: "Record your observing sessions.",
+                  model: "How AstroScout ranks locations.",
+                  compare: "Compare observing sites.",
                 }[view]
               }
             </h1>
@@ -490,16 +490,16 @@ export function AstroScoutApp() {
               {
                 {
                   explore:
-                    "Lookouts, coastlines and dark-sky escapes around Sydney.",
+                    "Stargazing sites around Sydney, including lookouts, coastlines, parks and observatories.",
                   calendar:
                     "Moon phases and seasonal milestones, in Sydney time.",
                   observe:
-                    "One object. Your equipment. The conditions that matter.",
+                    "Choose an object and your equipment, then see the conditions that matter for your observation.",
                   journal:
                     "Your planned attempts and the things you actually saw.",
                   model:
-                    "The evidence, assumptions and limits behind each result.",
-                  compare: "Your shortlisted places, side by side.",
+                    "Each result shows the weather, sky calculations and limits behind the recommendation.",
+                  compare: "Compare selected locations and their current conditions.",
                 }[view]
               }
             </p>
@@ -529,6 +529,14 @@ export function AstroScoutApp() {
                     onChange={(location) =>
                       setSession({ ...session, location })
                     }
+                    onPostcodeResolved={(location, nearestSpotName) => {
+                      const next = { ...session, location };
+                      setSession(next);
+                      setNotice(
+                        `${location.label} selected. Nearest curated spot: ${nearestSpotName}.`,
+                      );
+                      void search(next);
+                    }}
                   />
                   <button
                     className="icon-button"
