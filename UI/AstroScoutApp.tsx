@@ -37,6 +37,8 @@ import {
 import {
   LocationSearch,
   locationPresets,
+  lookupNswLocation,
+  type LocationLookup,
   type LocationPreset,
 } from "@/components/dashboard/LocationSearch";
 import { MapPreview } from "@/components/dashboard/MapPreview";
@@ -112,6 +114,7 @@ export function AstroScoutApp() {
   const [selectedId, setSelectedId] = useState("");
   const [hour, setHour] = useState(0);
   const [query, setQuery] = useState("");
+  const [placeSearchError, setPlaceSearchError] = useState("");
   const [comparisonIds, setComparisonIds] = useState<string[]>([]);
   const [priorities, setPriorities] = useState<Priorities>(defaultPriorities);
   const [feedback, setFeedback] = useState<Feedback[]>([]);
@@ -156,6 +159,9 @@ export function AstroScoutApp() {
         throw new Error(data.error ?? "Unable to load locations.");
       if (requestRef.current !== controller) return;
       const locations = data.locations ?? [];
+      // A place/postcode lookup changes the result set. Do not leave a prior
+      // catalogue-name filter in place, or valid nearby results can appear empty.
+      setQuery("");
       setPlans(locations);
       setUnavailableSites(data.unavailableSites ?? []);
       setApplied(input);
@@ -324,6 +330,40 @@ export function AstroScoutApp() {
           : ids,
     );
   }
+  async function searchPlacesLocation() {
+    const value = query.trim();
+    if (!value) return;
+
+    // Keep the original catalogue-name/region filter working. When it has no
+    // match, use the same location lookup as the global planner control.
+    if (
+      ranked.some((plan) =>
+        `${plan.name} ${plan.region}`.toLowerCase().includes(value.toLowerCase()),
+      )
+    ) {
+      setPlaceSearchError("");
+      return;
+    }
+    try {
+      await applyLocationLookup(await lookupNswLocation(value));
+    } catch (failure) {
+      setPlaceSearchError(
+        failure instanceof Error ? failure.message : "Location lookup failed.",
+      );
+    }
+  }
+  async function applyLocationLookup({
+    origin,
+    nearestSpot,
+  }: LocationLookup) {
+    const next = { ...session, location: origin };
+    setPlaceSearchError("");
+    setSession(next);
+    setNotice(
+      `${origin.label} selected. Nearest curated spot: ${nearestSpot.name}. The Places list now ranks nearby catalogue options.`,
+    );
+    await search(next);
+  }
   function useLocation() {
     if (!navigator.geolocation) {
       setNotice("Location is unavailable in this browser.");
@@ -490,7 +530,7 @@ export function AstroScoutApp() {
               {
                 {
                   explore:
-                    "Stargazing sites around Sydney, including lookouts, coastlines, parks and observatories.",
+                    "Enter a NSW postcode to rank nearby spots from AstroScout’s curated catalogue. If none fall within your radius, we’ll show the closest known options.",
                   calendar:
                     "Moon phases and seasonal milestones, in Sydney time.",
                   observe:
@@ -529,14 +569,7 @@ export function AstroScoutApp() {
                     onChange={(location) =>
                       setSession({ ...session, location })
                     }
-                    onPostcodeResolved={(location, nearestSpotName) => {
-                      const next = { ...session, location };
-                      setSession(next);
-                      setNotice(
-                        `${location.label} selected. Nearest curated spot: ${nearestSpotName}.`,
-                      );
-                      void search(next);
-                    }}
+                    onLocationResolved={applyLocationLookup}
                   />
                   <button
                     className="icon-button"
@@ -731,15 +764,35 @@ export function AstroScoutApp() {
                     <h2>Where to go</h2>
                     <span>{filtered.length} locations</span>
                   </div>
-                  <label className="location-filter">
-                    <Search size={16} />
-                    <input
-                      aria-label="Filter locations"
-                      placeholder="Find a location or region"
-                      value={query}
-                      onChange={(e) => setQuery(e.target.value)}
-                    />
-                  </label>
+                  <div className="places-location-search">
+                    <p>
+                      Search by NSW postcode or place name.
+                    </p>
+                    <form
+                      className="location-filter"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void searchPlacesLocation();
+                      }}
+                    >
+                      <Search size={16} aria-hidden="true" />
+                      <input
+                        aria-label="Find a location or region"
+                        placeholder="Find a location or region"
+                        value={query}
+                        onChange={(e) => {
+                          setPlaceSearchError("");
+                          setQuery(e.target.value);
+                        }}
+                      />
+                      <button type="submit" aria-label="Search location">
+                        Search
+                      </button>
+                    </form>
+                    {placeSearchError && (
+                      <span role="alert">{placeSearchError}</span>
+                    )}
+                  </div>
                   <div className="rank-label">
                     <span>Ranked for {currentProfile.toLowerCase()}</span>
                     <span>Match / 100</span>

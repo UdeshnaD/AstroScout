@@ -8,6 +8,8 @@ import Link from "next/link";
 import {
   ArrowDown,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   Moon,
   Telescope,
@@ -42,6 +44,10 @@ export function TonightView({
   const [playing, setPlaying] = useState(false);
   const reducedMotion = useReducedMotion();
   const hourCount = plan?.weather.hourly.length ?? 0;
+  const selectHour = (value: number) => {
+    setPlaying(false);
+    onHour(Math.max(0, Math.min(hourCount - 1, value)));
+  };
   useEffect(() => {
     if (!playing) return;
     if (hour >= hourCount - 1) {
@@ -133,8 +139,7 @@ export function TonightView({
               <select
                 value={hour}
                 onChange={(e) => {
-                  setPlaying(false);
-                  onHour(Number(e.target.value));
+                  selectHour(Number(e.target.value));
                 }}
               >
                 {plan.weather.hourly.map((point, index) => (
@@ -203,8 +208,8 @@ export function TonightView({
                       initial={false}
                       animate={{ x, y }}
                       transition={{
-                        duration: reducedMotion ? 0 : 0.45,
-                        ease: "easeInOut",
+                        duration: reducedMotion ? 0 : 1.15,
+                        ease: [0.22, 1, 0.36, 1],
                       }}
                     >
                       <circle
@@ -262,15 +267,45 @@ export function TonightView({
                     aria-valuetext={
                       plan ? formatClock(plan.weather.hourly[hour].time) : ""
                     }
-                    onChange={(event) => {
-                      setPlaying(false);
-                      onHour(Number(event.target.value));
+                    onChange={(event) => selectHour(Number(event.target.value))}
+                    onWheel={(event) => {
+                      if (!event.deltaX && !event.deltaY) return;
+                      event.preventDefault();
+                      // A leftward horizontal gesture always moves to an
+                      // earlier hour; vertical-wheel fallbacks retain that
+                      // same, unsurprising direction.
+                      const delta = event.deltaX || event.deltaY;
+                      selectHour(hour + (delta > 0 ? 1 : -1));
                     }}
                   />
                 </label>
-                <output className="sky-time-output">
-                  {plan ? formatClock(plan.weather.hourly[hour].time) : ""}
-                </output>
+                <div className="sky-time-navigation">
+                  <Hint label="Show the previous hour">
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Show the previous hour"
+                      disabled={hour === 0}
+                      onClick={() => selectHour(hour - 1)}
+                    >
+                      <ChevronLeft size={18} />
+                    </button>
+                  </Hint>
+                  <output className="sky-time-output">
+                    {plan ? formatClock(plan.weather.hourly[hour].time) : ""}
+                  </output>
+                  <Hint label="Show the next hour">
+                    <button
+                      type="button"
+                      className="icon-button"
+                      aria-label="Show the next hour"
+                      disabled={hour >= hourCount - 1}
+                      onClick={() => selectHour(hour + 1)}
+                    >
+                      <ChevronRight size={18} />
+                    </button>
+                  </Hint>
+                </div>
               </div>
             )}
             <p>Calculated positions / flat horizon / Moon and planets only</p>

@@ -25,6 +25,7 @@ function load(file, fetchMock = global.fetch) {
 
 const model = load("src/lib/recommender.ts");
 const astronomy = load("src/lib/astronomy.ts");
+const nswLocations = load("src/lib/nsw-postcode.ts");
 const weatherData = {
   cloudCover: 20,
   visibilityKm: 25,
@@ -80,6 +81,19 @@ test("hour selection changes weather features and score", () => {
     model.rankPlans([nearby], model.defaultPriorities, [], false, 0)[0].score >
       model.rankPlans([nearby], model.defaultPriorities, [], false, 1)[0].score,
   );
+});
+
+test("known NSW place names and postcodes resolve without a geocoder request", async () => {
+  const byPostcode = await nswLocations.resolveNswLocation("2780");
+  const byName = await nswLocations.resolveNswLocation("Katoomba");
+  assert.equal(byPostcode.label, "Katoomba NSW 2780");
+  assert.deepEqual(byName, byPostcode);
+});
+
+test("Melbourne resolves to the expanded observing catalogue area", async () => {
+  const location = await nswLocations.resolveNswLocation("Melbourne");
+  assert.equal(location.label, "Melbourne VIC 3000");
+  assert.equal(location.postcode, "3000");
 });
 
 test("logistic regression learns the labelled feature direction", () => {
@@ -184,6 +198,25 @@ test("valid provider data preserves zeroes and converts visibility from metres",
   assert.equal(result.source, "open-meteo");
   assert.equal(result.cloudCover, 0);
   assert.equal(result.visibilityKm, 20);
+});
+
+test("Tonight keeps 8pm available when the selected forecast hour is later", async () => {
+  const data = forecastData();
+  data.hourly.time.push("2026-09-07T12:00");
+  data.hourly.cloud_cover.push(30);
+  data.hourly.visibility.push(16000);
+  data.hourly.precipitation_probability.push(15);
+  data.hourly.wind_speed_10m.push(18);
+  data.hourly.temperature_2m.push(13);
+  const weather = load("src/lib/weather.ts", async () => ({
+    ok: true,
+    json: async () => data,
+  }));
+  const result = await weather.getWeatherForSpot(
+    providerSpot,
+    "2026-09-07T12:00:00Z",
+  );
+  assert.equal(result.hourly[0].time, "2026-09-07T10:00:00.000Z");
 });
 
 test("missing data returns unavailable without generated values", async () => {

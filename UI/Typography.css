@@ -276,6 +276,20 @@ p {
   min-width: 72px;
   text-align: right;
 }
+.sky-time-navigation {
+  display: grid;
+  grid-template-columns: 36px minmax(72px, auto) 36px;
+  align-items: center;
+  gap: 6px;
+}
+.sky-time-navigation .icon-button {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+.sky-time-navigation .sky-time-output {
+  text-align: center;
+}
 .sky-target-detail-inner {
   min-height: 285px;
 }
@@ -450,7 +464,7 @@ p {
   }
   .sky-chart-controls {
     gap: 10px;
-    grid-template-columns: 44px minmax(0, 1fr) 66px;
+    grid-template-columns: 44px minmax(0, 1fr) auto;
   }
   .astro-site .equipment-segments {
     gap: 3px;

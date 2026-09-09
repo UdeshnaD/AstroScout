@@ -1,21 +1,21 @@
 import { NextResponse } from "next/server";
 import { observingSpots } from "@/data/observing-spots";
 import { distanceKm } from "@/lib/distance";
-import { resolveNswPostcode } from "@/lib/nsw-postcode";
+import { resolveNswLocation } from "@/lib/nsw-postcode";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const postcode = searchParams.get("postcode");
+  const locationQuery = searchParams.get("q") ?? searchParams.get("postcode");
   const latitude = Number(searchParams.get("lat"));
   const longitude = Number(searchParams.get("lon"));
   const radiusKm = Number(searchParams.get("radiusKm") ?? 120);
 
-  if (postcode) {
+  if (locationQuery) {
     try {
-      const origin = await resolveNswPostcode(postcode);
+      const origin = await resolveNswLocation(locationQuery);
       if (!origin) {
         return NextResponse.json(
-          { error: "Enter a valid NSW postcode." },
+          { error: "Enter a recognised NSW town, suburb or four-digit postcode." },
           { status: 400 },
         );
       }

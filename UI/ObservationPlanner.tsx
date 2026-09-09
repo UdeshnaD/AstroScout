@@ -9,6 +9,7 @@ import {
   Check,
   Download,
   Eye,
+  FileText,
   Telescope,
   Trash2,
   Upload,
@@ -28,9 +29,12 @@ import {
   type Equipment,
   type Observation,
   type TargetId,
+  targetLabels,
 } from "@/lib/observation-model";
 import type { RankedPlan } from "@/lib/recommender";
 import { formatClock } from "@/lib/format";
+import { getAstronomySummary } from "@/lib/astronomy";
+import { observingSpots } from "@/data/observing-spots";
 
 const storageKey = "astroscout.observations.v1";
 const equipmentNames = {
@@ -43,6 +47,32 @@ const equipmentIcons = {
   binoculars: Binoculars,
   telescope: Telescope,
 };
+type JournalEntry = {
+  id: string;
+  observedAt: string;
+  location: string;
+  target: string;
+  equipment: string;
+  notes: string;
+};
+
+function validJournalEntries(value: unknown): JournalEntry[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (entry): entry is JournalEntry =>
+        entry &&
+        typeof entry === "object" &&
+        typeof entry.id === "string" &&
+        typeof entry.observedAt === "string" &&
+        Number.isFinite(Date.parse(entry.observedAt)) &&
+        typeof entry.location === "string" &&
+        typeof entry.target === "string" &&
+        typeof entry.equipment === "string" &&
+        typeof entry.notes === "string",
+    )
+    .slice(-500);
+}
 
 export function ObservationPlanner({
   plan,
@@ -62,11 +92,23 @@ export function ObservationPlanner({
     equipmentPresets.telescope,
   );
   const [observations, setObservations] = useState<Observation[]>([]);
+  const [journalEntries, setJournalEntries] = useState<JournalEntry[]>([]);
+  const [journalDraft, setJournalDraft] = useState({
+    observedAt: "",
+    location: "",
+    target: "",
+    equipment: "",
+    notes: "",
+  });
   const [ready, setReady] = useState(false);
   const [storageWritable, setStorageWritable] = useState(true);
   const [message, setMessage] = useState("");
   const [now, setNow] = useState(0);
   const upload = useRef<HTMLInputElement>(null);
+  const journalLocationOptions = useMemo(
+    () => [...new Set([plan.name, ...observingSpots.map((spot) => spot.name)])],
+    [plan.name],
+  );
   useEffect(() => {
     if (requestedTarget) setTarget(requestedTarget);
   }, [requestedTarget]);
@@ -77,6 +119,7 @@ export function ObservationPlanner({
       const stored = JSON.parse(localStorage.getItem(storageKey) ?? "null");
       if (stored) {
         setObservations(validateObservations(stored.observations));
+        setJournalEntries(validJournalEntries(stored.journalEntries));
         if (validEquipment(stored.equipment)) setEquipment(stored.equipment);
         if (targetIds.includes(stored.target)) setTarget(stored.target);
       }
@@ -96,7 +139,7 @@ export function ObservationPlanner({
     try {
       localStorage.setItem(
         storageKey,
-        JSON.stringify({ observations, equipment, target }),
+        JSON.stringify({ observations, journalEntries, equipment, target }),
       );
     } catch {
       setStorageWritable(false);
@@ -104,7 +147,7 @@ export function ObservationPlanner({
         "Browser storage is unavailable. Export observations before leaving this page.",
       );
     }
-  }, [ready, storageWritable, observations, equipment, target]);
+  }, [ready, storageWritable, observations, journalEntries, equipment, target]);
 
   const assessment = assessVisibility(
     plan.astronomy,
@@ -113,6 +156,33 @@ export function ObservationPlanner({
     target,
     equipment,
   );
+  const visibleHours = useMemo(
+    () =>
+      plan.weather.hourly
+        .map((point, index) => {
+          const sky = getAstronomySummary(
+            point.time,
+            plan.latitude,
+            plan.longitude,
+          );
+          const object = sky.highlights.find((item) => item.id === target);
+          return {
+            index,
+            point,
+            visible:
+              (object?.altitude ?? -90) > 0 && (sky.sunAltitude ?? 0) < 0,
+          };
+        })
+        .filter((entry) => entry.visible),
+    [plan.latitude, plan.longitude, plan.weather.hourly, target],
+  );
+  useEffect(() => {
+    if (
+      visibleHours.length > 0 &&
+      !visibleHours.some((entry) => entry.index === hour)
+    )
+      onHour(visibleHours[0].index);
+  }, [hour, onHour, visibleHours]);
   const model = useMemo(
     () => trainObservationModel(observations, target, equipment.kind),
     [observations, target, equipment.kind],
@@ -134,6 +204,18 @@ export function ObservationPlanner({
   const stale = forecastAge > 3600000;
   const availableProbability =
     !assessment.blocked && !stale ? prediction.probability : null;
+  const readiness =
+    availableProbability === null && !assessment.blocked && !stale && point
+      ? Math.round(
+          Math.max(
+            0,
+            Math.min(
+              100,
+              100 - point.cloudCover * 0.55 - point.precipitationChance * 0.35 - Math.max(0, 25 - (selectedTarget?.altitude ?? 0)) * 1.25,
+            ),
+          ),
+        )
+      : null;
   const key = point
     ? observationKey({ siteId: plan.id, time: point.time, target, equipment })
     : "";
@@ -211,7 +293,7 @@ export function ObservationPlanner({
     const blob = new Blob(
       [
         JSON.stringify(
-          { schema: "astroscout.observations.v1", observations },
+          { schema: "astroscout.observations.v1", observations, journalEntries },
           null,
           2,
         ),
@@ -236,6 +318,13 @@ export function ObservationPlanner({
         throw new Error("This file is not an AstroScout observation export.");
       const incoming = validateObservations(data.observations);
       const merged = validateObservations([...observations, ...incoming]);
+      const incomingEntries = validJournalEntries(data.journalEntries);
+      setJournalEntries((entries) =>
+        [...entries, ...incomingEntries].filter(
+          (entry, index, all) =>
+            all.findIndex((candidate) => candidate.id === entry.id) === index,
+        ),
+      );
       setObservations(merged);
       setMessage(
         `${merged.length} unique attempts in your log. Imported outcomes are self-reported and are not independently verified.`,
@@ -248,6 +337,36 @@ export function ObservationPlanner({
       );
     }
     if (upload.current) upload.current.value = "";
+  }
+
+  function addJournalEntry() {
+    if (
+      !journalDraft.observedAt ||
+      !journalDraft.location.trim() ||
+      !journalDraft.notes.trim()
+    ) {
+      setMessage("Add a date, location and notes before saving your journal entry.");
+      return;
+    }
+    const observedAtTimestamp = Date.parse(journalDraft.observedAt);
+    if (!Number.isFinite(observedAtTimestamp)) {
+      setMessage("Enter a valid observation date and time.");
+      return;
+    }
+    const observedAt = new Date(observedAtTimestamp).toISOString();
+    setJournalEntries((entries) => [
+      ...entries,
+      {
+        id: crypto.randomUUID(),
+        observedAt,
+        location: journalDraft.location.trim(),
+        target: journalDraft.target.trim() || "Not specified",
+        equipment: journalDraft.equipment.trim() || "Not specified",
+        notes: journalDraft.notes.trim(),
+      },
+    ]);
+    setJournalDraft({ observedAt: "", location: "", target: "", equipment: "", notes: "" });
+    setMessage("Journal entry saved on this device.");
   }
 
   return (
@@ -270,10 +389,11 @@ export function ObservationPlanner({
             <select
               value={hour}
               onChange={(event) => onHour(Number(event.target.value))}
+              disabled={!visibleHours.length}
             >
-              {plan.weather.hourly.map((p, index) => (
-                <option key={p.time} value={index}>
-                  {formatClock(p.time)}
+              {visibleHours.map(({ point: visiblePoint, index }) => (
+                <option key={visiblePoint.time} value={index}>
+                  {formatClock(visiblePoint.time)}
                 </option>
               ))}
             </select>
@@ -286,11 +406,16 @@ export function ObservationPlanner({
             >
               {targetIds.map((id) => (
                 <option key={id} value={id}>
-                  {id[0].toUpperCase() + id.slice(1)}
+                  {targetLabels[id]}
                 </option>
               ))}
             </select>
           </label>
+          <small className="visible-hours-note">
+            {visibleHours.length
+              ? `Only times when ${targetLabels[target]} is above the NSW horizon after sunset are shown.`
+              : `${targetLabels[target]} is not visible above the NSW horizon in this forecast window.`}
+          </small>
           <fieldset>
             <legend>My equipment</legend>
             <ToggleGroup.Root
@@ -365,10 +490,14 @@ export function ObservationPlanner({
         </p>
         <div className="observation-result" aria-live="polite">
           <div>
-            <span className="kicker">SIGHTING PROBABILITY</span>
+            <span className="kicker">
+              {availableProbability === null ? "TONIGHT'S READINESS" : "SIGHTING PROBABILITY"}
+            </span>
             <strong className="observation-probability">
               {availableProbability === null
-                ? "Not available yet"
+                ? readiness === null
+                  ? "Unavailable"
+                  : `${readiness}%`
                 : `${Math.round(availableProbability * 100)}%`}
             </strong>
             <p>
@@ -376,12 +505,19 @@ export function ObservationPlanner({
                 ? assessment.title
                 : stale
                   ? "Forecast snapshot expired. Update the plan."
-                  : prediction.reason}
+                  : availableProbability === null
+                    ? "A forecast-and-position readiness guide. It is not a personal sighting prediction."
+                    : prediction.reason}
             </p>
             {availableProbability !== null && (
               <small>
                 Experimental estimate / {prediction.calibrationCount} attempts
                 in this calibration group. Uncertainty remains substantial.
+              </small>
+            )}
+            {availableProbability === null && readiness !== null && (
+              <small>
+                Based on the selected forecast and calculated altitude. Personal sighting predictions unlock only after sufficient logged attempts.
               </small>
             )}
           </div>
@@ -399,6 +535,15 @@ export function ObservationPlanner({
             </ul>
           </div>
         </div>
+        {selectedTarget?.reference && (
+          <p className="observation-reference">
+            <strong>Documented observation:</strong>{" "}
+            <a href={selectedTarget.reference.url} target="_blank" rel="noreferrer">
+              {selectedTarget.reference.label}
+            </a>{" "}
+            <span>— professional/archival reference, not a local success claim.</span>
+          </p>
+        )}
         <div className="observation-capture">
           <button
             className="button button--primary"
@@ -437,27 +582,26 @@ export function ObservationPlanner({
         </summary>
         <div className="observation-log-toolbar">
           <p>
-            On this device{!storageWritable ? ", this visit only" : ""}. A
-            missed outing is not an unsuccessful sighting.
+            Forecast-linked attempts and journal notes stay on this device
+            {!storageWritable ? " for this visit only" : ""}. A missed outing
+            is not an unsuccessful sighting.
           </p>
           <button
             type="button"
-            className="icon-button"
-            title="Export observations"
-            aria-label="Export observations"
-            disabled={!observations.length}
+            className="button button--secondary"
+            disabled={!observations.length && !journalEntries.length}
             onClick={download}
           >
             <Download size={18} />
+            Export JSON
           </button>
           <button
             type="button"
-            className="icon-button"
-            title="Import observation export"
-            aria-label="Import observation export"
+            className="button button--secondary"
             onClick={() => upload.current?.click()}
           >
             <Upload size={18} />
+            Import JSON
           </button>
           <input
             ref={upload}
@@ -467,6 +611,143 @@ export function ObservationPlanner({
             onChange={(e) => void importFile(e.target.files?.[0])}
           />
         </div>
+        <p className="journal-import-note">
+          Import an AstroScout observation export (.json, up to 3 MB). PDFs,
+          Word documents, images and spreadsheets are not supported because
+          they cannot be safely converted into forecast-backed observations.
+        </p>
+        <form
+          className="journal-entry-form"
+          onSubmit={(event) => {
+            event.preventDefault();
+            addJournalEntry();
+          }}
+        >
+          <div>
+            <FileText size={18} aria-hidden="true" />
+            <div>
+              <h3>Add a journal entry</h3>
+              <p>
+                Record notes from an outing without adding them to the
+                forecast-based observation model.
+              </p>
+            </div>
+          </div>
+          <div className="journal-entry-fields">
+            <label>
+              Date and time
+              <input
+                type="datetime-local"
+                required
+                value={journalDraft.observedAt}
+                onChange={(event) =>
+                  setJournalDraft({ ...journalDraft, observedAt: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Location
+              <input
+                required
+                list="journal-location-options"
+                placeholder="e.g. Long Reef Headland"
+                value={journalDraft.location}
+                onChange={(event) =>
+                  setJournalDraft({ ...journalDraft, location: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Object observed
+              <input
+                list="journal-target-options"
+                placeholder="e.g. Saturn"
+                value={journalDraft.target}
+                onChange={(event) =>
+                  setJournalDraft({ ...journalDraft, target: event.target.value })
+                }
+              />
+            </label>
+            <label>
+              Equipment
+              <input
+                list="journal-equipment-options"
+                placeholder="e.g. 8×42 binoculars"
+                value={journalDraft.equipment}
+                onChange={(event) =>
+                  setJournalDraft({ ...journalDraft, equipment: event.target.value })
+                }
+              />
+            </label>
+            <label className="journal-notes-field">
+              Notes
+              <textarea
+                required
+                placeholder="What did you see? Include conditions, equipment or anything to remember next time."
+                value={journalDraft.notes}
+                onChange={(event) =>
+                  setJournalDraft({ ...journalDraft, notes: event.target.value })
+                }
+              />
+            </label>
+          </div>
+          <datalist id="journal-location-options">
+            {journalLocationOptions.map((location) => (
+              <option key={location} value={location} />
+            ))}
+          </datalist>
+          <datalist id="journal-target-options">
+            {targetIds.map((id) => (
+              <option key={id} value={targetLabels[id]} />
+            ))}
+          </datalist>
+          <datalist id="journal-equipment-options">
+            <option value="Unaided eye" />
+            <option value="10×50 binoculars" />
+            <option value="8×42 binoculars" />
+            <option value="130 mm telescope / 65×" />
+            <option value="200 mm telescope / 100×" />
+          </datalist>
+          <button className="button button--primary" type="submit">
+            <Check size={16} /> Save journal entry
+          </button>
+        </form>
+        {journalEntries.length > 0 && (
+          <div className="journal-entry-list">
+            <h3>Journal notes</h3>
+            {journalEntries
+              .slice()
+              .reverse()
+              .map((entry) => (
+                <article key={entry.id}>
+                  <div>
+                    <strong>{entry.target} / {entry.location}</strong>
+                    <span>
+                      {new Intl.DateTimeFormat("en-AU", {
+                        timeZone: "Australia/Sydney",
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      }).format(new Date(entry.observedAt))} / {entry.equipment}
+                    </span>
+                    <p>{entry.notes}</p>
+                  </div>
+                  <button
+                    className="icon-button"
+                    type="button"
+                    title="Delete journal entry"
+                    aria-label={`Delete journal entry for ${entry.location}`}
+                    onClick={() =>
+                      setJournalEntries((entries) =>
+                        entries.filter((candidate) => candidate.id !== entry.id),
+                      )
+                    }
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </article>
+              ))}
+          </div>
+        )}
         {!observations.length && (
           <p className="footnote">No observation records yet.</p>
         )}
@@ -478,7 +759,7 @@ export function ObservationPlanner({
               <div className="observation-record" key={observationKey(row)}>
                 <div>
                   <strong>
-                    {row.target[0].toUpperCase() + row.target.slice(1)} /{" "}
+                    {targetLabels[row.target]} /{" "}
                     {row.siteName}
                   </strong>
                   <span>

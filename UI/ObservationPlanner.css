@@ -33,6 +33,13 @@
   color: var(--soft);
   min-width: 0;
 }
+.visible-hours-note {
+  grid-column: 1 / -1;
+  margin: -6px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
 .observation-controls input,
 .observation-controls select {
   width: 100%;
@@ -112,6 +119,21 @@
   font-size: 14px;
   color: var(--muted);
 }
+.observation-reference {
+  margin: 14px 0 0;
+  padding: 11px 13px;
+  border-left: 3px solid var(--cyan);
+  background: #f1f7f8;
+  color: var(--soft);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.observation-reference a {
+  color: #14586e;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.observation-reference span { color: var(--muted); }
 .observation-evidence > span {
   display: block;
   color: var(--cyan);
@@ -166,6 +188,91 @@
 .observation-log-toolbar p {
   flex: 1;
 }
+.journal-import-note {
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 10px 0 0;
+}
+.journal-entry-form {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel);
+}
+.journal-entry-form > div:first-child {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+}
+.journal-entry-form h3,
+.journal-entry-list h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.journal-entry-form p {
+  margin: 4px 0 0;
+  color: var(--muted);
+}
+.journal-entry-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+  margin: 18px 0;
+}
+.journal-entry-fields label {
+  display: grid;
+  gap: 6px;
+  color: var(--soft);
+  font-size: 14px;
+}
+.journal-entry-fields input,
+.journal-entry-fields textarea {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  font: inherit;
+}
+.journal-entry-fields textarea {
+  min-height: 94px;
+  resize: vertical;
+}
+.journal-notes-field {
+  grid-column: 1 / -1;
+}
+.journal-entry-list {
+  margin-top: 22px;
+}
+.journal-entry-list article {
+  display: flex;
+  align-items: start;
+  gap: 12px;
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+.journal-entry-list article > div {
+  flex: 1;
+  min-width: 0;
+}
+.journal-entry-list strong,
+.journal-entry-list span {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.journal-entry-list span,
+.journal-entry-list p {
+  color: var(--muted);
+  font-size: 14px;
+}
+.journal-entry-list p {
+  margin: 7px 0 0;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
 .observation-records {
   max-height: 420px;
   overflow-y: auto;
@@ -216,7 +323,8 @@
     padding: 18px 14px;
   }
   .observation-controls,
-  .observation-result {
+  .observation-result,
+  .journal-entry-fields {
     grid-template-columns: 1fr;
   }
   .observation-capture {

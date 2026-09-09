@@ -75,9 +75,16 @@ function normaliseOpenMeteo(
     return nextDelta < bestDelta ? index : bestIndex;
   }, 0);
 
+  // Keep the evening timeline anchored at 8pm when a later hour is selected,
+  // so Tonight can always navigate back through the beginning of the session.
+  const eveningStartIndex = findSydneyEveningStart(hourly.time, nearestIndex);
+  const windowStartIndex = eveningStartIndex ?? nearestIndex;
+
+  // A full day lets the Observe page offer every usable night-time window,
+  // rather than artificially stopping at the first eight forecast hours.
   const indices = Array.from(
-    { length: Math.min(8, hourly.time.length - nearestIndex) },
-    (_, offset) => nearestIndex + offset,
+    { length: Math.min(24, hourly.time.length - windowStartIndex) },
+    (_, offset) => windowStartIndex + offset,
   );
   if (
     indices.some((index) =>
@@ -103,9 +110,9 @@ function normaliseOpenMeteo(
   )
     return null;
   const window = hourly.time
-    .slice(nearestIndex, nearestIndex + 8)
+    .slice(windowStartIndex, windowStartIndex + 24)
     .map((time, offset) => {
-      const index = nearestIndex + offset;
+      const index = windowStartIndex + offset;
       return {
         time: new Date(parseForecastTime(time)).toISOString(),
         cloudCover: clamp(hourly.cloud_cover![index]),
@@ -116,16 +123,16 @@ function normaliseOpenMeteo(
       };
     });
 
-  const cloudCover = clamp(hourly.cloud_cover![nearestIndex]);
+  const cloudCover = clamp(hourly.cloud_cover![windowStartIndex]);
   const visibilityKm =
-    Math.round((hourly.visibility![nearestIndex] / 1000) * 10) / 10;
+    Math.round((hourly.visibility![windowStartIndex] / 1000) * 10) / 10;
 
   return {
     cloudCover,
     visibilityKm,
-    precipitationChance: clamp(hourly.precipitation_probability![nearestIndex]),
-    windKph: Math.round(hourly.wind_speed_10m![nearestIndex]),
-    temperatureC: Math.round(hourly.temperature_2m![nearestIndex]),
+    precipitationChance: clamp(hourly.precipitation_probability![windowStartIndex]),
+    windKph: Math.round(hourly.wind_speed_10m![windowStartIndex]),
+    temperatureC: Math.round(hourly.temperature_2m![windowStartIndex]),
     conditionLabel: labelConditions(cloudCover, visibilityKm),
     source: "open-meteo",
     fetchedAt: new Date().toISOString(),
@@ -135,6 +142,19 @@ function normaliseOpenMeteo(
 
 function parseForecastTime(time: string) {
   return new Date(time.endsWith("Z") ? time : `${time}Z`).getTime();
+}
+
+function findSydneyEveningStart(times: string[], beforeIndex: number) {
+  const hour = new Intl.DateTimeFormat("en-AU", {
+    hour: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Australia/Sydney",
+  });
+  for (let index = beforeIndex; index >= 0; index -= 1) {
+    if (hour.format(new Date(parseForecastTime(times[index]))) === "20")
+      return index;
+  }
+  return null;
 }
 
 function labelConditions(cloudCover: number, visibilityKm: number) {

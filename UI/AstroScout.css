@@ -943,11 +943,13 @@
 .postcode-lookup > div {
   display: flex;
   gap: 8px;
+  min-width: 0;
 }
 
 .postcode-lookup input {
   min-width: 0;
-  width: 105px;
+  width: 0;
+  flex: 1 1 0;
   padding: 8px 10px;
 }
 
@@ -956,13 +958,15 @@
   align-items: center;
   justify-content: center;
   gap: 7px;
-  padding: 8px 11px;
+  flex: 0 0 auto;
+  padding: 8px 9px;
   border: 1px solid var(--line, #d5dfd9);
   border-radius: 6px;
   background: var(--surface, #fff);
   color: var(--ink, #172021);
   font-size: 13px;
   font-weight: 650;
+  white-space: nowrap;
 }
 
 .postcode-lookup button:hover:not(:disabled) {
@@ -974,6 +978,11 @@
 .postcode-lookup > span {
   color: var(--accent-strong, #7d1c35);
   font-size: 12px;
+}
+.postcode-lookup > small {
+  color: var(--muted, #52615d);
+  font-size: 12px;
+  line-height: 1.35;
 }
 
 /* --------------------------------------------------------------------------
@@ -1138,6 +1147,27 @@
   border-color: var(--green);
   background: var(--surface-subtle);
   color: var(--green);
+}
+
+/* Primary actions keep white text on a reliably legible green surface. */
+.astro-site .button.button--primary,
+.astro-site .button-link.button-link--primary {
+  border-color: #1f674f;
+  background: #1f674f;
+  color: #ffffff;
+}
+
+.astro-site .button.button--primary:hover:not(:disabled),
+.astro-site .button-link.button-link--primary:hover {
+  border-color: #164c3b;
+  background: #164c3b;
+  color: #ffffff;
+}
+
+.astro-site .button.button--primary:disabled {
+  border-color: #8eb4a4;
+  background: #8eb4a4;
+  color: #ffffff;
 }
 
 .astro-header > .icon-button:hover {

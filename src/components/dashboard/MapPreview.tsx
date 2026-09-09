@@ -31,7 +31,7 @@ export function MapPreview({ plans, selectedId, onSelect, origin }: Props) {
         if (disposed || !container.current) return;
         api.current = L;
         const instance = L.map(container.current, {
-          scrollWheelZoom: false,
+          scrollWheelZoom: true,
         }).setView([-33.7738, 151.1126], 9);
         map.current = instance;
         L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {

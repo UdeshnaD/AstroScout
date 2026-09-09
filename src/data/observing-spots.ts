@@ -1,5 +1,56 @@
 import type { ObservingSpot } from "@/types/spot";
 
+type RegionalSpot = Pick<
+  ObservingSpot,
+  "id" | "name" | "region" | "spotType" | "latitude" | "longitude" | "bortleRating" | "imageTheme"
+>;
+
+const regionalSpot = (spot: RegionalSpot): ObservingSpot => ({
+  ...spot,
+  darknessLabel: spot.bortleRating <= 3 ? "Rural dark sky" : "Regional sky",
+  description: `An observing option near ${spot.region} for a darker, more open session than nearby town centres.`,
+  accessNotes: "Confirm current access, weather, road conditions and opening hours before travelling after dark.",
+  safetyNotes: "Use established public areas, bring a torch and warm clothing, and avoid unlit edges or water after dark.",
+  facilities: ["Nearby parking", "Open sky", "Regional services"],
+  horizonNotes: "Open overhead sky with the lowest horizons affected by local terrain, trees or nearby town lights.",
+});
+
+const regionalSpots: ObservingSpot[] = [
+  regionalSpot({ id: "hanging-rock-lookout", name: "Hanging Rock Lookout", region: "Blue Mountains", spotType: "lookout", latitude: -33.619, longitude: 150.423, bortleRating: 4, imageTheme: "mountain" }),
+  regionalSpot({ id: "warragamba-lookout", name: "Warragamba Lookout", region: "Warragamba", spotType: "lookout", latitude: -33.890, longitude: 150.604, bortleRating: 5, imageTheme: "dam" }),
+  regionalSpot({ id: "belanglo-reserve", name: "Belanglo State Forest Reserve", region: "Southern Highlands", spotType: "reserve", latitude: -34.427, longitude: 150.273, bortleRating: 4, imageTheme: "mountain" }),
+  regionalSpot({ id: "kangaroo-valley", name: "Kangaroo Valley Village Green", region: "Kangaroo Valley", spotType: "park", latitude: -34.738, longitude: 150.534, bortleRating: 4, imageTheme: "valley" }),
+  regionalSpot({ id: "mollymook-headland", name: "Mollymook Headland", region: "Ulladulla", spotType: "lookout", latitude: -35.343, longitude: 150.476, bortleRating: 5, imageTheme: "coast" }),
+  regionalSpot({ id: "narooma-lookout", name: "Narooma Lookout", region: "Narooma", spotType: "lookout", latitude: -36.222, longitude: 150.132, bortleRating: 4, imageTheme: "coast" }),
+  regionalSpot({ id: "tathra-headland", name: "Tathra Headland", region: "Sapphire Coast", spotType: "lookout", latitude: -36.734, longitude: 149.977, bortleRating: 4, imageTheme: "coast" }),
+  regionalSpot({ id: "jindabyne-lakeside", name: "Jindabyne Lakeside Reserve", region: "Snowy Mountains", spotType: "reserve", latitude: -36.417, longitude: 148.623, bortleRating: 3, imageTheme: "mountain" }),
+  regionalSpot({ id: "wagga-botanic-gardens", name: "Wagga Botanic Gardens", region: "Wagga Wagga", spotType: "park", latitude: -35.116, longitude: 147.349, bortleRating: 5, imageTheme: "park" }),
+  regionalSpot({ id: "albury-hume-weir", name: "Hume Weir Foreshore", region: "Albury", spotType: "reserve", latitude: -36.092, longitude: 147.031, bortleRating: 4, imageTheme: "dam" }),
+  regionalSpot({ id: "griffith-lookout", name: "Hermit’s Cave Lookout", region: "Griffith", spotType: "lookout", latitude: -34.303, longitude: 146.045, bortleRating: 4, imageTheme: "mountain" }),
+  regionalSpot({ id: "deniliquin-island", name: "McLean Beach Reserve", region: "Deniliquin", spotType: "reserve", latitude: -35.529, longitude: 144.958, bortleRating: 3, imageTheme: "park" }),
+  regionalSpot({ id: "dubbo-western-plains", name: "Dubbo Western Plains Reserve", region: "Dubbo", spotType: "reserve", latitude: -32.252, longitude: 148.595, bortleRating: 4, imageTheme: "park" }),
+  regionalSpot({ id: "mudgee-lookout", name: "Mudgee Scenic Lookout", region: "Mudgee", spotType: "lookout", latitude: -32.594, longitude: 149.588, bortleRating: 4, imageTheme: "mountain" }),
+  regionalSpot({ id: "wellington-caves", name: "Wellington Caves Reserve", region: "Wellington", spotType: "reserve", latitude: -32.558, longitude: 148.945, bortleRating: 3, imageTheme: "mountain" }),
+  regionalSpot({ id: "cobar-reservoir", name: "Cobar Reservoir Lookout", region: "Cobar", spotType: "lookout", latitude: -31.499, longitude: 145.835, bortleRating: 2, imageTheme: "mountain" }),
+  regionalSpot({ id: "bourke-riverside", name: "Bourke Riverside Reserve", region: "Bourke", spotType: "reserve", latitude: -30.09, longitude: 145.94, bortleRating: 2, imageTheme: "park" }),
+  regionalSpot({ id: "moree-sundown", name: "Moree Sundown Lookout", region: "Moree Plains", spotType: "lookout", latitude: -29.462, longitude: 149.841, bortleRating: 3, imageTheme: "mountain" }),
+  regionalSpot({ id: "inverell-lookout", name: "Inverell Lookout", region: "New England", spotType: "lookout", latitude: -29.775, longitude: 151.112, bortleRating: 3, imageTheme: "mountain" }),
+  regionalSpot({ id: "armidale-pines", name: "Armidale Pine Forest", region: "Armidale", spotType: "reserve", latitude: -30.51, longitude: 151.667, bortleRating: 3, imageTheme: "park" }),
+  regionalSpot({ id: "tamworth-lookout", name: "Oxley Scenic Lookout", region: "Tamworth", spotType: "lookout", latitude: -31.092, longitude: 150.933, bortleRating: 4, imageTheme: "mountain" }),
+  regionalSpot({ id: "port-macquarie-tacking", name: "Tacking Point Lookout", region: "Port Macquarie", spotType: "lookout", latitude: -31.476, longitude: 152.932, bortleRating: 5, imageTheme: "coast" }),
+  regionalSpot({ id: "coffs-muttonbird", name: "Muttonbird Island Lookout", region: "Coffs Harbour", spotType: "lookout", latitude: -30.302, longitude: 153.139, bortleRating: 5, imageTheme: "coast" }),
+  regionalSpot({ id: "forster-bennetts", name: "Bennetts Head Lookout", region: "Forster", spotType: "lookout", latitude: -32.192, longitude: 152.525, bortleRating: 5, imageTheme: "coast" }),
+  regionalSpot({ id: "port-stephens-tomaree", name: "Tomaree Headland", region: "Port Stephens", spotType: "lookout", latitude: -32.72, longitude: 152.169, bortleRating: 4, imageTheme: "coast" }),
+  regionalSpot({ id: "byron-cape", name: "Cape Byron Reserve", region: "Byron Bay", spotType: "reserve", latitude: -28.638, longitude: 153.639, bortleRating: 5, imageTheme: "coast" }),
+  regionalSpot({ id: "lismore-wilsons", name: "Wilson’s River Reserve", region: "Lismore", spotType: "reserve", latitude: -28.813, longitude: 153.278, bortleRating: 5, imageTheme: "park" }),
+  regionalSpot({ id: "newcastle-nobbys", name: "Nobbys Headland", region: "Newcastle", spotType: "lookout", latitude: -32.918, longitude: 151.798, bortleRating: 6, imageTheme: "coast" }),
+  regionalSpot({ id: "newcastle-blackbutt", name: "Blackbutt Reserve", region: "Newcastle", spotType: "reserve", latitude: -32.94, longitude: 151.707, bortleRating: 6, imageTheme: "park" }),
+  regionalSpot({ id: "dubbo-terrama", name: "Terramungamine Reserve", region: "Dubbo", spotType: "reserve", latitude: -32.216, longitude: 148.581, bortleRating: 4, imageTheme: "park" }),
+  regionalSpot({ id: "melbourne-yarra-bend", name: "Yarra Bend Park", region: "Melbourne", spotType: "park", latitude: -37.797, longitude: 145.006, bortleRating: 8, imageTheme: "park" }),
+  regionalSpot({ id: "melbourne-williamstown", name: "Williamstown Foreshore", region: "Melbourne", spotType: "beach", latitude: -37.861, longitude: 144.892, bortleRating: 7, imageTheme: "coast" }),
+  regionalSpot({ id: "melbourne-dandenong", name: "Mount Dandenong Lookout", region: "Dandenong Ranges", spotType: "lookout", latitude: -37.828, longitude: 145.352, bortleRating: 6, imageTheme: "mountain" }),
+];
+
 export const observingSpots: ObservingSpot[] = [
   {
     id: "observatory-hill",
@@ -345,7 +396,8 @@ export const observingSpots: ObservingSpot[] = [
     facilities: ["Nearby town facilities", "Open sky", "Low light pollution"],
     horizonNotes: "Low regional light pollution and broad open sky away from town lights.",
     imageTheme: "mountain"
-  }
+  },
+  ...regionalSpots,
 ];
 
 export function getSpotById(id: string) {

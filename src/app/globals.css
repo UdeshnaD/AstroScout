@@ -449,6 +449,20 @@ svg {
   background: #fff;
   color: var(--muted);
 }
+.places-location-search {
+  display: grid;
+  gap: 7px;
+}
+.places-location-search > p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+.places-location-search > span {
+  color: var(--accent-strong);
+  font-size: 12px;
+}
 .location-filter input {
   min-width: 0;
   width: 100%;
@@ -456,6 +470,17 @@ svg {
   color: var(--text);
   font-size: 14px;
   border: 0;
+}
+.location-filter button {
+  flex: 0 0 auto;
+  border: 0;
+  border-left: 1px solid var(--line);
+  padding: 2px 0 2px 9px;
+  background: transparent;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 650;
+  cursor: pointer;
 }
 .rank-label {
   display: flex;
@@ -508,6 +533,7 @@ svg {
   font-size: 15px;
   font-weight: 600;
   overflow-wrap: anywhere;
+  white-space: normal;
 }
 .location-copy > span {
   font-size: 13px;

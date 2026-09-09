@@ -9,14 +9,14 @@ export async function buildPlanResults(input: PlanSearchRequest) {
   const withinRadius = observingSpots
     .map((spot) => ({ spot, distance: distanceKm(input, spot) }))
     .filter(({ distance }) => distance <= input.radiusKm);
-  // A postcode lookup should always surface the closest curated spot, even
-  // where the user's chosen radius contains no locations yet.
+  // A postcode lookup should always surface useful nearby options, even where
+  // the user's chosen radius contains no locations in the curated catalogue.
   const nearby = withinRadius.length
     ? withinRadius
     : observingSpots
         .map((spot) => ({ spot, distance: distanceKm(input, spot) }))
         .sort((a, b) => a.distance - b.distance)
-        .slice(0, 1);
+        .slice(0, 3);
   const results = await Promise.all(
     nearby.map(async ({ spot, distance }) => {
       const weather = await getWeatherForSpot(spot, input.startTime);
@@ -56,7 +56,7 @@ export async function buildPlanResults(input: PlanSearchRequest) {
   // All sites must expose the same number of hours for a fair time comparison.
   const sharedHours = plans.reduce(
     (count, plan) => Math.min(count, plan.weather.hourly.length),
-    8,
+    24,
   );
   const aligned = plans.map((plan) => ({
     ...plan,

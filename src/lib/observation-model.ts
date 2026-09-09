@@ -8,8 +8,27 @@ export const targetIds = [
   "mars",
   "jupiter",
   "saturn",
+  "milky-way-core",
+  "andromeda",
+  "large-magellanic-cloud",
+  "small-magellanic-cloud",
+  "orion-nebula",
+  "eta-carinae",
+  "pleiades",
+  "omega-centauri",
+  "hyades",
+  "hercules-cluster",
 ] as const;
 export type TargetId = (typeof targetIds)[number];
+export const targetLabels: Record<TargetId, string> = {
+  moon: "Moon", venus: "Venus", mars: "Mars", jupiter: "Jupiter", saturn: "Saturn",
+  "milky-way-core": "Milky Way Core", andromeda: "Andromeda Galaxy (M31)",
+  "large-magellanic-cloud": "Large Magellanic Cloud (LMC)",
+  "small-magellanic-cloud": "Small Magellanic Cloud (SMC)",
+  "orion-nebula": "Orion Nebula (M42)", "eta-carinae": "Eta Carinae Nebula (NGC 3372)",
+  pleiades: "Pleiades Star Cluster (M45)", "omega-centauri": "Omega Centauri Cluster (NGC 5139)",
+  hyades: "Hyades Star Cluster", "hercules-cluster": "Hercules Globular Cluster (M13)",
+};
 export type Equipment = {
   kind: "eye" | "binoculars" | "telescope";
   aperture: number;

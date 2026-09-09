@@ -22,42 +22,60 @@ export const locationPresets: LocationPreset[] = [
 type LocationSearchProps = {
   value: LocationPreset;
   onChange: (location: LocationPreset) => void;
-  onPostcodeResolved: (location: LocationPreset, nearestSpotName: string) => void;
+  /**
+   * Applies a successful NSW postcode/place lookup. The parent owns this so
+   * every place that renders the Date & location control uses its normal
+   * session-update and plan-search flow.
+   */
+  onLocationResolved: (location: LocationLookup) => void | Promise<void>;
 };
+
+export type LocationLookup = {
+  origin: LocationPreset;
+  nearestSpot: { name: string };
+};
+
+// This is shared by the global planner control and the Places search so both
+// accept exactly the same NSW postcode/place-name inputs.
+export async function lookupNswLocation(query: string): Promise<LocationLookup> {
+  const response = await fetch(`/api/spots?q=${encodeURIComponent(query.trim())}`);
+  const data = (await response.json()) as {
+    error?: string;
+    origin?: LocationPreset;
+    nearestSpot?: { name: string };
+  };
+  if (!response.ok || !data.origin || !data.nearestSpot)
+    throw new Error(data.error ?? "Location lookup failed.");
+  return { origin: data.origin, nearestSpot: data.nearestSpot };
+}
 
 export function LocationSearch({
   value,
   onChange,
-  onPostcodeResolved,
+  onLocationResolved,
 }: LocationSearchProps) {
-  const [postcode, setPostcode] = useState("");
-  const [postcodeError, setPostcodeError] = useState("");
+  const [locationQuery, setLocationQuery] = useState("");
+  const [locationError, setLocationError] = useState("");
   const [lookingUp, setLookingUp] = useState(false);
   const options = locationPresets.some((location) => location.label === value.label)
     ? locationPresets
     : [value, ...locationPresets];
 
-  async function findPostcode() {
-    const normalized = postcode.trim();
-    if (!/^\d{4}$/.test(normalized)) {
-      setPostcodeError("Enter a four-digit NSW postcode.");
+  async function findLocation() {
+    const normalized = locationQuery.trim();
+    if (!normalized) {
+      setLocationError("Enter a NSW town, suburb or four-digit postcode.");
       return;
     }
     setLookingUp(true);
-    setPostcodeError("");
+    setLocationError("");
     try {
-      const response = await fetch(`/api/spots?postcode=${encodeURIComponent(normalized)}`);
-      const data = (await response.json()) as {
-        error?: string;
-        origin?: LocationPreset;
-        nearestSpot?: { name: string };
-      };
-      if (!response.ok || !data.origin || !data.nearestSpot)
-        throw new Error(data.error ?? "Postcode lookup failed.");
-      onPostcodeResolved(data.origin, data.nearestSpot.name);
+      const location = await lookupNswLocation(normalized);
+      await onLocationResolved(location);
+      setLocationQuery("");
     } catch (error) {
-      setPostcodeError(
-        error instanceof Error ? error.message : "Postcode lookup failed.",
+      setLocationError(
+        error instanceof Error ? error.message : "Location lookup failed.",
       );
     } finally {
       setLookingUp(false);
@@ -84,26 +102,31 @@ export function LocationSearch({
         ))}
       </Select>
       <div className="postcode-lookup">
-        <label htmlFor="nsw-postcode">NSW postcode</label>
+        <label htmlFor="nsw-location">Search NSW</label>
+        <small>Enter a postcode or place name.</small>
         <div>
           <input
-            id="nsw-postcode"
-            inputMode="numeric"
-            maxLength={4}
-            onChange={(event) => setPostcode(event.target.value.replace(/\D/g, ""))}
-            placeholder="e.g. 2000"
-            value={postcode}
+            id="nsw-location"
+            onChange={(event) => setLocationQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                event.preventDefault();
+                void findLocation();
+              }
+            }}
+            placeholder="e.g. Katoomba or 2780"
+            value={locationQuery}
           />
           <button
             type="button"
-            onClick={() => void findPostcode()}
+            onClick={() => void findLocation()}
             disabled={lookingUp}
           >
             {lookingUp ? <Loader2 className="spin" size={16} /> : <Search size={16} />}
             Find nearest
           </button>
         </div>
-        {postcodeError && <span role="alert">{postcodeError}</span>}
+        {locationError && <span role="alert">{locationError}</span>}
       </div>
     </div>
   );
