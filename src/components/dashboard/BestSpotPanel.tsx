@@ -19,9 +19,9 @@ export function BestSpotPanel({ plan, startTime, locationLabel, lastUpdated, isL
     return (
       <Card className="best-panel best-panel--empty">
         <div>
-          <span className="eyebrow">Field decision</span>
-          <h2>Choose a location and search the night sky.</h2>
-          <p>AstroScout will compare travel time, cloud cover, moon brightness, and visible targets.</p>
+          <span className="eyebrow">Choose an observing site</span>
+          <h2>Choose a starting location.</h2>
+          <p>AstroScout considers travel time, cloud cover, moonlight and target visibility when ranking locations.</p>
         </div>
         <Button disabled={isLoading} onClick={onRefresh} type="button">
           <RefreshCw size={17} aria-hidden="true" />
@@ -37,7 +37,7 @@ export function BestSpotPanel({ plan, startTime, locationLabel, lastUpdated, isL
   return (
     <Card className="best-panel">
       <div className="best-panel__main">
-        <span className="eyebrow">Best field plan from {locationLabel}</span>
+        <span className="eyebrow">Best option near {locationLabel}</span>
         <div className="best-panel__title">
           <div>
             <h2>{plan.name}</h2>

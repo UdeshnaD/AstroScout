@@ -1,6 +1,7 @@
 "use client";
 
-import { MapPin } from "lucide-react";
+import { Loader2, MapPin, Search } from "lucide-react";
+import { useState } from "react";
 import { Select } from "@/components/ui/Select";
 
 export type LocationPreset = {
@@ -21,15 +22,50 @@ export const locationPresets: LocationPreset[] = [
 type LocationSearchProps = {
   value: LocationPreset;
   onChange: (location: LocationPreset) => void;
+  onPostcodeResolved: (location: LocationPreset, nearestSpotName: string) => void;
 };
 
-export function LocationSearch({ value, onChange }: LocationSearchProps) {
+export function LocationSearch({
+  value,
+  onChange,
+  onPostcodeResolved,
+}: LocationSearchProps) {
+  const [postcode, setPostcode] = useState("");
+  const [postcodeError, setPostcodeError] = useState("");
+  const [lookingUp, setLookingUp] = useState(false);
   const options = locationPresets.some((location) => location.label === value.label)
     ? locationPresets
     : [value, ...locationPresets];
 
+  async function findPostcode() {
+    const normalized = postcode.trim();
+    if (!/^\d{4}$/.test(normalized)) {
+      setPostcodeError("Enter a four-digit NSW postcode.");
+      return;
+    }
+    setLookingUp(true);
+    setPostcodeError("");
+    try {
+      const response = await fetch(`/api/spots?postcode=${encodeURIComponent(normalized)}`);
+      const data = (await response.json()) as {
+        error?: string;
+        origin?: LocationPreset;
+        nearestSpot?: { name: string };
+      };
+      if (!response.ok || !data.origin || !data.nearestSpot)
+        throw new Error(data.error ?? "Postcode lookup failed.");
+      onPostcodeResolved(data.origin, data.nearestSpot.name);
+    } catch (error) {
+      setPostcodeError(
+        error instanceof Error ? error.message : "Postcode lookup failed.",
+      );
+    } finally {
+      setLookingUp(false);
+    }
+  }
+
   return (
-    <label className="control">
+    <div className="control">
       <span className="control__label">
         <MapPin size={16} aria-hidden="true" />
         Location
@@ -47,6 +83,28 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
           </option>
         ))}
       </Select>
-    </label>
+      <div className="postcode-lookup">
+        <label htmlFor="nsw-postcode">NSW postcode</label>
+        <div>
+          <input
+            id="nsw-postcode"
+            inputMode="numeric"
+            maxLength={4}
+            onChange={(event) => setPostcode(event.target.value.replace(/\D/g, ""))}
+            placeholder="e.g. 2000"
+            value={postcode}
+          />
+          <button
+            type="button"
+            onClick={() => void findPostcode()}
+            disabled={lookingUp}
+          >
+            {lookingUp ? <Loader2 className="spin" size={16} /> : <Search size={16} />}
+            Find nearest
+          </button>
+        </div>
+        {postcodeError && <span role="alert">{postcodeError}</span>}
+      </div>
+    </div>
   );
 }
