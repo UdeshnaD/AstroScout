@@ -11,15 +11,15 @@ import { distanceKm, estimateTrip } from "@/lib/distance";
 import { getWeatherForSpot } from "@/lib/weather";
 
 type SpotPageProps = {
-  params: {
+  params: Promise<{
     id: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     startTime?: string;
     lat?: string;
     lon?: string;
     mode?: string;
-  };
+  }>;
 };
 
 const SYDNEY_CBD = {
@@ -31,25 +31,26 @@ export default async function SpotPage({
   params,
   searchParams,
 }: SpotPageProps) {
-  const spot = getSpotById(params.id);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const spot = getSpotById(id);
 
   if (!spot) {
     notFound();
   }
 
   const startTime =
-    searchParams.startTime &&
-    Number.isFinite(Date.parse(searchParams.startTime))
-      ? searchParams.startTime
+    query.startTime &&
+    Number.isFinite(Date.parse(query.startTime))
+      ? query.startTime
       : defaultViewingIso();
-  const astronomy = getAstronomySummary(
+  const astronomy = await getAstronomySummary(
     startTime,
     spot.latitude,
     spot.longitude,
   );
   const weather = await getWeatherForSpot(spot, startTime);
-  const latitude = Number(searchParams.lat);
-  const longitude = Number(searchParams.lon);
+  const latitude = Number(query.lat);
+  const longitude = Number(query.lon);
   const origin =
     Number.isFinite(latitude) &&
     Number.isFinite(longitude) &&
@@ -58,8 +59,8 @@ export default async function SpotPage({
       ? { latitude, longitude }
       : SYDNEY_CBD;
   const mode =
-    searchParams.mode === "walking" || searchParams.mode === "public_transport"
-      ? searchParams.mode
+    query.mode === "walking" || query.mode === "public_transport"
+      ? query.mode
       : "driving";
   const trip = estimateTrip(distanceKm(origin, spot), mode);
 

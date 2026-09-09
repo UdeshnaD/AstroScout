@@ -16,7 +16,8 @@ export function formatMinutes(minutes: number) {
   return mins === 0 ? `${hours} hr` : `${hours} hr ${mins} min`;
 }
 
-export function formatPercent(value: number) {
+export function formatPercent(value: number | null) {
+  if (value === null) return "Unavailable";
   return `${Math.round(value)}%`;
 }
 

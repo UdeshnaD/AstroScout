@@ -1,4 +1,4 @@
-import { AstroScoutApp } from "@ui/AstroScoutApp";
+import { UnifiedApp } from "@ui/UnifiedApp";
 import { UIProviders } from "@ui/Providers";
 
 export default function ObservingLayout({
@@ -8,7 +8,7 @@ export default function ObservingLayout({
 }) {
   return (
     <UIProviders>
-      <AstroScoutApp />
+      <UnifiedApp />
       {children}
     </UIProviders>
   );

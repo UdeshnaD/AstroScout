@@ -46,7 +46,7 @@ import {
   ForecastTimeline,
   ModelLab,
 } from "@/components/dashboard/ObservingAnalysis";
-import { getAstronomySummary } from "@/lib/astronomy";
+import { unavailableAstronomy } from "@/lib/horizons-summary";
 import {
   defaultPriorities,
   observingProfiles,
@@ -75,7 +75,7 @@ type SavedPlan = {
 };
 const storageKey = "astroscout.observing-desk.v1";
 const views = [
-  { id: "tonight", path: "/", label: "Tonight", icon: Moon },
+  { id: "tonight", path: "/planner", label: "Tonight", icon: Moon },
   { id: "explore", path: "/places", label: "Places", icon: Compass },
   { id: "calendar", path: "/calendar", label: "Calendar", icon: CalendarDays },
   { id: "observe", path: "/observe", label: "Observe", icon: Telescope },
@@ -275,7 +275,7 @@ export function AstroScoutApp() {
         return time
           ? {
               ...p,
-              astronomy: getAstronomySummary(time, p.latitude, p.longitude),
+              astronomy: unavailableAstronomy(time),
             }
           : p;
       }),
@@ -310,9 +310,7 @@ export function AstroScoutApp() {
       { id: selected.id, features: selected.features, liked },
     ]);
     setNotice(
-      learn
-        ? "Rating saved. Your location rankings have been updated."
-        : "Rating saved. Enable learning in Model lab to personalize rankings.",
+      "Rating saved on this device. Preference learning is not applied without a complete site-specific JPL snapshot.",
     );
   }
   function toggleCompare(id: string) {
@@ -445,6 +443,15 @@ export function AstroScoutApp() {
           </button>
         </Hint>
       </header>
+      <div className="astro-context">
+        <span>
+          Site ranking uses Open-Meteo forecasts, estimated site darkness and
+          travel. Moonlight is excluded until exact-site JPL data is requested.
+        </span>
+        <Link href="/">
+          Open observing planner <ArrowRight size={16} />
+        </Link>
+      </div>
       <div className="astro-context">
         <span>
           <MapPin size={14} />
@@ -874,7 +881,7 @@ export function AstroScoutApp() {
                       <div className="place-actions">
                         <Link
                           className="button button--primary"
-                          href="/observe"
+                          href={`/planner?lat=${selected.latitude}&lon=${selected.longitude}&elevation=0&utc=${encodeURIComponent(selectedTime)}`}
                         >
                           Observe here <ArrowRight size={16} />
                         </Link>
@@ -981,11 +988,11 @@ export function AstroScoutApp() {
               Weather: Open-Meteo
             </a>
             <a
-              href="https://github.com/cosinekitty/astronomy"
+              href="https://ssd-api.jpl.nasa.gov/doc/horizons.html"
               target="_blank"
               rel="noreferrer"
             >
-              Ephemerides: Astronomy Engine
+              Ephemerides: NASA/JPL Horizons only
             </a>
             <span>Times in Australia/Sydney</span>
           </div>

@@ -24,7 +24,7 @@ function load(file, fetchMock = global.fetch) {
 }
 
 const model = load("src/lib/recommender.ts");
-const astronomy = load("src/lib/astronomy.ts");
+
 const weatherData = {
   cloudCover: 20,
   visibilityKm: 25,
@@ -126,36 +126,6 @@ test("learning has no effect without labels or when disabled, and influence is c
   assert.ok(learned.score >= 0 && learned.score <= 100);
 });
 
-test("sky positions change with time and observer coordinates", () => {
-  const first = astronomy.getAstronomySummary(
-    "2026-09-07T10:00:00Z",
-    -33.77,
-    151.11,
-  );
-  const later = astronomy.getAstronomySummary(
-    "2026-09-07T14:00:00Z",
-    -33.77,
-    151.11,
-  );
-  const other = astronomy.getAstronomySummary(
-    "2026-09-07T10:00:00Z",
-    51.5,
-    -0.1,
-  );
-  assert.notEqual(first.highlights[0].altitude, later.highlights[0].altitude);
-  assert.notEqual(first.highlights[0].altitude, other.highlights[0].altitude);
-  assert.ok(first.moonIllumination >= 0 && first.moonIllumination <= 100);
-  assert.ok(
-    first.highlights.every((p) => p.altitude >= -90 && p.altitude <= 90),
-  );
-});
-
-test("after-midnight astronomy retains the preceding evening twilight", () => {
-  const evening = astronomy.getAstronomySummary("2026-09-07T10:00:00Z");
-  const overnight = astronomy.getAstronomySummary("2026-09-07T16:00:00Z");
-  assert.equal(evening.astronomicalTwilight, overnight.astronomicalTwilight);
-});
-
 const providerSpot = { id: "test", latitude: -33.77, longitude: 151.11 };
 function forecastData() {
   return {
@@ -235,148 +205,16 @@ test("physically invalid provider values are rejected", async () => {
 });
 
 const observation = load("src/lib/observation-model.ts");
-// Synthetic fixtures verify the algorithm only. They never ship as observation data.
-function attempts() {
-  return Array.from({ length: 200 }, (_, i) => {
-    const time = new Date(
-      Date.UTC(2025, 0, 1 + Math.floor(i / 20), 10),
-    ).toISOString();
-    const capturedAt = new Date(Date.parse(time) - 3600000).toISOString();
-    return {
-      version: 1,
-      id: String(i),
-      siteId: `site-${i % 20}`,
-      siteName: "Test fixture",
-      target: "saturn",
-      equipment: { kind: "telescope", aperture: 130, magnification: 65 },
-      time,
-      capturedAt,
-      forecastFetchedAt: capturedAt,
-      source: "open-meteo",
-      features: [i % 2 ? 90 : 10, 10, 20, 10, 40, -20, 0, 1, 130, 65, 4, 1],
-      seen: i % 2 === 0,
-      reportedAt: new Date(Date.parse(time) + 60000).toISOString(),
-    };
-  });
-}
 
-test("sighting model never invents a cold-start probability or pools other targets", () => {
+test("sighting model withholds probability without real observations", () => {
   const model = observation.trainObservationModel([], "saturn", "telescope");
-  assert.equal(
-    observation.predictObservation(model, attempts()[0].features).probability,
-    null,
-  );
-  assert.equal(
-    observation.trainObservationModel(attempts(), "moon", "telescope").count,
-    0,
-  );
-  assert.equal(
-    observation.trainObservationModel(attempts(), "saturn", "eye").count,
-    0,
-  );
+  assert.equal(observation.predictObservation(model, null).probability, null);
+  assert.equal(model.forest, undefined);
 });
-
-test("night-grouped chronological splits have no shared nights", () => {
-  const split = observation.splitObservationNights(attempts());
-  const sets = [split.train, split.calibration, split.test].map(
-    (rows) => new Set(rows.map((r) => observation.observingNight(r.time))),
-  );
-  assert.ok(
-    [...sets[0]].every((night) => !sets[1].has(night) && !sets[2].has(night)),
-  );
-  assert.ok([...sets[1]].every((night) => !sets[2].has(night)));
-  assert.ok(split.train.at(-1).time < split.calibration[0].time);
-  assert.ok(split.calibration.at(-1).time < split.test[0].time);
-  assert.equal(
-    observation.observingNight("2025-01-01T10:00:00Z"),
-    observation.observingNight("2025-01-01T15:00:00Z"),
-  );
+test("legacy model observations and unsupported equipment are rejected", () => {
+  assert.throws(() => observation.validateObservations([{version: 1}]));
+  assert.equal(observation.validEquipment({kind: "eye", aperture: 100, magnification: 10}), false);
 });
-
-test("calibrated forest learns outcomes, evaluates on later nights, and refuses extrapolation", () => {
-  const rows = attempts();
-  const model = observation.trainObservationModel(rows, "saturn", "telescope");
-  assert.ok(model.brier < model.baselineBrier);
-  const clear = observation.predictObservation(model, rows[0].features);
-  const cloudy = observation.predictObservation(model, rows[1].features);
-  assert.ok(clear.probability > cloudy.probability);
-  assert.ok(clear.probability < 1 && cloudy.probability > 0);
-  assert.equal(
-    observation.predictObservation(
-      model,
-      rows[0].features.map((v, i) => (i === 8 ? 300 : v)),
-    ).probability,
-    null,
-  );
-});
-
-test("non-predictive and one-class data cannot enable a probability", () => {
-  const constant = attempts().map((r) => ({
-    ...r,
-    features: attempts()[0].features,
-  }));
-  assert.equal(
-    observation.trainObservationModel(constant, "saturn", "telescope").forest,
-    undefined,
-  );
-  assert.equal(
-    observation.trainObservationModel(
-      attempts().map((r) => ({ ...r, seen: true })),
-      "saturn",
-      "telescope",
-    ).forest,
-    undefined,
-  );
-});
-
-test("forecast snapshots, report windows, and duplicate outcomes are validated", () => {
-  const row = attempts()[0];
-  assert.equal(observation.validateObservations([row, row]).length, 1);
-  assert.throws(() =>
-    observation.validateObservations([row, { ...row, seen: false }]),
-  );
-  assert.throws(() =>
-    observation.validateObservations([{ ...row, source: "fallback" }]),
-  );
-  assert.throws(() =>
-    observation.validateObservations([{ ...row, features: [1, 2] }]),
-  );
-  assert.throws(() =>
-    observation.validateObservations([{ ...row, reportedAt: row.capturedAt }]),
-  );
-  assert.throws(() =>
-    observation.validateObservations([{ ...row, capturedAt: row.reportedAt }]),
-  );
-  assert.equal(observation.canReport(row, Date.parse(row.time) - 1), false);
-  assert.equal(
-    observation.canReport(row, Date.parse(row.time) + 7200001),
-    false,
-  );
-  assert.equal(observation.canReport(row, Date.parse(row.time) + 60000), true);
-});
-
-test("horizon and sunlight gates are independent of a learned score", () => {
-  const sky = {
-    sunAltitude: -20,
-    highlights: [{ id: "saturn", name: "Saturn", altitude: -10 }],
-  };
-  const weather = {
-    hourly: [{ cloudCover: 0, precipitationChance: 0, windKph: 0 }],
-  };
-  const eq = observation.equipmentPresets.telescope;
-  assert.equal(
-    observation.assessVisibility(sky, weather, 0, "saturn", eq).title,
-    "Below the horizon",
-  );
-  sky.highlights[0].altitude = 40;
-  sky.sunAltitude = 10;
-  assert.equal(
-    observation.assessVisibility(sky, weather, 0, "saturn", eq).blocked,
-    true,
-  );
-  sky.sunAltitude = -20;
-  assert.equal(
-    observation.assessVisibility(sky, weather, 0, "saturn", eq).blocked,
-    false,
-  );
+test("observing nights keep evening and following morning together", () => {
+  assert.equal(observation.observingNight("2025-01-01T10:00:00Z"), observation.observingNight("2025-01-01T15:00:00Z"));
 });

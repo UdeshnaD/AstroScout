@@ -63,6 +63,7 @@ export function ForecastTimeline({
 }
 
 export function SkyTargets({ astronomy }: { astronomy: AstronomySummary }) {
+  if (astronomy.sunAltitude == null || !astronomy.highlights.length) return <section className="targets-section"><h3>NASA/JPL data unavailable</h3><p>Open the JPL night planner for this location. No replacement positions are calculated.</p></section>;
   const visibleCount = astronomy.highlights.filter(
     (p) => (p.altitude ?? -90) > 10,
   ).length;
@@ -114,8 +115,7 @@ export function SkyTargets({ astronomy }: { astronomy: AstronomySummary }) {
         ))}
       </div>
       <p className="footnote">
-        Calculated for the selected location and hour. Altitude is height above
-        the horizon.
+        NASA/JPL Horizons API. Requested UTC: {astronomy.requestedUtc}. Response: {astronomy.receivedAt ?? "unavailable"}. Calculations, not telescope measurements.
       </p>
     </section>
   );

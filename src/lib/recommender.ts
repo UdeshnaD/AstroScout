@@ -26,7 +26,7 @@ export function featuresFor(plan: SpotPlan, hour = 0): Features {
       100,
     (9 - plan.bortleRating) / 8,
     Math.max(0, 1 - plan.travelTimeMinutes / 180),
-    1 - plan.astronomy.moonIllumination / 100,
+    plan.astronomy.moonIllumination == null ? 0 : plan.astronomy.moonAltitude !== undefined && plan.astronomy.moonAltitude <= 0 ? 1 : 1 - plan.astronomy.moonIllumination / 100,
   ].map((x) => Math.max(0, Math.min(1, x))) as Features;
 }
 
@@ -97,18 +97,23 @@ export function rankPlans(
   return plans
     .map((plan) => {
       const features = featuresFor(plan, hour);
-      const parts = contributions(features, priorities);
+      const astronomyAvailable = plan.astronomy.moonIllumination !== null;
+      // Missing astronomy is excluded, not imputed as a physical Moon value.
+      const effective: Priorities = astronomyAvailable ? priorities : [priorities[0], priorities[1], priorities[2], 0];
+      if (!effective.some(Boolean)) effective[0] = 1;
+      const parts = contributions(features, effective);
       const baseScore = parts.reduce((a, b) => a + b, 0);
       const learnedScore = preferenceScore(features, model);
+      const share = astronomyAvailable ? learnedShare : 0;
       const score = Math.round(
-        baseScore * (1 - learnedShare) + learnedScore * learnedShare,
+        baseScore * (1 - share) + learnedScore * share,
       );
       return {
         ...plan,
         score,
         baseScore,
         learnedScore,
-        learnedShare,
+        learnedShare: share,
         features,
         contributions: parts,
         condition:

@@ -1,6 +1,9 @@
 node_modules
 .next
 .next-dev
+/public/vendor/opencv.js
+/test-results/
+/playwright-report/
 *.tsbuildinfo
 out
 dist

@@ -1,5 +1,5 @@
 import { observingSpots } from "@/data/observing-spots";
-import { getAstronomySummary } from "@/lib/astronomy";
+import { unavailableAstronomy } from "@/lib/horizons-summary";
 import { distanceKm, estimateTrip } from "@/lib/distance";
 import { getWeatherForSpot } from "@/lib/weather";
 import { defaultPriorities, factorNames, rankPlans } from "@/lib/recommender";
@@ -13,11 +13,7 @@ export async function buildPlanResults(input: PlanSearchRequest) {
     nearby.map(async ({ spot, distance }) => {
       const weather = await getWeatherForSpot(spot, input.startTime);
       if (!weather) return null;
-      const astronomy = getAstronomySummary(
-        weather.hourly[0]?.time ?? input.startTime,
-        spot.latitude,
-        spot.longitude,
-      );
+      const astronomy = unavailableAstronomy(weather.hourly[0]?.time ?? input.startTime);
       const trip = estimateTrip(distance, input.travelMode);
       return {
         ...spot,

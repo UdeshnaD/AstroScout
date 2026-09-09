@@ -5,21 +5,28 @@ export type NightSkyHighlight = {
   bestTime: string;
   direction: string;
   equipment: string;
-  confidence: "high" | "medium" | "low";
+  confidence?: "high" | "medium" | "low";
   description: string;
   altitude?: number;
   azimuth?: number;
   magnitude?: number;
+  rightAscension?: number | null;
+  declination?: number | null;
+  illumination?: number | null;
+  receivedAt?: string;
 };
 
 export type AstronomySummary = {
   moonPhase: string;
-  moonIllumination: number;
+  moonIllumination: number | null;
   sunset: string;
   astronomicalTwilight: string;
   moonset: string;
   bestViewingWindow: string;
   highlights: NightSkyHighlight[];
   sunAltitude?: number;
-  source?: "astronomy-engine";
+  moonAltitude?: number;
+  source: "NASA/JPL Horizons API";
+  requestedUtc: string;
+  receivedAt: string | null;
 };

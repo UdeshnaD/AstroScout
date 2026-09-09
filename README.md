@@ -1,134 +1,199 @@
 # AstroScout
 
-**An interactive observing desk for MQ Astronomy Night.**
+**An evidence-led night-sky planner for Macquarie University Astronomy Night.**
 
-AstroScout connects the practical question of where to observe with hourly weather, calculated celestial positions, and an explainable preference model. Start from Macquarie University or another location, compare nearby sites, and explore how your priorities change the ranking.
+AstroScout connects NASA/JPL observer ephemerides, regional weather forecasts, local image-quality analysis and visitor-reported outcomes. Its observing desk and night planner share one astronomy pipeline: **NASA/JPL Horizons only**.
 
-## Explore AstroScout
+## Observing Experience
 
-| Destination | Purpose |
+1. Set latitude, longitude, elevation and an explicit UTC epoch. The default Macquarie University coordinates are -33.7738, 151.1126, with **0 m as an editable default**, not a surveyed campus elevation.
+2. Select the Moon, Venus, Mars, Jupiter or Saturn. The Sun provides daylight/twilight context only; solar observing and solar outcome recording are disabled.
+3. Inspect calculated altitude, azimuth, compass direction, apparent right ascension/declination, magnitude and illuminated disk fraction where JPL supplies them.
+4. Explore the five-minute altitude timeline across the night. The target and Sun have separate curves; astronomical darkness is identified from the Sun's calculated altitude.
+5. Review the best sampled observing interval, its geometric and weather conditions, and the Moon's potential effect on faint deep-sky contrast.
+6. Upload a real JPG/JPEG or PNG and run local OpenCV analysis. Record what you personally found, your equipment and any notes.
+7. Review observation history and export JSON or CSV, including source snapshots and failures.
+
+The device clock, requested astronomy epoch, forecast valid times and API receipt timestamps are distinct. Refresh to now requests new data; the application does not continuously poll upstream services.
+
+## One Astronomy System
+
+All astronomy results originate in the [official NASA/JPL Horizons API](https://ssd-api.jpl.nasa.gov/doc/horizons.html). These are **scientific calculations, not telescope measurements**.
+
+| Request setting | Meaning |
 | --- | --- |
-| Tonight `/` | Credited NASA photography, calculated local Moon/planet positions, observing-hour selection and skywatching guides |
-| Places `/places` | Ranked NSW locations, map, concise site preview and an expandable hourly forecast |
-| Calendar `/calendar` | Month navigation, lunar quarter phases, equinoxes and solstices calculated with Astronomy Engine |
-| Observe `/observe` | Object and equipment selection, conditions, experimental sighting estimates and planned attempts |
-| Journal `/journal` | Completed and pending observations, outcome reporting and JSON import/export |
-| The science `/method` | Sighting-model evidence and expandable preference-learning analysis |
-| Compare `/compare` | Up to three shortlisted sites side by side |
+| EPHEM_TYPE=OBSERVER | Observer ephemerides |
+| CENTER=coord@399 | Observer on Earth |
+| COORD_TYPE=GEODETIC | Geodetic coordinates |
+| SITE_COORD | East-positive longitude, latitude and elevation in kilometres |
+| TIME_TYPE=UT; TIME_DIGITS=FRACSEC | UTC input with millisecond precision retained by the application |
+| START_TIME / STOP_TIME / STEP_SIZE | Requested epoch minus/plus 24 hours, sampled every five minutes |
+| QUANTITIES=2,4,9,10 | Apparent RA/Dec, azimuth/altitude, apparent visual magnitude and illuminated fraction |
+| ANG_FORMAT=DEG; APPARENT=AIRLESS | Degrees; no atmospheric refraction |
 
-Each destination has its own URL. A shared layout preserves session state during navigation. Date, origin, radius and travel settings open on demand. Saved places remain available from the header. Forecasts and local sky geometry remain distinct from spacecraft imagery and illustrative landscape photography.
+Body IDs are Sun 10, Moon 301, Venus 299, Mars 499, Jupiter 599 and Saturn 699. Each successful body response contains 577 samples; index 288 is the exact requested epoch. Fractional seconds are preserved in each epoch. Supported inputs span 2000-2100, latitude +/-90 degrees, longitude +/-180 degrees and elevation -500 to 10,000 metres.
 
-The interface uses native navigation links, active-page indicators, progressive disclosure, visible focus states, responsive layouts and reduced-motion support. Reference notes and design decisions are documented in [UI/DESIGN_NOTES.md](UI/DESIGN_NOTES.md).
+The server uses structured CSV parsing, verifies the NASA/JPL signature and target ID, checks row counts and validates each returned Julian day against its requested UTC epoch within one millisecond. Apparent RA/Dec use the equator/equinox of date. Compass direction is derived from JPL azimuth, clockwise from north. Optional absent values remain null.
 
-### Typography And Interaction
+Every object retains the source, request URL, API version, requested epoch and request/response timestamps. Timeline samples inherit their body's response provenance. Receipt time is when AstroScout received the API result, not an observation time. See the [Horizons manual](https://ssd.jpl.nasa.gov/horizons/manual.html) for definitions.
 
-Geist provides the interface and reading type; Newsreader provides editorial headings. Two Latin-subset variable WOFF2 files are bundled from Fontsource and self-hosted through `next/font/local`, with fallback metrics and `font-display: swap`. Visitors do not make font requests to Google. The source files total approximately 85 KiB. Typography sizes, reading width and responsive scales are defined in `UI/Typography.css`.
+### Availability
 
-Motion 13 supplies lightweight transitions through `LazyMotion`, with a site-wide reduced-motion policy. Radix UI supplies focus-aware tooltips and keyboard-accessible single-selection controls. The sky timeline supports play, pause and manual scrubbing through available forecast hours; chart objects can be selected directly or through the object selector. Playback pauses when the tab becomes hidden. The calendar supports arrow-key day navigation, highlights today and provides a current-month shortcut. Mobile navigation uses an expandable menu with Escape-to-close behaviour.
+The six body requests run serially with a 12-second timeout each and a bounded queue per server process. Identical requests are coalesced **only while in flight**. Completed ephemerides are not reused as current responses, and upstream fetches use no-store.
 
-## AI And Data Science
+A failed result displays **NASA/JPL data unavailable**. Partial successes remain available; complete failure returns HTTP 503. No generated positions, alternate astronomy engine, stale-current fallback or sample observations replace failures. Exact rise/set events are not calculated: timeline window edges are sampled times.
 
-AstroScout combines an explicit location-ranking model with two separate supervised learning systems: location preference learning and experimental object-sighting prediction. It does not require a chatbot or a paid AI API.
+## Night Planning
 
-### Object-Sighting Prediction
+The selected night is the contiguous Sun-below-horizon interval containing the requested epoch, or the next such interval when the epoch falls in daylight. A night reaching the edge of the 48-hour scan is marked incomplete.
 
-The outcome is **the observer located and saw the selected object with the specified equipment**. Detecting Saturn is distinct from resolving its rings; detecting Jupiter is distinct from resolving cloud bands. Detailed planetary features are outside this model's scope.
+Sun states use the airless Sun-centre altitude:
 
-The sighting model uses [ml-random-forest](https://github.com/mljs/random-forest), a JavaScript machine-learning library. It trains 64 classification trees with a fixed seed and bounded depth. Records are filtered to the selected object and equipment type. Aperture and magnification remain numeric model inputs.
-
-| Input | Provenance |
+| Altitude | State |
 | --- | --- |
-| Cloud cover, precipitation probability, horizontal visibility, wind | Open-Meteo hourly forecast captured before the attempt |
-| Target altitude, apparent magnitude, Sun altitude | Astronomy Engine calculations for the selected site and hour |
-| Moon illumination above the horizon | Astronomy Engine; contribution is zero when the Moon is below the horizon |
-| Aperture and magnification | Observer-entered equipment settings; unaided-eye mode uses a fixed 7 mm proxy, not a measured pupil size |
-| Estimated Bortle class | Curated site catalogue; not a measured sky-brightness reading |
-| Forecast lead time | Hours between saving the attempt and its planned time |
-| Seen / not seen | Actual self-reported outcome after an observing attempt |
+| At or above 0 degrees | Daylight |
+| Below 0, above -6 degrees | Civil twilight |
+| At/below -6, above -12 degrees | Nautical twilight |
+| At/below -12, above -18 degrees | Astronomical twilight |
+| At/below -18 degrees | Astronomical night |
 
-**No trained sighting dataset is bundled.** On a fresh installation, the app displays calculated observing constraints and explains that a success probability is not yet available. Location likes, generated examples, and weather-derived labels do not train the sighting model.
+This is not a refraction-corrected, upper-limb sunrise calculation. Bright planets and the Moon can sometimes be observed outside astronomical darkness.
 
-The observation workflow captures a complete forecast before the selected time, then accepts an outcome during the following two hours. An outing that did not happen remains unreported and is excluded from training. Duplicate attempts are deduplicated; conflicting imported outcomes are rejected. Observations stay in this browser, with JSON export and import for backup. Imported records are validated structurally, but their authenticity is not independently verified.
+A weather-qualified window needs at least 15 minutes of consecutive samples with:
 
-### Evaluation And Probability
+- Sun altitude at or below -18 degrees.
+- Target altitude at or above 20 degrees.
+- Forecast cloud cover at most 50%.
+- Forecast precipitation at most 0.1 mm.
+- Forecast visibility at least 10 km.
+- Forecast wind at most 25 km/h.
 
-Records are grouped into noon-to-noon Sydney observing nights. Nights are ordered chronologically: the earliest 60% train the forest, the next 20% calibrate its outputs, and the latest 20% evaluate the resulting estimates. Attempts from the same night cannot appear in different partitions.
+Eligible samples are ranked by altitude (65%), clear-sky fraction (25%) and calmer wind (10%). A window extends around a candidate peak while the score remains within 0.1 of that peak. The highest-ranked candidate with a qualifying sustained interval is selected. Forecast samples must be within 30 minutes of their JPL sample.
 
-The minimum evidence gate requires 60 labelled attempts across six nights for the selected object and equipment type, at least 30 training, 10 calibration and 10 evaluation records, and both successful and unsuccessful attempts in every partition. These are prototype operating thresholds, not a guarantee of statistical reliability.
+These are transparent planning thresholds, **not learned probabilities or guarantees of visibility**. Weather-free geometric intervals are labelled separately. Missing weather never becomes clear weather. Past windows and results at historical/future epochs remain explicitly dated. Graph lines connect genuine samples; intermediate positions are not asserted.
 
-Forest vote fractions are divided into three fixed bins. Each bin's estimate comes from outcomes in the separate calibration set, using Laplace smoothing: `(successes + 1) / (attempts + 2)`. A bin needs at least five calibration attempts. Brier score on the later evaluation nights is compared with a constant prediction using the training-set success rate. Predictions are withheld when evaluation does not beat that baseline or when inputs fall outside the training range. The fitted forest is not retrained on calibration or evaluation records.
+Moonlight explanations use JPL Moon altitude and illumination. They do not claim a numerical sky-brightness measurement: angular separation, atmosphere and local light pollution also influence deep-sky visibility.
 
-Passing these checks enables an **experimental sighting probability**, not a guaranteed or externally validated success rate. Small calibration groups, repeated attempts, self-reporting and selection bias remain limitations. Atmospheric seeing, eyesight, observer experience, optical quality, mount stability, and terrain obstructions are not measured. The numerical weather visibility input measures horizontal visibility, not telescope resolution or atmospheric seeing.
+## Weather And Site Planning
 
-Calculated horizon and daytime exclusions take precedence over the model. A forecast snapshot older than one hour cannot support a new attempt or a displayed probability. Condition warnings use transparent rules and are distinct from learned probabilities. The live planner and the test suite do not share observation data; synthetic fixtures exist only in tests to verify software behaviour.
+[Open-Meteo](https://open-meteo.com/en/docs) supplies current weather-model estimates and hourly forecasts: cloud, precipitation, visibility, temperature, wind, humidity and WMO weather code. These are labelled **weather-forecast data**, not on-site sensor measurements. Requested coordinates, provider grid coordinates, valid times and receipt timestamps are retained. Missing fields remain unavailable.
 
-### Feature Engineering
+Places and Compare use curated NSW site descriptions, explicitly estimated Bortle ratings, travel estimates and Open-Meteo forecasts. Their location-match score is not a sighting probability. Moon influence is excluded when no site-specific JPL snapshot exists; the site can be opened in the same JPL night planner. Estimated journey times are not live traffic or transit schedules.
 
-Each site is represented by four features normalized to the range 0-1:
+[Leaflet](https://leafletjs.com/) provides maps with OpenStreetMap attribution. Site photography and imagery are illustrative, not observations of current sky conditions.
 
-| Feature       | Transformation                                                                     |
-| ------------- | ---------------------------------------------------------------------------------- |
-| Clear skies   | 65% inverse cloud cover + 20% inverse rain probability + 15% normalized visibility |
-| Darkness      | `(9 - estimated Bortle class) / 8`                                                 |
-| Easy travel   | `max(0, 1 - estimated minutes / 180)`                                              |
-| Low moonlight | `1 - illuminated fraction`                                                         |
+## Image Analysis
 
-The baseline score is the normalized weighted sum, multiplied by 100. The default weights are 40%, 25%, 25%, and 10%. Deep-sky, quick-trip, and Moon/planet profiles provide other weight settings. Sliders support sensitivity analysis: changing a priority immediately updates the ranking and contribution chart.
+JPG/JPEG and PNG uploads support up to 20 MB and 40 megapixels. Images stay in the browser. OpenCV.js loads locally on first analysis and runs in a Web Worker, using a maximum analysis dimension of 1,280 pixels.
 
-### Preference Learning
+| Output | Method |
+| --- | --- |
+| Brightness | Mean grayscale intensity |
+| Contrast | Grayscale standard deviation |
+| Sharpness indicator | Variance of the grayscale Laplacian |
+| Dark-pixel fraction | Grayscale threshold |
+| Cloud-like pixel fraction | Exploratory HSV thresholds |
+| Edge density | Canny edges |
+| Possible obstruction indicator | Dark-region contours and edges |
 
-Helpful / not-for-me ratings provide binary labels. A logistic regression model trains in the browser on the four centered features, using batch gradient descent and L2 regularization. Re-rating a location replaces its previous label and feature snapshot.
+These are explainable image-quality heuristics, **not a trained cloud classifier, planet detector or object-recognition model**. Exposure, noise, texture, haze and buildings can affect the same statistics. Camera pointing and field of view are unknown. AstroScout does not claim that a selected planet has been detected in a photo.
 
-```text
-preference = sigmoid(bias + weights . centered_features)
-learned_share = min(0.30, 0.05 * number_of_rated_locations)
-final_score = (1 - learned_share) * baseline + learned_share * preference * 100
-```
+The visitor supplies the optional image capture time; it is not verified from EXIF. A screenshot or reference photo must not be confirmed as a real observing attempt. Image analysis and astronomy remain separate evidence sources.
 
-Learning can be disabled or reset. With no feedback, rankings use only the baseline. Model lab displays the learned coefficients and every baseline score contribution.
+## Experimental Machine Learning
 
-This is a personal preference model, not a weather predictor. Its scores are not calibrated probabilities of observing success, and it has no held-out accuracy evaluation. Small, self-selected feedback sets provide limited evidence.
+The question is: **did a visitor report seeing this target with this equipment under these conditions?**
 
-## Data And Provenance
+The implemented learner is a 64-tree random-forest classifier using ml-random-forest. TypeScript runs the feature extraction and model in the application. No trained weights, artificial observation dataset or pretrained sighting-probability service are bundled.
 
-| Source                                                                                             | Use                                                                                    | Behaviour                                                                                                    |
-| -------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
-| [Open-Meteo](https://open-meteo.com/)                                                              | Cloud cover, visibility, rain probability, wind and temperature                        | Seven-day forecast request; up to eight hourly samples; 15-minute server cache; seven-second request timeout |
-| [Astronomy Engine](https://github.com/cosinekitty/astronomy)                                       | Moon illumination, sunset, astronomical twilight, moonset, local Moon/planet positions | Calculated for location and time, independently of weather                                                   |
-| [OpenStreetMap](https://www.openstreetmap.org/copyright) through [Leaflet](https://leafletjs.com/) | Interactive map and location markers                                                   | Browser-loaded map tiles with attribution                                                                    |
-| Curated NSW site catalogue                                                                         | Coordinates, descriptions, Bortle estimates, facilities and access notes               | Local data, not live access verification                                                                     |
-| Distance-based travel model                                                                        | Estimated journey time for driving, walking and public transport                       | Not road routing, a timetable, or live traffic data                                                          |
-| Google Maps directions                                                                             | External trip planning                                                                 | Opens the selected destination, origin and travel mode                                                       |
+### Inputs
 
-Incomplete, invalid, unavailable, or out-of-range weather returns **forecast unavailable**. No replacement weather is generated. Affected sites are excluded from ranking and identified in the response. If all nearby sites lack a forecast, the planning endpoint returns HTTP 503. Forecast retrieval time is recorded separately from the forecast's valid hour; it is not a weather-model issue timestamp. Times are displayed in `Australia/Sydney`.
+| Source | Features |
+| --- | --- |
+| NASA/JPL Horizons | Target altitude, Sun altitude, Moon altitude, Moon illumination and target apparent magnitude |
+| Open-Meteo | Cloud cover, precipitation in mm, visibility, wind and humidity |
+| Visitor | Equipment category, aperture and magnification |
+| Provenance | Source-snapshot age |
 
-The location preference score does not account for wind, road access, astronomical darkness, or the Moon's altitude. The separate sighting model includes wind, Sun altitude and whether the Moon is above the horizon. Site access is not verified by either model. The sky list covers the Moon, Venus, Mars, Jupiter and Saturn, not a live meteor-shower or astronomy-event feed.
+Only explicitly confirmed real attempts with complete target/Sun/Moon snapshots, matching location/epoch, valid equipment and timely forecasts are eligible. JPL snapshots must be received within five minutes of the attempt, with the requested epoch also within five minutes. Weather receipt must be within one hour. Reports without the new source context remain in history but cannot train the model.
+
+Reports are deduplicated by half-hour, site, target and equipment category; conflicting outcomes in a group are excluded. This reduces repeated-label inflation but does not independently verify visitor honesty or eliminate selection bias.
+
+### Evaluation And Withholding
+
+A probability is withheld until there are at least 60 eligible attempts across six observing nights for the selected target/equipment category. Nights are split chronologically into training, calibration and test periods (approximately 60/20/20), with at least 30/10/10 records and both outcomes in every period.
+
+A separate calibration period supplies three probability bins with Laplace smoothing. The later-night test Brier score must beat the training-success-rate baseline. Inputs outside the training range and calibration bins with insufficient support remain withheld.
+
+These are minimum safeguards, not proof of scientific validity. Until sufficient real data are collected and evaluated, the interface says **Probability withheld**. Predictions, if eventually enabled, estimate visitor-reported success rather than independently verified target detection.
+
+Image quality is classical computer vision, overnight optimisation is deterministic decision support, and the random forest is supervised machine learning. No chatbot or paid generative-AI API is needed.
+
+## Interface And Routes
+
+| Route | Purpose |
+| --- | --- |
+| / | Shared observing desk |
+| /planner | Same JPL observing system and night analysis |
+| /observe | Same observing system and visitor workflow |
+| /calendar | UTC date selection for a new JPL night scan |
+| /journal | Observation history within the shared desk |
+| /method | Experimental model evidence and source explanations |
+| /places | NSW location discovery and forecast-based comparison |
+| /compare | Side-by-side shortlisted sites |
+| /spot/[id] | Site information and JPL summary with a link to the full planner |
+
+Geist is the interface font and Newsreader the editorial/navigation font. Variable fonts are self-hosted via next/font/local. The UI uses accessible labels, visible focus states, target selection, progressive disclosure, a keyboard-operable timeline and responsive layouts.
 
 ## Technology
 
-| Layer             | Implementation                                             |
-| ----------------- | ---------------------------------------------------------- |
-| Application       | Next.js 14 App Router, React 18, TypeScript                |
-| Interface         | CSS, Tailwind toolchain, Lucide icons                      |
-| Typography        | Geist and Newsreader variable fonts, Fontsource, Next.js local font optimization |
-| Interaction       | Motion 13, Radix UI Tooltip and Toggle Group |
-| Maps              | Leaflet 1.9, OpenStreetMap tiles                           |
-| Astronomy         | Astronomy Engine 2.1                                       |
-| Backend           | Next.js route handlers and server-side provider requests   |
-| Learning          | ml-random-forest 2.1 for sightings; regularized logistic regression for preferences |
-| Local persistence | Browser localStorage for observations, equipment, ratings, weights, and saved plans; observation JSON import/export |
-| Verification      | Next.js production build and focused Node.js tests         |
+| Layer | Tools |
+| --- | --- |
+| Application | Next.js 14 App Router, React 18, TypeScript |
+| Interface | CSS/Tailwind, Lucide, Radix UI, Motion, Geist/Newsreader |
+| Astronomy | NASA/JPL Horizons API, csv-parse |
+| Weather | Open-Meteo forecast API |
+| Maps | Leaflet, OpenStreetMap |
+| Image processing | Self-hosted OpenCV.js, Web Worker, browser image APIs |
+| Experimental ML | ml-random-forest |
+| Storage | Browser localStorage; JSON and CSV exports |
+| Checks | Node test runner, TypeScript, ESLint, Playwright |
+
+## Project Structure
+
+```text
+UI/
+  EventDesk.tsx            Shared observing experience
+  JplNightPanel.tsx        Night analysis and interactive altitude chart
+  JplModelEvidence.tsx     Evidence gate and experimental model display
+  CalendarView.tsx         UTC observing-date selection
+  UnifiedApp.tsx           Shared route host
+  EventDesk.css            Observing interface styles
+src/
+  app/api/event/           Horizons and weather server routes
+  app/api/astronomy/       Compatibility summary backed by the same JPL service
+  lib/event-providers.ts  JPL requests, CSV validation and weather parsing
+  lib/horizons-analysis.ts Overnight windows and Sun/Moon interpretation
+  lib/horizons-summary.ts Legacy display adapter for JPL results
+  lib/jpl-sighting.ts     Real-report eligibility and JPL feature extraction
+  lib/observation-model.ts Random forest, calibration and temporal evaluation
+  lib/event-log.ts        Local storage and evidence exports
+  lib/sky-image.ts        Upload validation and worker orchestration
+public/workers/           Local OpenCV worker
+scripts/                 OpenCV runtime preparation
+tests/                   Unit and browser checks
+```
 
 ## Run Locally
 
-Install dependencies and run the development server:
+Node.js and npm are required. From the project directory:
 
 ```powershell
 npm install
 npm run dev
 ```
 
-Open [localhost:3000](http://localhost:3000). No API key is needed for the current implementation. Maps and forecasts require an internet connection; provider usage policies apply.
+Open [localhost:3000](http://localhost:3000). Development does not require a production build. If that port is occupied, use `npm run dev -- --port 3001`.
 
 For a production build:
 
@@ -137,76 +202,44 @@ npm run build
 npm start
 ```
 
-`npm start` requires a completed production build in `.next`.
+The predev/prebuild scripts prepare the self-hosted OpenCV runtime. The public JPL and Open-Meteo endpoints used here do not require API keys; their usage terms and service availability still apply. External connectivity is required for current API results.
 
-Optional configuration in `.env.local`:
+## API Routes
 
-```env
-OPEN_METEO_BASE_URL=https://api.open-meteo.com
+| Endpoint | Response |
+| --- | --- |
+| GET /api/event/horizons?lat=...&lon=...&elevation=...&utc=... | Per-body exact positions, overnight series and provenance |
+| GET /api/event/weather?lat=...&lon=...&elevation=... | Separate current/hourly forecast source envelope |
+| GET /api/astronomy/tonight?lat=...&lon=...&elevation=...&startTime=... | Compatibility summary and snapshot using the same JPL service |
+
+UTC inputs must include seconds and an explicit Z suffix; fractional seconds are supported. No API key is exposed to visitors.
+
+## Records And Privacy
+
+Reports are stored under `astroscout.event-observations.v1` in this browser. Existing records are preserved; new records add a versioned JPL/equipment/real-attempt context. JSON retains structured evidence. CSV includes flattened model inputs and complete source-context JSON, with spreadsheet-formula escaping.
+
+Exports include location, notes and filenames. The log does not retain image files. Browser clearing, private sessions or changing origin/port can make records unavailable. Storage errors are visible; corrupt stored data is not silently overwritten.
+
+No observations are uploaded to a cloud database or shared between visitor devices. This application is not an offline-installed PWA.
+
+## Verification
+
+```powershell
+npm test
+npx tsc --noEmit
+npm run lint
+npm run build
 ```
 
-Other provider keys in `.env.example` are reserved and are not used by the current integrations.
+With the development server running:
 
-## API
-
-| Endpoint                                                   | Purpose                                                                   |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------- |
-| `POST /api/plans/search`                                   | Nearby sites, forecasts, astronomy, travel estimates, and baseline scores |
-| `GET /api/spots`                                           | Site catalogue                                                            |
-| `GET /api/spots/:id`                                       | Individual site                                                           |
-| `GET /api/weather?spotId=...&startTime=...`                | Forecast for a site                                                       |
-| `GET /api/astronomy/tonight?lat=...&lon=...&startTime=...` | Calculated astronomy summary                                              |
-| `POST /api/trips`                                          | Distance-based travel estimate                                            |
-
-Example planning request:
-
-```json
-{
-  "latitude": -33.7738,
-  "longitude": 151.1126,
-  "startTime": "2026-09-07T20:00:00+10:00",
-  "radiusKm": 120,
-  "travelMode": "driving"
-}
+```powershell
+$env:ASTROSCOUT_TEST_IMAGE = "C:\path\to\an-existing-image.png"
+npm run test:event
 ```
 
-The response contains a `locations` array and an `unavailableSites` array of names. Each available location includes weather provenance, retrieval time, hourly samples, astronomy, estimated travel time, and a baseline match score. Personalized ranking and sighting learning happen locally and do not send ratings or observation logs to the server. The weather endpoint returns HTTP 503 with `weather: null` when a forecast is unavailable.
+Browser checks use real upstream API responses for successful astronomy/weather paths and injected network failures for unavailable states. Upload tests use a supplied image in isolated browser storage, not a scientific observation. No artificial sighting dataset is used to establish model accuracy.
 
-## Repository
+## Scientific Scope
 
-```text
-UI/
-  AstroScoutApp.tsx       Shared application state and route views
-  AstroScout.css          Navigation, page layouts and responsive styles
-  TonightView.tsx         Sky feature, calculated positions and observing guides
-  CalendarView.tsx        Month grid and calculated astronomical dates
-  ObservationPlanner.tsx  Equipment, target, probability and observation-log interface
-  ObservationPlanner.css  Styles for the observing interface
-  DESIGN_NOTES.md         Reference study and information architecture
-  Typography.css         Type scale and interaction styling
-  fonts.ts               Local variable-font definitions
-  Providers.tsx          Motion and tooltip configuration
-  Hint.tsx               Accessible tooltip primitive
-src/
-  app/                  Pages, shared styles, API routes
-  components/
-    dashboard/          Observing desk, map, comparison, model lab
-    spot/               Location detail components
-    ui/                 Shared interface primitives
-  data/                 Curated observing catalogue
-  lib/
-    astronomy.ts        Ephemeris calculations
-    weather.ts          Forecast retrieval and unavailable-data handling
-    distance.ts         Distance and travel estimates
-    scoring.ts          Server-side plan assembly
-    recommender.ts      Features, scoring and preference learning
-    observation-model.ts Sighting features, validation, forest training and evaluation
-  types/                Shared contracts
-tests/                  Ranking, astronomy and provider checks
-```
-
-Run focused checks with `npm test`; `npm run build` also checks TypeScript and lint rules.
-
-## Project Context
-
-Built as a student project for MQ Astronomy Night. AstroScout is an educational planning prototype and is not an official Macquarie University service. Saved plans, ratings and observations remain in the browser where they were created; there are no accounts or cloud synchronization.
+AstroScout is an astronomy decision-support and data-collection project. Horizons provides authoritative ephemeris calculations; forecasts and observer reports introduce their own uncertainty. Local obstructions, atmospheric seeing, transparency, optical quality and observer experience are not fully modelled. An above-horizon object or favourable window is not a guarantee of a successful sighting.

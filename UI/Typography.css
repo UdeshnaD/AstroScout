@@ -178,6 +178,11 @@ p {
 }
 .astro-site .astro-header nav a {
   position: relative;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
   border-bottom: 0;
   min-height: 44px;
 }
@@ -410,7 +415,7 @@ p {
   }
   .astro-site .astro-header nav a {
     padding: 12px 0;
-    font-size: 16px;
+    font-size: 1.25rem;
   }
   .astro-site .astro-context {
     font-size: 14px;

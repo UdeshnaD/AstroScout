@@ -1,6 +1,4 @@
 import { RandomForestClassifier } from "ml-random-forest";
-import type { AstronomySummary } from "@/types/astronomy";
-import type { WeatherSummary } from "@/types/weather";
 
 export const targetIds = [
   "moon",
@@ -22,21 +20,24 @@ export const equipmentPresets: Record<Equipment["kind"], Equipment> = {
 };
 export const featureNames = [
   "Cloud cover",
-  "Rain forecast",
+  "Forecast precipitation (mm)",
   "Visibility",
   "Wind",
   "Target altitude",
   "Sun altitude",
-  "Moon above horizon",
+  "Moon illumination (JPL)",
   "Target magnitude",
   "Aperture",
   "Magnification",
-  "Estimated Bortle",
-  "Forecast lead hours",
+  "Forecast humidity",
+  "Source snapshot age (hours)",
+  "Moon altitude (JPL)",
 ];
 
 export type Observation = {
-  version: 1;
+  version: 2;
+  astronomySource: "NASA/JPL Horizons API";
+  positionUtc: string;
   id: string;
   siteId: string;
   siteName: string;
@@ -64,121 +65,6 @@ export function validEquipment(value: unknown): value is Equipment {
     e.magnification <= 500 &&
     (e.kind !== "eye" || (e.aperture === 7 && e.magnification === 1))
   );
-}
-
-export function observationFeatures(
-  astronomy: AstronomySummary,
-  weather: WeatherSummary,
-  hour: number,
-  targetId: TargetId,
-  equipment: Equipment,
-  bortle: number,
-  capturedAt: string,
-): number[] | null {
-  const target = astronomy.highlights.find((t) => t.id === targetId);
-  const point = weather.hourly[hour];
-  if (
-    !target ||
-    !point ||
-    weather.source !== "open-meteo" ||
-    !validEquipment(equipment)
-  )
-    return null;
-  const moonAltitude = astronomy.highlights.find(
-    (t) => t.id === "moon",
-  )?.altitude;
-  if (moonAltitude === undefined) return null;
-  const values = [
-    point.cloudCover,
-    point.precipitationChance,
-    point.visibilityKm,
-    point.windKph,
-    target.altitude,
-    astronomy.sunAltitude,
-    moonAltitude > 0 ? astronomy.moonIllumination : 0,
-    target.magnitude,
-    equipment.aperture,
-    equipment.magnification,
-    bortle,
-    Math.max(0, (Date.parse(point.time) - Date.parse(capturedAt)) / 3600000),
-  ];
-  return values.every((v) => typeof v === "number" && Number.isFinite(v))
-    ? (values as number[])
-    : null;
-}
-
-export function assessVisibility(
-  astronomy: AstronomySummary,
-  weather: WeatherSummary,
-  hour: number,
-  targetId: TargetId,
-  equipment: Equipment,
-) {
-  const target = astronomy.highlights.find((t) => t.id === targetId);
-  const point = weather.hourly[hour];
-  if (
-    !target ||
-    target.altitude === undefined ||
-    astronomy.sunAltitude === undefined ||
-    !point ||
-    !validEquipment(equipment)
-  ) {
-    return {
-      blocked: true,
-      title: "Conditions unavailable",
-      reasons: ["A complete forecast and sky position are required."],
-    };
-  }
-  if (target.altitude <= 0)
-    return {
-      blocked: true,
-      title: "Below the horizon",
-      reasons: [
-        `${target.name} is ${Math.abs(target.altitude).toFixed(0)} degrees below the calculated horizon.`,
-      ],
-    };
-  if (astronomy.sunAltitude >= 0)
-    return {
-      blocked: true,
-      title: "Daytime observing excluded",
-      reasons: [
-        "This planner supports nighttime observing. Never point binoculars or a telescope towards the Sun.",
-      ],
-    };
-  const reasons: string[] = [];
-  if (target.altitude < 15)
-    reasons.push(
-      "Low altitude: terrain and atmospheric distortion may obstruct the view.",
-    );
-  if (astronomy.sunAltitude > -6)
-    reasons.push("Bright twilight may make the object harder to locate.");
-  if (point.cloudCover > 50)
-    reasons.push(
-      "Clouds cover more than half the forecast sky; gaps at the target are unknown.",
-    );
-  if (point.precipitationChance > 30)
-    reasons.push("The forecast includes a chance of rain.");
-  if (point.windKph > 20 && equipment.kind !== "eye")
-    reasons.push("Wind may shake the instrument and mount.");
-  if (
-    equipment.kind !== "eye" &&
-    equipment.magnification > equipment.aperture * 2
-  )
-    reasons.push(
-      "Magnification is high relative to aperture; a lower-power eyepiece may provide a steadier view.",
-    );
-  if (!reasons.length)
-    reasons.push(
-      "The object is above the horizon with no major warning from the available forecast. Local obstructions and atmospheric seeing remain unknown.",
-    );
-  return {
-    blocked: false,
-    title:
-      reasons.length === 1 && reasons[0].startsWith("The object")
-        ? "Observing opportunity"
-        : "View may be limited",
-    reasons,
-  };
 }
 
 export function observationKey(
@@ -217,7 +103,10 @@ export function validateObservations(
   for (const row of value as Observation[]) {
     if (
       !row ||
-      row.version !== 1 ||
+      row.version !== 2 ||
+      row.astronomySource !== "NASA/JPL Horizons API" ||
+      !Number.isFinite(Date.parse(row.positionUtc)) ||
+      Math.abs(Date.parse(row.positionUtc) - Date.parse(row.time)) > 300000 ||
       typeof row.id !== "string" ||
       typeof row.siteId !== "string" ||
       typeof row.siteName !== "string" ||
@@ -257,8 +146,9 @@ export function validateObservations(
       [-30, 30],
       [7, 500],
       [1, 500],
-      [1, 9],
+      [0, 100],
       [0, 168],
+      [-90, 90],
     ];
     if (
       row.features.some((v, i) => v < bounds[i][0] || v > bounds[i][1]) ||
