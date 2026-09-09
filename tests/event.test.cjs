@@ -34,6 +34,7 @@ function load(file, fetchMock = global.fetch, cache = new Map()) {
 const providers = load("src/lib/event-providers.ts");
 const types = load("src/lib/event-types.ts");
 const night = load("src/lib/horizons-analysis.ts");
+const nearby = load("src/lib/nearby-places.ts");
 const utc = "2026-09-08T10:00:00.000Z";
 
 test("Horizons requests use the observer's exact coordinates and UTC", () => {
@@ -65,4 +66,48 @@ test("night analysis only recommends real dark, elevated intervals", () => {
   assert.equal(night.skyState(-18), "Astronomical night");
   assert.equal(night.analyseNight(undefined, "saturn", null).best, null);
   assert.equal(night.weatherSuitable(null), null);
+});
+
+test("Geoapify place features become usable observing-place records", () => {
+  const places = nearby.parseNearbyPlaces([
+    {
+      geometry: { coordinates: [151.2921, -33.6034] },
+      properties: {
+        place_id: "geo-place-1",
+        name: "Coastal Lookout",
+        formatted: "Coastal Lookout, New South Wales, Australia",
+        distance: 12450,
+        categories: ["tourism.attraction.viewpoint"],
+        city: "Example Bay",
+        state: "New South Wales",
+        country: "Australia",
+      },
+    },
+  ]);
+
+  assert.deepEqual(places, [
+    {
+      id: "geo-place-1",
+      name: "Coastal Lookout",
+      address: "Coastal Lookout, New South Wales, Australia",
+      latitude: -33.6034,
+      longitude: 151.2921,
+      distanceMeters: 12450,
+      categories: ["tourism.attraction.viewpoint"],
+      kind: "Viewpoint",
+      city: "Example Bay",
+      region: "New South Wales",
+      country: "Australia",
+    },
+  ]);
+});
+
+test("Geoapify route results retain real road distance and duration", () => {
+  assert.deepEqual(
+    nearby.parseGeoapifyRoute({
+      features: [{ properties: { distance: 24310.5, time: 1982.4 } }],
+    }),
+    { distanceMeters: 24310.5, durationSeconds: 1982.4 },
+  );
+  assert.equal(nearby.parseGeoapifyRoute({ features: [] }), null);
 });
