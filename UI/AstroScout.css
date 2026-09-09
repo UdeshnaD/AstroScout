@@ -927,3 +927,259 @@
     transition: none;
   }
 }
+
+/* --------------------------------------------------------------------------
+   Visual polish — merged into this standalone replacement stylesheet
+   -------------------------------------------------------------------------- */
+
+/*
+ * AstroScout visual polish
+ * Load after the supplied stylesheet. This is intentionally an override layer:
+ * it upgrades the existing UI without requiring markup changes.
+ */
+
+.astro-site {
+  --accent: #9f2946;
+  --accent-strong: #7d1c35;
+  --green: #1f674f;
+  --cyan: #1f6175;
+  --ink: #172021;
+  --muted: #52615d;
+  --surface: #ffffff;
+  --surface-subtle: #f3f6f3;
+  --line: #d5dfd9;
+  --focus: #236e9b;
+  --radius: 10px;
+  --shadow: 0 12px 32px rgb(18 30 26 / 9%);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* Keep the theme legible: dark surfaces are blue-black, text is never greyed out. */
+.astro-site[data-theme="dark"],
+.dark .astro-site,
+.astro-site.dark {
+  --ink: #f1f6f3;
+  --muted: #bdc9c3;
+  --surface: #101817;
+  --surface-subtle: #182220;
+  --line: #354540;
+  --accent: #ef8b9e;
+  --accent-strong: #ffc0cc;
+  --green: #82c5a3;
+  --cyan: #8dc9dc;
+  --focus: #8dceff;
+  color-scheme: dark;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.astro-site :where(a, button, select, input, summary):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.astro-site :where(button, a) {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, transform 160ms ease;
+}
+
+/* Do not use a low-contrast opacity fade as the only hover affordance. */
+.astro-site :where(button, a):hover {
+  opacity: 1;
+}
+
+.astro-site :where(button, [role="button"]) {
+  min-height: 40px;
+}
+
+.astro-site :where(button, select, input) {
+  border-radius: 6px;
+}
+
+/* Plain overline, not a floating SaaS-style badge. */
+.feature-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #e6efeb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.feature-eyebrow::before {
+  width: 20px;
+  height: 1px;
+  content: "";
+  background: currentColor;
+}
+
+.sky-feature::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(3 9 9 / 74%) 0%, rgb(3 9 9 / 37%) 48%, transparent 76%);
+}
+
+.feature-cta {
+  min-height: 46px;
+  gap: 12px;
+  border-radius: 5px;
+  border-color: #f3f7f5;
+  background: rgb(15 26 24 / 88%);
+  font-weight: 650;
+}
+
+.feature-cta:hover {
+  background: #ffffff;
+  color: #101817;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 25%);
+  transform: translateY(-1px);
+}
+
+/* Use a comfortable two-column editorial layout—not a row of three icon cards. */
+.reading-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 42px;
+}
+
+.reading-links > a {
+  min-height: 220px;
+  padding: 28px 0 30px;
+}
+
+.reading-links > a:hover {
+  color: inherit;
+}
+
+.reading-links > a:hover h3 {
+  color: var(--accent-strong);
+}
+
+/* Decorative Lucide arrows are restrained; icons inside actionable controls remain usable. */
+.reading-links > a > svg:last-child {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.astro-site :where(button, a) > svg:only-child {
+  width: 18px;
+  height: 18px;
+}
+
+.astro-site :where(button, a) > svg + :not(svg),
+.astro-site :where(button, a) > :not(svg) + svg {
+  margin-inline: 2px;
+}
+
+/* Give inherited shadcn-like controls a consistent, quiet treatment. */
+.astro-site :where(.button, .btn, [data-slot="button"], .icon-button) {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.astro-site :where(.button, .btn, [data-slot="button"], .icon-button):hover {
+  border-color: var(--green);
+  background: var(--surface-subtle);
+  color: var(--green);
+}
+
+.astro-header > .icon-button:hover {
+  border-color: #d5ad76;
+  background: rgb(255 255 255 / 11%);
+  color: #ffffff;
+}
+
+.astro-site :where(input, select, textarea, [data-slot="select-trigger"]) {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.astro-site :where(input, select, textarea, [data-slot="select-trigger"]):hover {
+  border-color: var(--green);
+}
+
+/* One spacing rhythm across sections, layouts, and interactive records. */
+.astro-page-heading,
+.sky-position-section,
+.sky-reading {
+  padding-block: clamp(42px, 6vw, 72px);
+}
+
+.section-intro {
+  margin-bottom: clamp(22px, 3vw, 34px);
+}
+
+.sky-position-layout {
+  gap: clamp(28px, 4vw, 52px);
+}
+
+.tonight-next {
+  gap: clamp(34px, 5vw, 70px);
+  padding-block: clamp(42px, 6vw, 72px);
+}
+
+.astro-site .location-row,
+.astro-site .observation-record,
+.calendar-agenda article {
+  padding-block: 20px;
+}
+
+/* Dark-mode surface corrections for areas whose supplied CSS hard-coded white. */
+.astro-site[data-theme="dark"] :is(.astro-context, .astro-settings, .locations-pane,
+  .location-row, .sky-target-picker button, .calendar-day, .calendar-blank),
+.dark .astro-site :is(.astro-context, .astro-settings, .locations-pane, .location-row,
+  .sky-target-picker button, .calendar-day, .calendar-blank),
+.astro-site.dark :is(.astro-context, .astro-settings, .locations-pane, .location-row,
+  .sky-target-picker button, .calendar-day, .calendar-blank) {
+  background: var(--surface-subtle);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.astro-site[data-theme="dark"] :is(.astro-page-heading > p, .sky-hour-label,
+  .sky-target-detail p, .tonight-next p, .reading-links p, .place-preview > p,
+  .calendar-agenda p, .calendar-source),
+.dark .astro-site :is(.astro-page-heading > p, .sky-hour-label, .sky-target-detail p,
+  .tonight-next p, .reading-links p, .place-preview > p, .calendar-agenda p,
+  .calendar-source),
+.astro-site.dark :is(.astro-page-heading > p, .sky-hour-label, .sky-target-detail p,
+  .tonight-next p, .reading-links p, .place-preview > p, .calendar-agenda p,
+  .calendar-source) {
+  color: var(--muted);
+}
+
+.astro-site[data-theme="dark"] .tonight-next,
+.dark .astro-site .tonight-next,
+.astro-site.dark .tonight-next {
+  background: var(--surface-subtle);
+}
+
+@media (max-width: 760px) {
+  .reading-links {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-links > a {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .astro-site :where(button, a) {
+    transition: none;
+  }
+
+  .feature-cta:hover {
+    transform: none;
+  }
+}
