@@ -11,15 +11,15 @@ import type {
   EventWeather,
   HorizonsSnapshot,
 } from "@/lib/event-types";
-const clock = (utc: string) =>
+const clock = (utc: string, timezone: string) =>
   new Date(utc).toLocaleTimeString("en-AU", {
-    timeZone: "Australia/Sydney",
+    timeZone: timezone,
     hour: "numeric",
     minute: "2-digit",
   });
-const date = (utc: string) =>
+const date = (utc: string, timezone: string) =>
   new Date(utc).toLocaleString("en-AU", {
-    timeZone: "Australia/Sydney",
+    timeZone: timezone,
     day: "numeric",
     month: "short",
     hour: "numeric",
@@ -30,12 +30,14 @@ export function JplNightPanel({
   target,
   weather,
   locationName,
+  timezone,
   onEpoch,
 }: {
   snapshot?: HorizonsSnapshot;
   target: EventTarget;
   weather?: EventWeather | null;
   locationName: string;
+  timezone: string;
   onEpoch: (utc: string) => void;
 }) {
   const night = useMemo(
@@ -80,7 +82,7 @@ export function JplNightPanel({
       {exact && (
         <p className="jpl-narrative">
           NASA/JPL Horizons has calculated {exact.name}&apos;s apparent position
-          from {locationName} for {date(exact.utc)} Australia/Sydney.{" "}
+          from {locationName} for {date(exact.utc, timezone)} ({timezone}).{" "}
           {exact.name} is {Math.abs(exact.altitude).toFixed(2)}°{" "}
           {exact.altitude > 0 ? "above" : "below"} the {exact.compass} horizon.
         </p>
@@ -90,12 +92,12 @@ export function JplNightPanel({
         <div>
           <h3>
             {night.best
-              ? `${date(night.best.start)} – ${date(night.best.end)}`
+              ? `${date(night.best.start, timezone)} – ${date(night.best.end, timezone)}`
               : "No weather-qualified window"}
           </h3>
           <p>
             {night.best
-              ? "Best sampled window / Australia/Sydney"
+              ? `Best sampled window / ${timezone}`
               : night.reason}
           </p>
           {night.best && (
@@ -116,8 +118,8 @@ export function JplNightPanel({
       </div>
       {!night.best && night.geometryOnly && (
         <p className="event-footnote">
-          Geometry-only interval: {date(night.geometryOnly.start)} –{" "}
-          {date(night.geometryOnly.end)} Sydney. Weather suitability is not
+          Geometry-only interval: {date(night.geometryOnly.start, timezone)} –{" "}
+          {date(night.geometryOnly.end, timezone)}. Weather suitability is not
           established for this interval.
         </p>
       )}
@@ -126,6 +128,12 @@ export function JplNightPanel({
           <div className="jpl-chart-header">
             <h3>Altitude through the night</h3>
             <span>JPL samples / 5-minute spacing</span>
+          </div>
+          <div className="jpl-chart-legend" aria-label="Chart legend">
+            <span><i className="target" />{exact?.name ?? "Target"}</span>
+            <span><i className="sun" />Sun</span>
+            <span><i className="darkness" />Astronomical darkness</span>
+            <span><i className="horizon" />Horizon</span>
           </div>
           <div className="jpl-plot">
             <div className="jpl-axis">
@@ -207,11 +215,11 @@ export function JplNightPanel({
             </svg>
           </div>
           <div className="jpl-chart-times">
-            <span>{clock(night.points[0].utc)}</span>
+            <span>{clock(night.points[0].utc, timezone)}</span>
             <span>
-              {clock(night.points[Math.floor(night.points.length / 2)].utc)}
+              {clock(night.points[Math.floor(night.points.length / 2)].utc, timezone)}
             </span>
-            <span>{clock(night.points[night.points.length - 1].utc)}</span>
+            <span>{clock(night.points[night.points.length - 1].utc, timezone)}</span>
           </div>
           <label className="jpl-scrubber">
             Selected JPL sample
@@ -222,12 +230,12 @@ export function JplNightPanel({
               step="1"
               value={Math.min(index, night.points.length - 1)}
               aria-label="Night timeline sample"
-              aria-valuetext={`${date(point.utc)}, target ${point.target.altitude.toFixed(2)} degrees, Sun ${point.sun.altitude.toFixed(2)} degrees`}
+              aria-valuetext={`${date(point.utc, timezone)}, target ${point.target.altitude.toFixed(2)} degrees, Sun ${point.sun.altitude.toFixed(2)} degrees`}
               onChange={(e) => setIndex(Number(e.target.value))}
             />
           </label>
           <div className="jpl-sample-readout">
-            <strong>{date(point.utc)} Sydney</strong>
+            <strong>{date(point.utc, timezone)} / {timezone}</strong>
             <span>Exact sample UTC: {point.utc}</span>
             <span>
               Target {point.target.altitude.toFixed(2)}° / Sun{" "}
@@ -244,9 +252,8 @@ export function JplNightPanel({
             </button>
           </div>
           <p className="event-footnote">
-            Gold: target. Lilac: Sun. Green shading: Sun at/below -18°. Dashed
-            line: geometric horizon; dotted line: 20°. Lines connect JPL
-            samples; no intermediate positions are claimed.
+            The dotted guide marks 20° altitude. Lines connect JPL samples; no
+            intermediate positions are claimed.
           </p>
         </>
       )}

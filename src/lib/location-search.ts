@@ -4,6 +4,7 @@ export type LocationSearchResult = {
   latitude: number;
   longitude: number;
   elevation: number;
+  timezone: string | null;
   country: string | null;
   region: string | null;
 };
@@ -16,6 +17,7 @@ type GeoapifyResult = {
   city?: string;
   state?: string;
   country?: string;
+  timezone?: { name?: string };
   lat?: number;
   lon?: number;
 };
@@ -29,6 +31,7 @@ type OpenMeteoResult = {
   country?: string;
   admin1?: string;
   admin2?: string;
+  timezone?: string;
 };
 
 function finiteCoordinate(value: unknown, limit: number) {
@@ -57,6 +60,7 @@ export function parseGeoapifyResults(
         latitude: row.lat as number,
         longitude: row.lon as number,
         elevation: 0,
+        timezone: row.timezone?.name?.trim() || null,
         country: row.country?.trim() || null,
         region: row.state?.trim() || null,
       },
@@ -93,6 +97,7 @@ export function parseOpenMeteoResults(
           typeof row.elevation === "number" && Number.isFinite(row.elevation)
             ? row.elevation
             : 0,
+        timezone: row.timezone?.trim() || null,
         country: row.country?.trim() || null,
         region: row.admin1?.trim() || null,
       },

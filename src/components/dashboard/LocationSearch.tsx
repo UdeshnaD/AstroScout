@@ -9,6 +9,7 @@ export type LocationPreset = {
   latitude: number;
   longitude: number;
   elevation?: number;
+  timezone?: string;
 };
 
 export const locationPresets: LocationPreset[] = [
@@ -17,6 +18,7 @@ export const locationPresets: LocationPreset[] = [
     latitude: -33.7738,
     longitude: 151.1126,
     elevation: 0,
+    timezone: "Australia/Sydney",
   },
 ];
 
@@ -142,6 +144,7 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
                   latitude: result.latitude,
                   longitude: result.longitude,
                   elevation: result.elevation,
+                  timezone: result.timezone || undefined,
                 });
                 setQuery(result.label);
                 setResults([]);
@@ -158,7 +161,31 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
       )}
       {provider && !error && (
         <small className="location-search__credit">
-          Results: {provider}.
+          Results:{" "}
+          <a
+            href={
+              provider === "Geoapify"
+                ? "https://www.geoapify.com/"
+                : "https://open-meteo.com/en/docs/geocoding-api"
+            }
+            target="_blank"
+            rel="noreferrer"
+          >
+            {provider}
+          </a>
+          {provider === "Geoapify" && (
+            <>
+              {" / "}
+              <a
+                href="https://www.openstreetmap.org/copyright"
+                target="_blank"
+                rel="noreferrer"
+              >
+                © OpenStreetMap contributors
+              </a>
+            </>
+          )}
+          .
           {!fullPlaceSearch &&
             " City/postcode fallback active; add GEOAPIFY_API_KEY for addresses and landmarks."}
         </small>
