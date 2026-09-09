@@ -139,8 +139,8 @@ Image quality is classical computer vision, overnight optimisation is determinis
 | /calendar | UTC date selection for a new JPL night scan |
 | /journal | Observation history within the shared desk |
 | /method | Experimental model evidence and source explanations |
-| /places | NSW location discovery and forecast-based comparison |
-| /compare | Side-by-side shortlisted sites |
+| /places | Global observing-location search feeding the same JPL planner |
+| /compare | Redirects to the global location finder; legacy estimated-site comparison is retired |
 | /spot/[id] | Site information and JPL summary with a link to the full planner |
 
 Geist is the interface font and Newsreader the editorial/navigation font. Variable fonts are self-hosted via next/font/local. The UI uses accessible labels, visible focus states, target selection, progressive disclosure, a keyboard-operable timeline and responsive layouts.
@@ -149,10 +149,11 @@ Geist is the interface font and Newsreader the editorial/navigation font. Variab
 
 | Layer | Tools |
 | --- | --- |
-| Application | Next.js 14 App Router, React 18, TypeScript |
+| Application | Next.js 15 App Router, React 18, TypeScript |
 | Interface | CSS/Tailwind, Lucide, Radix UI, Motion, Geist/Newsreader |
 | Astronomy | NASA/JPL Horizons API, csv-parse |
 | Weather | Open-Meteo forecast API |
+| Location search | Geoapify geocoding; Open-Meteo city/postcode fallback |
 | Maps | Leaflet, OpenStreetMap |
 | Image processing | Self-hosted OpenCV.js, Web Worker, browser image APIs |
 | Experimental ML | ml-random-forest |
@@ -172,10 +173,12 @@ UI/
 src/
   app/api/event/           Horizons and weather server routes
   app/api/astronomy/       Compatibility summary backed by the same JPL service
+  app/api/locations/       Server-side global geocoding route
   lib/event-providers.ts  JPL requests, CSV validation and weather parsing
   lib/horizons-analysis.ts Overnight windows and Sun/Moon interpretation
   lib/horizons-summary.ts Legacy display adapter for JPL results
   lib/jpl-sighting.ts     Real-report eligibility and JPL feature extraction
+  lib/location-search.ts  Validated provider response adapters
   lib/observation-model.ts Random forest, calibration and temporal evaluation
   lib/event-log.ts        Local storage and evidence exports
   lib/sky-image.ts        Upload validation and worker orchestration
@@ -204,6 +207,14 @@ npm start
 
 The predev/prebuild scripts prepare the self-hosted OpenCV runtime. The public JPL and Open-Meteo endpoints used here do not require API keys; their usage terms and service availability still apply. External connectivity is required for current API results.
 
+City and postcode search works without configuration through Open-Meteo. For worldwide address, landmark and place-name search, create a free Geoapify key and add it to `.env.local` without exposing it to browser code:
+
+```powershell
+GEOAPIFY_API_KEY=your_key_here
+```
+
+The Geoapify free plan currently provides 3,000 credits per day. Restart the development server after adding or changing the key.
+
 ## API Routes
 
 | Endpoint | Response |
@@ -211,6 +222,7 @@ The predev/prebuild scripts prepare the self-hosted OpenCV runtime. The public J
 | GET /api/event/horizons?lat=...&lon=...&elevation=...&utc=... | Per-body exact positions, overnight series and provenance |
 | GET /api/event/weather?lat=...&lon=...&elevation=... | Separate current/hourly forecast source envelope |
 | GET /api/astronomy/tonight?lat=...&lon=...&elevation=...&startTime=... | Compatibility summary and snapshot using the same JPL service |
+| GET /api/locations/search?q=... | Validated global geocoding results; Geoapify when configured, Open-Meteo fallback otherwise |
 
 UTC inputs must include seconds and an explicit Z suffix; fractional seconds are supported. No API key is exposed to visitors.
 

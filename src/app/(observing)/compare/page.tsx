@@ -1,4 +1,6 @@
+import { redirect } from "next/navigation";
+
 export default function ComparePage() {
-  return null;
+  redirect("/places");
 }
 export const metadata = { title: "Compare Places | AstroScout" };

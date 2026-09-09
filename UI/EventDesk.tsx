@@ -16,6 +16,7 @@ import {
   ImagePlus,
   Info,
   Loader2,
+  LocateFixed,
   MapPin,
   RefreshCw,
   Telescope,
@@ -35,6 +36,10 @@ import type {
   SourceResult,
 } from "@/lib/event-types";
 import { analyseSkyImage, validateSkyImage } from "@/lib/sky-image";
+import {
+  LocationSearch,
+  type LocationPreset,
+} from "@/components/dashboard/LocationSearch";
 import {
   eventLogKey,
   observationsCsv,
@@ -83,6 +88,12 @@ export function EventDesk({
   const pathname = usePathname();
   const [now, setNow] = useState("");
   const [location, setLocation] = useState<EventLocation>(initialLocation);
+  const [locationName, setLocationName] = useState(
+    initialLocation.latitude === mqLocation.latitude &&
+      initialLocation.longitude === mqLocation.longitude
+      ? "Macquarie University"
+      : "Custom observing location",
+  );
   const [latitude, setLatitude] = useState(String(initialLocation.latitude));
   const [longitude, setLongitude] = useState(String(initialLocation.longitude));
   const [elevation, setElevation] = useState(String(initialLocation.elevation));
@@ -102,6 +113,7 @@ export function EventDesk({
   const [positionLoading, setPositionLoading] = useState(true);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [revision, setRevision] = useState(0);
+  const [locating, setLocating] = useState(false);
   const [file, setFile] = useState<File>();
   const [preview, setPreview] = useState("");
   const [uploadedAt, setUploadedAt] = useState("");
@@ -154,6 +166,7 @@ export function EventDesk({
         elev <= 10000
       ) {
         setLocation({ latitude: lat, longitude: lon, elevation: elev });
+        setLocationName("Shared observing location");
         setLatitude(String(lat));
         setLongitude(String(lon));
         setElevation(String(elev));
@@ -321,6 +334,61 @@ export function EventDesk({
     setUtc(time);
     setEpochInput(time.slice(0, -1));
     setRevision((r) => r + 1);
+  }
+  function chooseLocation(selected: LocationPreset) {
+    const elevation =
+      typeof selected.elevation === "number" &&
+      Number.isFinite(selected.elevation) &&
+      selected.elevation >= -500 &&
+      selected.elevation <= 10000
+        ? selected.elevation
+        : 0;
+    setLatitude(String(selected.latitude));
+    setLongitude(String(selected.longitude));
+    setElevation(String(elevation));
+    setLocationName(selected.label);
+    setLocation({
+      latitude: selected.latitude,
+      longitude: selected.longitude,
+      elevation,
+    });
+    setFormError("");
+    setNotice(`Using ${selected.label} for JPL and weather calculations.`);
+  }
+  function useCurrentLocation() {
+    if (!navigator.geolocation) {
+      setFormError("Location access is unavailable in this browser.");
+      return;
+    }
+    setLocating(true);
+    setFormError("");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const elevation =
+          position.coords.altitude !== null &&
+          Number.isFinite(position.coords.altitude) &&
+          position.coords.altitude >= -500 &&
+          position.coords.altitude <= 10000
+            ? position.coords.altitude
+            : 0;
+        chooseLocation({
+          label: "Current device location",
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          elevation,
+        });
+        setLocating(false);
+      },
+      (error) => {
+        setLocating(false);
+        setFormError(
+          error.code === error.PERMISSION_DENIED
+            ? "Location permission was denied. Search for a place instead."
+            : "Your current location could not be determined. Search for a place instead.",
+        );
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 },
+    );
   }
   function removeImage() {
     setRealObservationConfirmed(false);
@@ -500,10 +568,6 @@ export function EventDesk({
       !recorded &&
       target !== "sun",
   );
-  const atMq =
-    location.latitude === mqLocation.latitude &&
-    location.longitude === mqLocation.longitude;
-
   return (
     <div
       className={`event-desk ${pathname === "/observe" ? "jpl-observe-view" : "jpl-plan-view"}`}
@@ -543,7 +607,7 @@ export function EventDesk({
         <div>
           <MapPin size={19} />
           <strong>
-            {atMq ? "Macquarie University" : "Custom observing location"}
+            {locationName}
           </strong>
           <span>
             {location.latitude}, {location.longitude} / elevation{" "}
@@ -564,6 +628,8 @@ export function EventDesk({
                 ? "Observation journal"
                 : pathname === "/method"
                   ? "The science"
+                  : pathname === "/places"
+                    ? "Choose your observing location"
                   : pathname === "/calendar"
                     ? "Observing calendar"
                     : pathname === "/observe"
@@ -580,8 +646,70 @@ export function EventDesk({
             Refresh to now
           </button>
         </div>
+        {pathname === "/places" && (
+          <section className="event-place-finder" aria-labelledby="place-finder-heading">
+            <div>
+              <p className="event-eyebrow">Global location search</p>
+              <h2 id="place-finder-heading">Calculate the sky from anywhere.</h2>
+              <p>
+                Choose an indexed place or use this device's coordinates. The
+                selected latitude and longitude are sent to JPL Horizons and
+                Open-Meteo; AstroScout does not claim that every search result
+                is a verified dark-sky site.
+              </p>
+            </div>
+            <div className="event-place-finder__controls">
+              <LocationSearch
+                value={{
+                  label: locationName,
+                  latitude: location.latitude,
+                  longitude: location.longitude,
+                  elevation: location.elevation,
+                }}
+                onChange={chooseLocation}
+              />
+              <button
+                className="event-secondary"
+                type="button"
+                onClick={useCurrentLocation}
+                disabled={locating}
+              >
+                {locating ? (
+                  <Loader2 size={17} className="spin" />
+                ) : (
+                  <LocateFixed size={17} />
+                )}
+                Use my location
+              </button>
+            </div>
+          </section>
+        )}
         <details className="event-settings">
           <summary>Location &amp; ephemeris time</summary>
+          <div className="event-location-search">
+            <LocationSearch
+              value={{
+                label: locationName,
+                latitude: location.latitude,
+                longitude: location.longitude,
+                elevation: location.elevation,
+              }}
+              onChange={chooseLocation}
+            />
+            <button
+              className="event-secondary"
+              type="button"
+              onClick={useCurrentLocation}
+              disabled={locating}
+            >
+              {locating ? (
+                <Loader2 size={17} className="spin" />
+              ) : (
+                <LocateFixed size={17} />
+              )}
+              Use my location
+            </button>
+          </div>
           <form
             onSubmit={(event) => {
               event.preventDefault();
@@ -611,6 +739,11 @@ export function EventDesk({
               }
               setFormError("");
               setLocation({ latitude: lat, longitude: lon, elevation: elev });
+              setLocationName(
+                lat === mqLocation.latitude && lon === mqLocation.longitude
+                  ? "Macquarie University"
+                  : "Custom observing location",
+              );
               setUtc(time.toISOString());
             }}
           >
@@ -750,9 +883,7 @@ export function EventDesk({
                 snapshot={positions}
                 target={target}
                 weather={weather?.data}
-                locationName={
-                  atMq ? "Macquarie University" : "your selected location"
-                }
+                locationName={locationName}
                 onEpoch={(time) => {
                   setUtc(time);
                   setEpochInput(time.slice(0, -1));
