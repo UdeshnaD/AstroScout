@@ -80,10 +80,10 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
       "Choose a target and explore its real position, best viewing window and local weather.",
   },
   "/places": {
-    eyebrow: "Live place discovery",
-    title: "Find a real observing place.",
+    eyebrow: "Places",
+    title: "Find somewhere to observe.",
     intro:
-      "Search globally, then explore outdoor places returned live by Geoapify. Select one to calculate its real sky and weather.",
+      "Search for a location, explore nearby outdoor areas and check the sky and weather before you go.",
   },
   "/calendar": {
     eyebrow: "Plan another night",
@@ -395,6 +395,9 @@ export function EventDesk({
     elevation: location.elevation,
     timezone,
   };
+  const exactSearchIsSelected =
+    location.latitude === placeOrigin.latitude &&
+    location.longitude === placeOrigin.longitude;
 
   return (
     <div className="event-desk">
@@ -463,7 +466,7 @@ export function EventDesk({
                 <p className="event-kicker">SEARCH CENTRE</p>
                 <h2 id="location-search-heading">Where should the search begin?</h2>
                 <p>
-                  Search a city, venue, landmark or address, or use your phone’s location. AstroScout then asks Geoapify for real outdoor places nearby.
+                  Search a city, venue, landmark or address, or use your phone’s current location.
                 </p>
               </div>
               <div className="event-place-finder__controls">
@@ -472,6 +475,28 @@ export function EventDesk({
                   {locating ? <Loader2 className="spin" size={17} /> : <LocateFixed size={17} />}
                   Use my location
                 </button>
+                <div className="event-place-finder__exact" aria-live="polite">
+                  <MapPin size={18} aria-hidden="true" />
+                  <span>
+                    <small>Exact search point</small>
+                    <strong>{placeOrigin.label}</strong>
+                    <span>{placeOrigin.latitude.toFixed(5)}, {placeOrigin.longitude.toFixed(5)}</span>
+                  </span>
+                  {exactSearchIsSelected ? (
+                    <span className="event-place-finder__selected-label"><Check size={15} /> Selected</span>
+                  ) : (
+                    <button type="button" onClick={() => chooseLocation(placeOrigin, false)}>
+                      Use exact point
+                    </button>
+                  )}
+                </div>
+                <Link
+                  className="event-primary event-link-button"
+                  href="/"
+                  onClick={() => chooseLocation(placeOrigin, false)}
+                >
+                  View tonight from this exact location
+                </Link>
               </div>
             </section>
             <NearbyPlacesExplorer

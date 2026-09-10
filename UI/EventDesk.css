@@ -205,6 +205,50 @@
   display: grid;
   gap: 10px;
 }
+.event-place-finder__exact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #b9c9c0;
+  border-radius: 5px;
+  background: #fff;
+}
+.event-place-finder__exact > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.event-place-finder__exact small,
+.event-place-finder__exact > span:nth-child(2) > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.event-place-finder__exact strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-place-finder__exact > button {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--forest);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 700;
+}
+.event-place-finder__selected-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 700;
+}
 
 .places-explorer {
   margin-top: 28px;
@@ -232,12 +276,6 @@
   align-items: flex-end;
   gap: 10px;
   flex: 0 0 auto;
-}
-.places-explorer__filters label {
-  display: grid;
-  gap: 5px;
-  color: var(--muted);
-  font-size: 11px;
 }
 .places-explorer__filters select {
   min-height: 42px;
@@ -1017,12 +1055,17 @@
   .event-heading { display: grid; }
   .event-heading h1 { font-size: 38px; }
   .event-place-finder { gap: 22px; padding: 20px; }
+  .event-place-finder__exact { grid-template-columns: auto minmax(0, 1fr); }
+  .event-place-finder__exact > button,
+  .event-place-finder__selected-label {
+    grid-column: 2;
+    justify-self: start;
+  }
   .event-primary,
   .event-secondary,
   .event-link-button { min-height: 44px; }
   .places-explorer__toolbar { display: grid; }
   .places-explorer__filters { justify-content: space-between; }
-  .places-explorer__filters label { flex: 1; }
   .places-explorer__filters select { width: 100%; min-height: 44px; }
   .places-explorer__workspace { grid-template-columns: 1fr; }
   .places-explorer__list {

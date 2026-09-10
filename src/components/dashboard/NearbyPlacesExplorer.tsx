@@ -9,7 +9,6 @@ import {
   Loader2,
   MapPin,
   Navigation,
-  RefreshCw,
 } from "lucide-react";
 import { NearbyPlacesMap } from "./NearbyPlacesMap";
 import type { LocationPreset } from "./LocationSearch";
@@ -57,7 +56,6 @@ export function NearbyPlacesExplorer({
   const [loading, setLoading] = useState(true);
   const [routeLoading, setRouteLoading] = useState(false);
   const [error, setError] = useState("");
-  const [revision, setRevision] = useState(0);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -85,7 +83,7 @@ export function NearbyPlacesExplorer({
         if (!controller.signal.aborted) setLoading(false);
       });
     return () => controller.abort();
-  }, [origin.latitude, origin.longitude, radiusKm, revision]);
+  }, [origin.latitude, origin.longitude, radiusKm]);
 
   useEffect(() => {
     if (!selected) return;
@@ -138,38 +136,35 @@ export function NearbyPlacesExplorer({
     <section className="places-explorer" aria-labelledby="nearby-places-heading">
       <div className="places-explorer__toolbar">
         <div>
-          <p className="event-kicker">LIVE GEOAPIFY PLACES</p>
-          <h2 id="nearby-places-heading">Explore outdoor places near {origin.label}</h2>
-          <p>Real map locations—not a curated or hardcoded list.</p>
+          <p className="event-kicker">NEARBY PLACES</p>
+          <h2 id="nearby-places-heading">Explore around {origin.label}</h2>
+          <p>Viewpoints, parks and outdoor areas near your selected location.</p>
         </div>
         <div className="places-explorer__filters">
-          <label>
-            Search radius
-            <select value={radiusKm} onChange={(event) => setRadiusKm(Number(event.target.value))}>
-              <option value={10}>10 km</option>
-              <option value={25}>25 km</option>
-              <option value={50}>50 km</option>
-              <option value={100}>100 km</option>
-            </select>
-          </label>
-          <button type="button" className="event-secondary" onClick={() => setRevision((value) => value + 1)} disabled={loading}>
-            {loading ? <Loader2 className="spin" size={17} /> : <RefreshCw size={17} />}
-            Refresh
-          </button>
+          <select
+            aria-label="Distance from selected location"
+            value={radiusKm}
+            onChange={(event) => setRadiusKm(Number(event.target.value))}
+          >
+            <option value={10}>Within 10 km</option>
+            <option value={25}>Within 25 km</option>
+            <option value={50}>Within 50 km</option>
+            <option value={100}>Within 100 km</option>
+          </select>
         </div>
       </div>
 
       {error && <p className="event-error" role="alert">{error}</p>}
       {!error && loading && (
-        <p className="places-explorer__loading"><Loader2 className="spin" size={18} /> Asking Geoapify for nearby viewpoints and outdoor places…</p>
+        <p className="places-explorer__loading"><Loader2 className="spin" size={18} /> Finding nearby outdoor places…</p>
       )}
       {!error && !loading && places.length === 0 && (
-        <p className="places-explorer__empty">Geoapify did not return a matching outdoor place inside this radius. Try a larger radius or another search centre.</p>
+        <p className="places-explorer__empty">No matching outdoor places were found within this radius. Try a larger area or another location.</p>
       )}
 
       {places.length > 0 && (
         <div className="places-explorer__workspace">
-          <ol className="places-explorer__list" aria-label="Nearby Geoapify places">
+          <ul className="places-explorer__list" aria-label="Nearby places">
             {places.map((place, index) => (
               <li key={place.id}>
                 <button
@@ -187,7 +182,7 @@ export function NearbyPlacesExplorer({
                 </button>
               </li>
             ))}
-          </ol>
+          </ul>
 
           <div className="places-explorer__map-panel">
             <NearbyPlacesMap
@@ -199,7 +194,7 @@ export function NearbyPlacesExplorer({
             {selected ? (
               <article className="places-explorer__detail">
                 <div>
-                  <p className="event-kicker">SELECTED GEOAPIFY PLACE</p>
+                  <p className="event-kicker">SELECTED PLACE</p>
                   <h3>{selected.name}</h3>
                   <p>{selected.address}</p>
                 </div>
@@ -220,7 +215,7 @@ export function NearbyPlacesExplorer({
               <div className="places-explorer__prompt">
                 <MapPin size={24} />
                 <strong>Select a map marker or place</strong>
-                <span>AstroScout will then request its route, weather and exact JPL sky calculation.</span>
+                <span>See travel details, local conditions and tonight’s viewing information.</span>
               </div>
             )}
           </div>
