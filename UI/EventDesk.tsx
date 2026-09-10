@@ -13,11 +13,14 @@ import {
   Loader2,
   LocateFixed,
   MapPin,
+  QrCode,
   RefreshCw,
   Telescope,
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
 import { JplNightPanel } from "./JplNightPanel";
+import { NearbyPlacesExplorer } from "@/components/dashboard/NearbyPlacesExplorer";
+import { PhoneJoin } from "@/components/dashboard/PhoneJoin";
 import {
   LocationSearch,
   type LocationPreset,
@@ -77,10 +80,10 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
       "Choose a target and explore its real position, best viewing window and local weather.",
   },
   "/places": {
-    eyebrow: "Observer location",
-    title: "Calculate the sky from anywhere.",
+    eyebrow: "Places",
+    title: "Find somewhere to observe.",
     intro:
-      "Search globally or use this device’s coordinates. Your selected location drives every astronomy and weather result.",
+      "Search for a location, explore nearby outdoor areas and check the sky and weather before you go.",
   },
   "/calendar": {
     eyebrow: "Plan another night",
@@ -93,6 +96,12 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
     title: "Real sources. Explainable decisions.",
     intro:
       "AstroScout combines authoritative astronomy data with weather forecasts using visible, deterministic rules.",
+  },
+  "/join": {
+    eyebrow: "Join Astronomy Night",
+    title: "Take AstroScout outside.",
+    intro:
+      "Share this live site with visitors using a QR code generated from its current address.",
   },
 };
 
@@ -111,6 +120,17 @@ export function EventDesk({
       : "Custom observing location",
   );
   const [timezone, setTimezone] = useState("Australia/Sydney");
+  const [placeOrigin, setPlaceOrigin] = useState<LocationPreset>({
+    label:
+      initialLocation.latitude === mqLocation.latitude &&
+      initialLocation.longitude === mqLocation.longitude
+        ? "Macquarie University"
+        : "Custom observing location",
+    latitude: initialLocation.latitude,
+    longitude: initialLocation.longitude,
+    elevation: initialLocation.elevation,
+    timezone: "Australia/Sydney",
+  });
   const [latitude, setLatitude] = useState(String(initialLocation.latitude));
   const [longitude, setLongitude] = useState(String(initialLocation.longitude));
   const [elevation, setElevation] = useState(String(initialLocation.elevation));
@@ -154,6 +174,13 @@ export function EventDesk({
         setElevation(String(elev));
         setLocationName("Shared observing location");
         setTimezone(deviceTimezone());
+        setPlaceOrigin({
+          label: "Shared observing location",
+          latitude: lat,
+          longitude: lon,
+          elevation: elev,
+          timezone: deviceTimezone(),
+        });
       } else {
         setFormError("The shared location is invalid, so Macquarie University remains selected.");
       }
@@ -249,7 +276,7 @@ export function EventDesk({
     setNotice("Updated to the current time.");
   }
 
-  function chooseLocation(selected: LocationPreset) {
+  function chooseLocation(selected: LocationPreset, updatePlaceOrigin = true) {
     const selectedElevation =
       typeof selected.elevation === "number" &&
       selected.elevation >= -500 &&
@@ -266,6 +293,13 @@ export function EventDesk({
     setElevation(String(selectedElevation));
     setLocationName(selected.label);
     setTimezone(selected.timezone || deviceTimezone());
+    if (updatePlaceOrigin) {
+      setPlaceOrigin({
+        ...selected,
+        elevation: selectedElevation,
+        timezone: selected.timezone || deviceTimezone(),
+      });
+    }
     setFormError("");
     setNotice(`Now calculating from ${selected.label}.`);
   }
@@ -336,6 +370,16 @@ export function EventDesk({
         : "Custom observing location",
     );
     setTimezone(deviceTimezone());
+    setPlaceOrigin({
+      label:
+        lat === mqLocation.latitude && lon === mqLocation.longitude
+          ? "Macquarie University"
+          : "Custom observing location",
+      latitude: lat,
+      longitude: lon,
+      elevation: elev,
+      timezone: deviceTimezone(),
+    });
     setUtc(time.toISOString());
     setFormError("");
     setNotice("Custom coordinates and UTC time applied.");
@@ -351,6 +395,9 @@ export function EventDesk({
     elevation: location.elevation,
     timezone,
   };
+  const exactSearchIsSelected =
+    location.latitude === placeOrigin.latitude &&
+    location.longitude === placeOrigin.longitude;
 
   return (
     <div className="event-desk">
@@ -363,7 +410,7 @@ export function EventDesk({
         <nav aria-label="Main navigation">
           {[
             ["/", "Tonight"],
-            ["/places", "Location"],
+            ["/places", "Explore places"],
             ["/calendar", "Calendar"],
             ["/method", "How it works"],
           ].map(([href, label]) => (
@@ -371,6 +418,9 @@ export function EventDesk({
               {label}
             </Link>
           ))}
+          <Link href="/join" className="event-join-link" aria-current={pathname === "/join" ? "page" : undefined}>
+            <QrCode size={15} /> Phone QR
+          </Link>
         </nav>
       </header>
 
@@ -407,26 +457,55 @@ export function EventDesk({
         {formError && <p className="event-error" role="alert">{formError}</p>}
 
         {pathname === "/places" && (
-          <section className="event-place-finder" aria-labelledby="location-search-heading">
-            <div>
-              <p className="event-kicker">GLOBAL SEARCH</p>
-              <h2 id="location-search-heading">Set the observer’s coordinates</h2>
-              <p>
-                Search a city, venue, landmark or address. AstroScout treats it as an observer location—not as a verified dark-sky site.
-              </p>
-            </div>
-            <div className="event-place-finder__controls">
-              <LocationSearch value={searchValue} onChange={chooseLocation} />
-              <button className="event-secondary" type="button" onClick={useCurrentLocation} disabled={locating}>
-                {locating ? <Loader2 className="spin" size={17} /> : <LocateFixed size={17} />}
-                Use my location
-              </button>
-              <Link className="event-primary event-link-button" href="/">
-                Open tonight’s sky
-              </Link>
-            </div>
-          </section>
+          <>
+            <section className="event-place-finder" aria-labelledby="location-search-heading">
+              <div>
+                <p className="event-kicker">SEARCH CENTRE</p>
+                <h2 id="location-search-heading">Where should the search begin?</h2>
+                <p>
+                  Search a city, venue, landmark or address, or use your phone’s current location.
+                </p>
+              </div>
+              <div className="event-place-finder__controls">
+                <LocationSearch value={searchValue} onChange={chooseLocation} />
+                <button className="event-secondary" type="button" onClick={useCurrentLocation} disabled={locating}>
+                  {locating ? <Loader2 className="spin" size={17} /> : <LocateFixed size={17} />}
+                  Use my location
+                </button>
+                <div className="event-place-finder__exact" aria-live="polite">
+                  <MapPin size={18} aria-hidden="true" />
+                  <span>
+                    <small>Exact search point</small>
+                    <strong>{placeOrigin.label}</strong>
+                    <span>{placeOrigin.latitude.toFixed(5)}, {placeOrigin.longitude.toFixed(5)}</span>
+                  </span>
+                  {exactSearchIsSelected ? (
+                    <span className="event-place-finder__selected-label"><Check size={15} /> Selected</span>
+                  ) : (
+                    <button type="button" onClick={() => chooseLocation(placeOrigin, false)}>
+                      Use exact point
+                    </button>
+                  )}
+                </div>
+                <Link
+                  className="event-primary event-link-button"
+                  href="/"
+                  onClick={() => chooseLocation(placeOrigin, false)}
+                >
+                  View tonight from this exact location
+                </Link>
+              </div>
+            </section>
+            <NearbyPlacesExplorer
+              origin={placeOrigin}
+              weather={weather}
+              weatherLoading={weatherLoading}
+              onSelect={(selected) => chooseLocation(selected, false)}
+            />
+          </>
         )}
+
+        {pathname === "/join" && <PhoneJoin />}
 
         {pathname === "/calendar" && (
           <div className="event-calendar-page">
@@ -452,7 +531,7 @@ export function EventDesk({
               <ul>
                 <li><strong>NASA/JPL Horizons</strong> calculates apparent altitude, azimuth, direction, magnitude and illumination.</li>
                 <li><strong>Open-Meteo</strong> supplies forecast cloud, rain, visibility, wind and temperature.</li>
-                <li><strong>Geoapify</strong> converts a searched place into coordinates; Open-Meteo provides the no-key city fallback.</li>
+                <li><strong>Geoapify</strong> converts searches into coordinates, discovers nearby outdoor places and estimates driving routes; Open-Meteo provides the no-key city fallback.</li>
               </ul>
             </section>
             <section>

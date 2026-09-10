@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="AstroScout telescope icon">
+  <rect width="512" height="512" rx="104" fill="#111916"/>
+  <circle cx="375" cy="122" r="28" fill="#e8be68"/>
+  <circle cx="409" cy="188" r="10" fill="#f7f4e8"/>
+  <path d="M118 163 344 89l24 72-226 74z" fill="#f7f4e8"/>
+  <path d="m99 171 50-16 26 80-50 16z" fill="#e8be68"/>
+  <path d="m205 223 75-24 13 39-75 24z" fill="#dbe9e1"/>
+  <path d="m251 247 21-7 75 184h-38zM236 253l22 8-45 163h-38z" fill="#f7f4e8"/>
+  <circle cx="245" cy="250" r="31" fill="#2e6f51" stroke="#f7f4e8" stroke-width="12"/>
+</svg>

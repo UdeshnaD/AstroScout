@@ -1,4 +1,5 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 import { interfaceFont, editorialFont } from "@ui/fonts";
 
@@ -6,6 +7,21 @@ export const metadata: Metadata = {
   title: "AstroScout | MQ Astronomy Night",
   description:
     "Use real NASA/JPL positions and local weather to plan when and where to observe the Moon and visible planets.",
+  manifest: "/manifest.webmanifest",
+  applicationName: "AstroScout",
+  appleWebApp: {
+    capable: true,
+    title: "AstroScout",
+    statusBarStyle: "black-translucent",
+  },
+  formatDetection: { telephone: false },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: "#111916",
 };
 
 export default function RootLayout({

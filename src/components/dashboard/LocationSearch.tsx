@@ -155,6 +155,7 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
               <span>
                 {result.latitude.toFixed(4)}, {result.longitude.toFixed(4)}
               </span>
+              <em>Choose this exact location</em>
             </button>
           ))}
         </div>

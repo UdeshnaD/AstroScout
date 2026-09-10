@@ -158,6 +158,14 @@ a {
   font-size: 11px;
 }
 
+.location-search__results > button em {
+  margin-top: 3px;
+  color: #174f3b;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+}
+
 @media (max-width: 560px) {
   .location-search__input > button span {
     display: none;

@@ -205,6 +205,361 @@
   display: grid;
   gap: 10px;
 }
+.event-place-finder__exact {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px;
+  border: 1px solid #b9c9c0;
+  border-radius: 5px;
+  background: #fff;
+}
+.event-place-finder__exact > span:nth-child(2) {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.event-place-finder__exact small,
+.event-place-finder__exact > span:nth-child(2) > span {
+  color: var(--muted);
+  font-size: 10px;
+}
+.event-place-finder__exact strong {
+  overflow: hidden;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.event-place-finder__exact > button {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid var(--forest);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 700;
+}
+.event-place-finder__selected-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.places-explorer {
+  margin-top: 28px;
+}
+.places-explorer__toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 28px;
+  margin-bottom: 18px;
+}
+.places-explorer__toolbar h2 {
+  margin: 6px 0 7px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(25px, 3vw, 34px);
+  font-weight: 500;
+}
+.places-explorer__toolbar p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.places-explorer__filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.places-explorer__filters select {
+  min-height: 42px;
+  padding: 8px 34px 8px 10px;
+  border: 1px solid #b9c6bf;
+  border-radius: 4px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.places-explorer__loading,
+.places-explorer__empty {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 92px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 13px;
+}
+.places-explorer__workspace {
+  display: grid;
+  grid-template-columns: minmax(270px, 340px) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.places-explorer__list {
+  max-height: 690px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  border-right: 1px solid var(--line);
+  list-style: none;
+}
+.places-explorer__list li + li {
+  border-top: 1px solid #e6ece8;
+}
+.places-explorer__list button {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr);
+  gap: 10px;
+  width: 100%;
+  min-height: 94px;
+  padding: 15px 14px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+}
+.places-explorer__list button:hover,
+.places-explorer__list button.is-selected {
+  border-left-color: var(--forest);
+  background: #edf4f0;
+}
+.places-explorer__number {
+  color: #829087;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.places-explorer__place {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+.places-explorer__place strong,
+.places-explorer__place small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.places-explorer__place strong {
+  font-size: 14px;
+}
+.places-explorer__place small,
+.places-explorer__place > span {
+  color: var(--muted);
+  font-size: 11px;
+}
+.places-explorer__place > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.places-explorer__map-panel {
+  display: grid;
+  grid-template-rows: 410px auto;
+  min-width: 0;
+}
+.places-map {
+  z-index: 0;
+  width: 100%;
+  height: 410px;
+  background: #dbe8e0;
+}
+.places-map-pin {
+  border: 0;
+  background: transparent;
+}
+.places-map-pin span {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 2px 8px rgb(13 47 36 / 28%);
+  background: var(--paper);
+  color: var(--forest-dark);
+  font-size: 12px;
+  font-weight: 750;
+}
+.places-map-pin--selected span {
+  background: var(--forest);
+  color: #fff;
+  transform: scale(1.15);
+}
+.places-map-pin--origin span {
+  width: 48px;
+  border-color: var(--forest);
+  background: var(--gold);
+  color: var(--forest-dark);
+  font-size: 10px;
+}
+.places-explorer__detail,
+.places-explorer__prompt {
+  min-height: 250px;
+  padding: 24px;
+}
+.places-explorer__detail h3 {
+  margin: 5px 0 5px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 27px;
+  font-weight: 500;
+}
+.places-explorer__detail > div:first-child > p:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.places-explorer__facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px 20px;
+  margin: 18px 0;
+  color: #41574b;
+  font-size: 12px;
+}
+.places-explorer__facts span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.places-explorer__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-bottom: 15px;
+}
+.places-explorer__prompt {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 7px;
+  color: var(--muted);
+  text-align: center;
+}
+.places-explorer__prompt strong {
+  color: var(--ink);
+}
+.places-explorer__prompt span {
+  max-width: 47ch;
+  font-size: 12px;
+}
+
+.phone-join {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 390px);
+  gap: clamp(32px, 7vw, 90px);
+  align-items: center;
+  padding: clamp(28px, 5vw, 60px);
+  border-radius: 12px;
+  background: var(--forest-dark);
+  color: #f5faf7;
+}
+.phone-join__copy h2 {
+  max-width: 12ch;
+  margin: 8px 0 15px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: clamp(32px, 5vw, 48px);
+  font-weight: 450;
+  line-height: 1.05;
+}
+.phone-join__copy > p:nth-of-type(2) {
+  max-width: 56ch;
+  color: #cbd9d1;
+  line-height: 1.65;
+}
+.phone-join .event-kicker {
+  color: #bfcfc6;
+}
+.phone-join__copy ol {
+  display: grid;
+  gap: 11px;
+  margin: 25px 0;
+  padding: 0;
+  list-style: none;
+}
+.phone-join__copy li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #dbe5df;
+  font-size: 13px;
+}
+.phone-join__copy li > span {
+  display: grid;
+  place-items: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border: 1px solid #688075;
+  border-radius: 999px;
+  color: var(--gold);
+  font-weight: 700;
+}
+.phone-join__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+}
+.phone-join .event-primary {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: var(--forest-dark);
+}
+.phone-join .event-secondary {
+  border-color: #6e8278;
+  background: transparent;
+  color: #fff;
+}
+.phone-join .event-secondary:hover {
+  background: rgb(255 255 255 / 10%);
+}
+.phone-join__open {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 20px;
+  color: #dce8e1;
+  font-size: 12px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.phone-join__code {
+  display: grid;
+  place-items: center;
+  min-height: 390px;
+  padding: 28px;
+  border-radius: 9px;
+  background: #fff;
+  color: var(--ink);
+  text-align: center;
+}
+.phone-join__code svg {
+  display: block;
+  width: min(280px, 100%);
+  height: auto;
+}
+.phone-join__code strong {
+  margin-top: 15px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 21px;
+}
+.phone-join__code span,
+.phone-join__placeholder {
+  overflow-wrap: anywhere;
+  color: var(--muted);
+  font-size: 11px;
+}
 
 .event-calendar-page {
   display: grid;
@@ -305,7 +660,7 @@
   display: grid;
   grid-template-columns: 0.8fr 0.8fr 0.8fr 1.35fr auto;
   gap: 12px;
-  align-items: end;
+  align-items: flex-end;
   padding: 4px 0 18px;
 }
 .event-settings label {
@@ -667,6 +1022,10 @@
   .event-edition { display: none; }
   .event-place-finder,
   .event-live-grid { grid-template-columns: 1fr; }
+  .places-explorer__workspace { grid-template-columns: minmax(230px, 0.7fr) minmax(0, 1.3fr); }
+  .phone-join { grid-template-columns: 1fr; }
+  .phone-join__copy h2 { max-width: 16ch; }
+  .phone-join__code { width: min(100%, 420px); justify-self: center; }
   .event-settings form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .event-settings form button { justify-self: start; }
   .jpl-sample-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -696,6 +1055,44 @@
   .event-heading { display: grid; }
   .event-heading h1 { font-size: 38px; }
   .event-place-finder { gap: 22px; padding: 20px; }
+  .event-place-finder__exact { grid-template-columns: auto minmax(0, 1fr); }
+  .event-place-finder__exact > button,
+  .event-place-finder__selected-label {
+    grid-column: 2;
+    justify-self: start;
+  }
+  .event-primary,
+  .event-secondary,
+  .event-link-button { min-height: 44px; }
+  .places-explorer__toolbar { display: grid; }
+  .places-explorer__filters { justify-content: space-between; }
+  .places-explorer__filters select { width: 100%; min-height: 44px; }
+  .places-explorer__workspace { grid-template-columns: 1fr; }
+  .places-explorer__list {
+    display: flex;
+    max-height: none;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    scroll-snap-type: x proximity;
+  }
+  .places-explorer__list li {
+    flex: 0 0 min(82vw, 290px);
+    border-right: 1px solid #e6ece8;
+    scroll-snap-align: start;
+  }
+  .places-explorer__list li + li { border-top: 0; }
+  .places-explorer__list button { min-height: 104px; }
+  .places-explorer__map-panel { grid-template-rows: 310px auto; }
+  .places-map { height: 310px; }
+  .places-explorer__detail,
+  .places-explorer__prompt { min-height: 265px; padding: 20px; }
+  .places-explorer__actions > * { width: 100%; }
+  .phone-join { gap: 30px; padding: 24px 18px; }
+  .phone-join__copy h2 { font-size: 36px; }
+  .phone-join__actions > button { flex: 1 1 calc(50% - 9px); }
+  .phone-join__actions > button:first-child { flex-basis: 100%; }
+  .phone-join__code { min-height: 0; padding: 20px; }
   .event-session-card { grid-template-columns: 1fr; gap: 12px; }
   .event-settings form { grid-template-columns: 1fr; }
   .event-target-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -713,4 +1110,42 @@
 
 @media (prefers-reduced-motion: reduce) {
   .spin { animation: none; }
+}
+
+@media print {
+  .event-header,
+  .event-location-strip,
+  .event-heading,
+  .event-footer,
+  .phone-join__actions,
+  .phone-join__open,
+  .phone-join__copy ol,
+  .phone-join__copy > p:nth-of-type(2) {
+    display: none !important;
+  }
+  .event-main {
+    width: 100%;
+    padding: 0;
+  }
+  .phone-join {
+    display: grid;
+    min-height: 95vh;
+    grid-template-columns: 1fr;
+    place-content: center;
+    background: #fff;
+    color: #111;
+    print-color-adjust: exact;
+  }
+  .phone-join__copy {
+    text-align: center;
+  }
+  .phone-join__copy h2 {
+    max-width: none;
+  }
+  .phone-join .event-kicker {
+    color: #333;
+  }
+  .phone-join__code {
+    justify-self: center;
+  }
 }
