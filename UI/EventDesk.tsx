@@ -354,9 +354,6 @@ export function EventDesk({
 
   return (
     <div className="event-desk">
-      <a className="skip-link" href="#event-content">
-        Skip to content
-      </a>
       <header className="event-header">
         <Link href="/" className="event-brand" aria-label="AstroScout home">
           <Telescope size={25} />
