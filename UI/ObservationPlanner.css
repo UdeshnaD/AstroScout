@@ -92,6 +92,16 @@
   color: var(--muted);
   margin: 16px 0;
 }
+.viewing-difficulty {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 14px;
+  margin: 0 0 16px;
+  color: var(--muted);
+  font-size: 13px;
+}
+.viewing-difficulty strong { color: var(--ink); }
+.viewing-difficulty a { color: inherit; text-decoration: underline; }
 .observation-result {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -227,6 +237,7 @@
   font-size: 14px;
 }
 .journal-entry-fields input,
+.journal-entry-fields select,
 .journal-entry-fields textarea {
   width: 100%;
   min-width: 0;
@@ -267,6 +278,11 @@
 .journal-entry-list p {
   color: var(--muted);
   font-size: 14px;
+}
+.journal-entry-list .journal-entry-conditions {
+  margin-top: 4px;
+  color: var(--soft);
+  font-size: 13px;
 }
 .journal-entry-list p {
   margin: 7px 0 0;

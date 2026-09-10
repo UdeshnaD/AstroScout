@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import { m, useReducedMotion } from "motion/react";
 import * as ToggleGroup from "@radix-ui/react-toggle-group";
 import { Hint } from "./Hint";
+import { TransientEvents } from "./TransientEvents";
+import { ObservingLists } from "./ObservingLists";
+import { astrophotographyGuide, objectRecommendation } from "@/data/object-recommendations";
 import Link from "next/link";
 import {
   ArrowDown,
@@ -20,6 +23,11 @@ import { getAstronomySummary } from "@/lib/astronomy";
 import { formatClock } from "@/lib/format";
 import type { RankedPlan } from "@/lib/recommender";
 import type { TargetId } from "@/lib/observation-model";
+
+// The next position arrives just before the prior interpolation completes, so
+// playback is slower but the sky diagram never visibly settles between steps.
+const skyTimelineStepMs = 900;
+const skyMarkerTransitionSeconds = 1.1;
 
 export function TonightView({
   time,
@@ -41,6 +49,9 @@ export function TonightView({
   onObserve: (target: TargetId) => void;
 }) {
   const [active, setActive] = useState("saturn");
+  const [viewMode, setViewMode] = useState<"observer" | "astronomer">(
+    "observer",
+  );
   const [playing, setPlaying] = useState(false);
   const reducedMotion = useReducedMotion();
   const hourCount = plan?.weather.hourly.length ?? 0;
@@ -54,7 +65,10 @@ export function TonightView({
       setPlaying(false);
       return;
     }
-    const timer = window.setTimeout(() => onHour(hour + 1), 1800);
+    const timer = window.setTimeout(
+      () => onHour(hour + 1),
+      skyTimelineStepMs,
+    );
     return () => window.clearTimeout(timer);
   }, [playing, hour, hourCount, onHour]);
   useEffect(() => {
@@ -74,6 +88,7 @@ export function TonightView({
   );
   const saturn = astronomy?.highlights.find((target) => target.id === "saturn");
   const target = astronomy?.highlights.find((item) => item.id === active);
+  const aurora = astronomy?.aurora;
   return (
     <div className="tonight-page">
       <section className="sky-feature">
@@ -208,8 +223,8 @@ export function TonightView({
                       initial={false}
                       animate={{ x, y }}
                       transition={{
-                        duration: reducedMotion ? 0 : 1.15,
-                        ease: [0.22, 1, 0.36, 1],
+                        duration: reducedMotion ? 0 : skyMarkerTransitionSeconds,
+                        ease: "linear",
                       }}
                     >
                       <circle
@@ -309,8 +324,38 @@ export function TonightView({
               </div>
             )}
             <p>Calculated positions / flat horizon / Moon and planets only</p>
+            <div className="horizon-obstruction" role="note">
+              <strong>Horizon obstruction</strong>
+              <span>
+                Trees, hills, buildings, and other obstacles can hide an object
+                even when it is technically above the horizon.
+              </span>
+            </div>
+            {aurora && (
+              <div className="aurora-outlook horizon-aurora">
+                <span>Aurora outlook / {aurora.direction}</span>
+                <strong>
+                  {aurora.visibility} · {aurora.potential} potential
+                </strong>
+                <p>{aurora.description}</p>
+              </div>
+            )}
           </div>
           <div className="sky-target-detail">
+            <ToggleGroup.Root
+              type="single"
+              value={viewMode}
+              onValueChange={(value) => {
+                if (value === "observer" || value === "astronomer") {
+                  setViewMode(value);
+                }
+              }}
+              className="view-mode-toggle"
+              aria-label="Viewing mode"
+            >
+              <ToggleGroup.Item value="observer">Observer</ToggleGroup.Item>
+              <ToggleGroup.Item value="astronomer">Astronomer</ToggleGroup.Item>
+            </ToggleGroup.Root>
             <ToggleGroup.Root
               type="single"
               value={active}
@@ -340,6 +385,7 @@ export function TonightView({
                   : "Calculating..."}
               </span>
               <p>{target?.description}</p>
+              {target && <ObjectRecommendations targetId={target.id as TargetId} />}
               {target && (
                 <p className="sky-target-state">
                   {(target.altitude ?? 0) <= 0
@@ -348,6 +394,9 @@ export function TonightView({
                       ? "The Sun is up. This planner supports nighttime observing."
                       : "Above the horizon. Clouds and local obstructions may affect the view."}
                 </p>
+              )}
+              {viewMode === "astronomer" && target?.technical && (
+                <TechnicalDetails target={target} />
               )}
               {target && (
                 <button
@@ -361,6 +410,8 @@ export function TonightView({
             </m.div>
           </div>
         </div>
+        {time && <TransientEvents time={time} latitude={latitude} longitude={longitude} mode={viewMode} />}
+        <ObservingLists selectedTarget={active as TargetId} />
       </section>
 
       <section className="tonight-next">
@@ -443,4 +494,53 @@ export function TonightView({
       </section>
     </div>
   );
+}
+
+function TechnicalDetails({
+  target,
+}: {
+  target: NonNullable<ReturnType<typeof getAstronomySummary>>["highlights"][number];
+}) {
+  const details = target.technical;
+  if (!details) return null;
+  return (
+    <dl className="technical-details">
+      <div><dt>Altitude</dt><dd>{formatDegrees(target.altitude)}</dd></div>
+      <div><dt>Azimuth</dt><dd>{formatDegrees(target.azimuth)}</dd></div>
+      <div><dt>RA / Dec</dt><dd>{formatRa(details.rightAscension)} / {formatSignedDegrees(details.declination)}</dd></div>
+      <div><dt>Magnitude</dt><dd>{target.magnitude?.toFixed(1) ?? "—"}</dd></div>
+      <div><dt>Angular separation (Sun)</dt><dd>{formatDegrees(details.sunSeparation)}</dd></div>
+      <div><dt>Constellation</dt><dd>{details.constellation}</dd></div>
+      <div><dt>Rise / transit / set</dt><dd>{details.rise} / {details.transit} / {details.set}</dd></div>
+      <div><dt>Object type</dt><dd>{objectType(target.type)}</dd></div>
+      <div><dt>Visibility</dt><dd>{details.visibility}</dd></div>
+      <div><dt>Airmass</dt><dd>{details.airmass?.toFixed(2) ?? "Below horizon"}</dd></div>
+      <div><dt>Moon separation</dt><dd>{formatDegrees(details.moonSeparation)}</dd></div>
+    </dl>
+  );
+}
+
+function formatDegrees(value: number | undefined) {
+  return value === undefined ? "—" : `${Math.round(value)}°`;
+}
+
+function formatSignedDegrees(value: number) {
+  return `${value >= 0 ? "+" : ""}${value.toFixed(1)}°`;
+}
+
+function formatRa(hours: number) {
+  const roundedMinutes = Math.round(hours * 60);
+  return `${Math.floor(roundedMinutes / 60) % 24}h ${roundedMinutes % 60}m`;
+}
+
+function objectType(type: string) {
+  return type === "deep-sky" ? "Deep-sky object" : type[0].toUpperCase() + type.slice(1);
+}
+
+function ObjectRecommendations({ targetId }: { targetId: TargetId }) {
+  const recommendation = objectRecommendation(targetId);
+  return <div className="object-recommendations">
+    {recommendation.beginner && <p><strong> Beginner friendly</strong> {recommendation.beginner}</p>}
+    <p><strong> Astrophotography: {recommendation.photography}</strong> {recommendation.photographyNote} <a href={astrophotographyGuide} target="_blank" rel="noreferrer">NASA guide</a></p>
+  </div>;
 }

@@ -76,6 +76,13 @@ type SavedPlan = {
   mode: TravelMode;
 };
 const storageKey = "astroscout.observing-desk.v1";
+const offlineCacheKey = "astroscout.plan-cache.v1";
+type CachedPlanResults = {
+  locationKey: string;
+  plans: SpotPlan[];
+  unavailableSites: string[];
+  updatedAt: string;
+};
 const views = [
   { id: "tonight", path: "/", label: "Tonight", icon: Moon },
   { id: "explore", path: "/places", label: "Places", icon: Compass },
@@ -127,9 +134,16 @@ export function AstroScoutApp() {
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [updated, setUpdated] = useState("");
+  const [offline, setOffline] = useState(false);
+  const [offlineUpdatedAt, setOfflineUpdatedAt] = useState("");
   const [unavailableSites, setUnavailableSites] = useState<string[]>([]);
   const requestRef = useRef<AbortController>();
   const savedPanel = useRef<HTMLDialogElement>(null);
+  const sessionRef = useRef(session);
+
+  useEffect(() => {
+    sessionRef.current = session;
+  }, [session]);
 
   async function search(input: Session) {
     requestRef.current?.abort();
@@ -137,7 +151,16 @@ export function AstroScoutApp() {
     requestRef.current = controller;
     setLoading(true);
     setError("");
+    if (!navigator.onLine) {
+      setOffline(true);
+      if (!restoreCachedResults(input)) {
+        setError("You're offline and no downloaded forecast is available for this location.");
+      }
+      setLoading(false);
+      return;
+    }
     const timer = window.setTimeout(() => controller.abort(), 20000);
+    let receivedResponse = false;
     try {
       const response = await fetch("/api/plans/search", {
         method: "POST",
@@ -150,6 +173,7 @@ export function AstroScoutApp() {
           travelMode: input.travelMode,
         }),
       });
+      receivedResponse = true;
       const data = (await response.json()) as {
         locations?: SpotPlan[];
         error?: string;
@@ -174,9 +198,24 @@ export function AstroScoutApp() {
           ? ids.filter((id) => locations.some((p) => p.id === id))
           : locations.slice(0, 2).map((p) => p.id),
       );
-      setUpdated(formatClock(new Date()));
+      const updatedAt = new Date().toISOString();
+      setUpdated(formatClock(new Date(updatedAt)));
+      setOffline(false);
+      setOfflineUpdatedAt(updatedAt);
+      cacheResults({
+        locationKey: cacheLocationKey(input.location),
+        plans: locations,
+        unavailableSites: data.unavailableSites ?? [],
+        updatedAt,
+      });
     } catch (failure) {
       if (requestRef.current !== controller) return;
+      const connectionLost =
+        !navigator.onLine || (!receivedResponse && failure instanceof TypeError);
+      if (connectionLost) {
+        setOffline(true);
+        if (restoreCachedResults(input)) return;
+      }
       setError(
         controller.signal.aborted
           ? "The request took too long. Try updating the plan again."
@@ -187,6 +226,58 @@ export function AstroScoutApp() {
     } finally {
       window.clearTimeout(timer);
       if (requestRef.current === controller) setLoading(false);
+    }
+  }
+
+  function cacheResults(next: CachedPlanResults) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(offlineCacheKey) ?? "[]");
+      const entries = Array.isArray(raw) ? raw : [];
+      const retained = entries.filter(
+        (entry): entry is CachedPlanResults =>
+          isCachedPlanResults(entry) && entry.locationKey !== next.locationKey,
+      );
+      localStorage.setItem(
+        offlineCacheKey,
+        JSON.stringify([next, ...retained].slice(0, 8)),
+      );
+    } catch {
+      // Offline cache is optional; the live plan remains usable in this visit.
+    }
+  }
+
+  function restoreCachedResults(input: Session) {
+    try {
+      const raw = JSON.parse(localStorage.getItem(offlineCacheKey) ?? "[]");
+      const cached = Array.isArray(raw)
+        ? raw.find(
+            (entry): entry is CachedPlanResults =>
+              isCachedPlanResults(entry) &&
+              entry.locationKey === cacheLocationKey(input.location),
+          )
+        : undefined;
+      if (!cached) return false;
+      setQuery("");
+      setPlans(cached.plans);
+      setUnavailableSites(cached.unavailableSites);
+      setApplied(input);
+      setHour(0);
+      setSelectedId((id) =>
+        cached.plans.some((plan) => plan.id === id)
+          ? id
+          : (cached.plans[0]?.id ?? ""),
+      );
+      setComparisonIds((ids) =>
+        ids.length
+          ? ids.filter((id) => cached.plans.some((plan) => plan.id === id))
+          : cached.plans.slice(0, 2).map((plan) => plan.id),
+      );
+      setUpdated(formatClock(new Date(cached.updatedAt)));
+      setOfflineUpdatedAt(cached.updatedAt);
+      setError("");
+      return true;
+    } catch {
+      return false;
     }
   }
 
@@ -252,6 +343,21 @@ export function AstroScoutApp() {
     void search(initial);
     return () => {
       requestRef.current?.abort();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleOffline = () => setOffline(true);
+    const handleOnline = () => {
+      setOffline(false);
+      void search(sessionRef.current);
+    };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    if (!navigator.onLine) handleOffline();
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
     };
   }, []);
 
@@ -663,6 +769,15 @@ export function AstroScoutApp() {
               {error} {plans.length > 0 && "Previous results remain below."}
             </div>
           )}
+          {offline && offlineUpdatedAt && (
+            <div className="offline-banner" role="status">
+              <strong>You&apos;re offline</strong>
+              <span>
+                Here&apos;s the last forecast and observing information downloaded for this location.
+              </span>
+              <em>Last updated: {formatClock(new Date(offlineUpdatedAt))}</em>
+            </div>
+          )}
           {notice && (
             <div className="notice">
               <span>{notice}</span>
@@ -741,6 +856,7 @@ export function AstroScoutApp() {
                         : "observe"
                   }
                   requestedTarget={requestedTarget}
+                  isActive={["observe", "journal", "model"].includes(view)}
                 />
               ) : (
                 ["observe", "journal", "model"].includes(view) && (
@@ -1160,4 +1276,29 @@ function sydneyIso(value: string) {
       .formatToParts(naive)
       .find((p) => p.type === "timeZoneName")?.value ?? "GMT+10:00";
   return new Date(`${value}${offsetName.replace("GMT", "")}`).toISOString();
+}
+
+function cacheLocationKey(location: LocationPreset) {
+  return `${location.latitude.toFixed(3)},${location.longitude.toFixed(3)}`;
+}
+
+function isCachedPlanResults(value: unknown): value is CachedPlanResults {
+  if (!value || typeof value !== "object") return false;
+  const cached = value as CachedPlanResults;
+  return (
+    typeof cached.locationKey === "string" &&
+    Array.isArray(cached.plans) &&
+    cached.plans.every(
+      (plan) =>
+        plan &&
+        typeof plan.id === "string" &&
+        typeof plan.name === "string" &&
+        Number.isFinite(plan.latitude) &&
+        Number.isFinite(plan.longitude) &&
+        Array.isArray(plan.weather?.hourly),
+    ) &&
+    Array.isArray(cached.unavailableSites) &&
+    typeof cached.updatedAt === "string" &&
+    Number.isFinite(Date.parse(cached.updatedAt))
+  );
 }

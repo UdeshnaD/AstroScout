@@ -1,14 +1,21 @@
 import {
   Body,
+  Constellation,
+  DefineStar,
   Equator,
   Horizon,
   Illumination,
   MoonPhase,
   Observer,
   SearchAltitude,
+  SearchHourAngle,
   SearchRiseSet,
 } from "astronomy-engine";
-import type { AstronomySummary, NightSkyHighlight } from "@/types/astronomy";
+import type {
+  AstronomySummary,
+  AuroraOutlook,
+  NightSkyHighlight,
+} from "@/types/astronomy";
 
 // J2000 coordinates are sufficiently fixed for nightly deep-sky planning.
 // Planets continue to use astronomy-engine's ephemeris calculations below.
@@ -88,6 +95,7 @@ export function getAstronomySummary(
       altitude: Math.round(horizon.altitude * 100) / 100,
       azimuth: Math.round(horizon.azimuth),
       magnitude: Illumination(body, date).mag,
+      technical: technicalDetails(body, date, observer, noon, sunAltitude),
     };
   });
   const deepSkyHighlights: NightSkyHighlight[] = deepSkyTargets.map(([id, name, ra, dec, magnitude, equipment, description, referenceLabel, referenceUrl]) => {
@@ -106,6 +114,13 @@ export function getAstronomySummary(
       azimuth: Math.round(horizon.azimuth),
       magnitude,
       reference: { label: referenceLabel, url: referenceUrl },
+      technical: technicalDetails(
+        defineDeepSkyStar(ra, dec),
+        date,
+        observer,
+        noon,
+        sunAltitude,
+      ),
     };
   });
   return {
@@ -118,9 +133,115 @@ export function getAstronomySummary(
       ? `Dark from ${clock(twilight.date)}`
       : "No full darkness",
     highlights: [...highlights, ...deepSkyHighlights],
+    aurora: auroraOutlook(latitude, sunAltitude),
     sunAltitude: Math.round(sunAltitude),
     source: "astronomy-engine",
   };
+}
+
+// Astronomy Engine's defined star slot lets the same position, rise/set and
+// coordinate calculations work for our fixed deep-sky catalogue as for planets.
+function defineDeepSkyStar(ra: number, dec: number) {
+  DefineStar(Body.Star1, ra, dec, 1_000_000);
+  return Body.Star1;
+}
+
+function technicalDetails(
+  body: Body,
+  date: Date,
+  observer: Observer,
+  noon: Date,
+  sunAltitude: number,
+): NonNullable<NightSkyHighlight["technical"]> {
+  const apparent = Equator(body, date, observer, true, true);
+  const j2000 = Equator(body, date, observer, false, true);
+  const horizon = Horizon(date, observer, apparent.ra, apparent.dec, "normal");
+  const moon = Equator(Body.Moon, date, observer, true, true);
+  const sun = Equator(Body.Sun, date, observer, true, true);
+  const rise = SearchRiseSet(body, observer, 1, noon, 1);
+  const set = SearchRiseSet(body, observer, -1, noon, 1);
+  const transit = SearchHourAngle(body, observer, 0, noon, 1);
+  const altitude = horizon.altitude;
+
+  return {
+    rightAscension: apparent.ra,
+    declination: apparent.dec,
+    constellation: Constellation(j2000.ra, j2000.dec).name,
+    rise: rise ? clock(rise.date) : "No rise",
+    transit: clock(transit.time.date),
+    set: set ? clock(set.date) : "No set",
+    airmass: airmass(altitude),
+    sunSeparation: angularSeparation(apparent, sun),
+    moonSeparation: angularSeparation(apparent, moon),
+    visibility:
+      altitude <= 0
+        ? "Below horizon"
+        : sunAltitude >= 0
+          ? "Daylight"
+          : sunAltitude >= -6
+            ? "Civil twilight"
+            : sunAltitude >= -18
+              ? "Astronomical twilight"
+              : "Dark sky",
+  };
+}
+
+function angularSeparation(
+  first: { ra: number; dec: number },
+  second: { ra: number; dec: number },
+) {
+  const degrees = Math.PI / 180;
+  const cosine =
+    Math.sin(first.dec * degrees) * Math.sin(second.dec * degrees) +
+    Math.cos(first.dec * degrees) *
+      Math.cos(second.dec * degrees) *
+      Math.cos((first.ra - second.ra) * 15 * degrees);
+  return (Math.acos(Math.max(-1, Math.min(1, cosine))) / degrees);
+}
+
+function airmass(altitude: number) {
+  if (altitude <= 0) return null;
+  const zenithAngle = 90 - altitude;
+  return 1 /
+    (Math.cos(zenithAngle * (Math.PI / 180)) +
+      0.50572 * Math.pow(96.07995 - zenithAngle, -1.6364));
+}
+
+function auroraOutlook(latitude: number, sunAltitude: number): AuroraOutlook {
+  if (sunAltitude >= -6) {
+    return {
+      potential: "Not visible",
+      visibility: "Daylight",
+      direction: auroraDirection(latitude),
+      description:
+        "The sky is too bright at this time. Check again after evening twilight.",
+    };
+  }
+
+  const visibility = sunAltitude >= -18 ? "Twilight" : "Dark sky";
+  const absoluteLatitude = Math.abs(latitude);
+  const potential =
+    absoluteLatitude >= 55
+      ? "Moderate"
+      : absoluteLatitude >= 40
+        ? "Low"
+        : "Very low";
+  const direction = auroraDirection(latitude);
+
+  return {
+    potential,
+    visibility,
+    direction,
+    description:
+      visibility === "Twilight"
+        ? "Aurora contrast is limited by twilight. Wait for full darkness, then look toward the auroral horizon from a clear site."
+        : `Aurora needs a geomagnetic storm at this latitude. Look ${direction === "Overhead" ? "overhead" : `low toward the ${direction.toLowerCase()}`} from a dark, clear site. This is a local sky outlook, not a live aurora alert.`,
+  };
+}
+
+function auroraDirection(latitude: number): AuroraOutlook["direction"] {
+  if (Math.abs(latitude) >= 70) return "Overhead";
+  return latitude < 0 ? "Southern horizon" : "Northern horizon";
 }
 
 function clock(date: Date) {

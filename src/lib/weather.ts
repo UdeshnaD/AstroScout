@@ -75,10 +75,11 @@ function normaliseOpenMeteo(
     return nextDelta < bestDelta ? index : bestIndex;
   }, 0);
 
-  // Keep the evening timeline anchored at 8pm when a later hour is selected,
-  // so Tonight can always navigate back through the beginning of the session.
-  const eveningStartIndex = findSydneyEveningStart(hourly.time, nearestIndex);
-  const windowStartIndex = eveningStartIndex ?? nearestIndex;
+  // A Sydney observing session runs noon-to-noon. Anchoring the timeline at
+  // the preceding noon keeps afternoon hours available before the selected
+  // evening, then continues naturally through midnight and the next morning.
+  const noonStartIndex = findSydneyNoonStart(hourly.time, nearestIndex);
+  const windowStartIndex = noonStartIndex ?? nearestIndex;
 
   // A full day lets the Observe page offer every usable night-time window,
   // rather than artificially stopping at the first eight forecast hours.
@@ -144,14 +145,14 @@ function parseForecastTime(time: string) {
   return new Date(time.endsWith("Z") ? time : `${time}Z`).getTime();
 }
 
-function findSydneyEveningStart(times: string[], beforeIndex: number) {
+function findSydneyNoonStart(times: string[], beforeIndex: number) {
   const hour = new Intl.DateTimeFormat("en-AU", {
     hour: "2-digit",
     hourCycle: "h23",
     timeZone: "Australia/Sydney",
   });
   for (let index = beforeIndex; index >= 0; index -= 1) {
-    if (hour.format(new Date(parseForecastTime(times[index]))) === "20")
+    if (hour.format(new Date(parseForecastTime(times[index]))) === "12")
       return index;
   }
   return null;

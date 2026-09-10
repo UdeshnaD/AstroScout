@@ -35,6 +35,7 @@ import type { RankedPlan } from "@/lib/recommender";
 import { formatClock } from "@/lib/format";
 import { getAstronomySummary } from "@/lib/astronomy";
 import { observingSpots } from "@/data/observing-spots";
+import { viewingProfile, viewingReadinessModifier } from "@/data/viewing-difficulty";
 
 const storageKey = "astroscout.observations.v1";
 const equipmentNames = {
@@ -54,7 +55,15 @@ type JournalEntry = {
   target: string;
   equipment: string;
   notes: string;
+  visibility?: VisibilityRating;
+  transparency?: TransparencyRating;
+  conditions?: ObservingConditions;
 };
+type VisibilityRating = "Excellent" | "Good" | "Fair" | "Poor" | "Not recorded";
+type TransparencyRating = "Excellent" | "Good" | "Fair" | "Poor" | "Not recorded";
+type ObservingConditions = "Clear" | "Hazy" | "Partly cloudy" | "Cloudy" | "Windy" | "Not recorded";
+const visibilityRatings: VisibilityRating[] = ["Excellent", "Good", "Fair", "Poor", "Not recorded"];
+const observingConditions: ObservingConditions[] = ["Clear", "Hazy", "Partly cloudy", "Cloudy", "Windy", "Not recorded"];
 
 function validJournalEntries(value: unknown): JournalEntry[] {
   if (!Array.isArray(value)) return [];
@@ -69,7 +78,10 @@ function validJournalEntries(value: unknown): JournalEntry[] {
         typeof entry.location === "string" &&
         typeof entry.target === "string" &&
         typeof entry.equipment === "string" &&
-        typeof entry.notes === "string",
+        typeof entry.notes === "string" &&
+        (entry.visibility === undefined || visibilityRatings.includes(entry.visibility)) &&
+        (entry.transparency === undefined || visibilityRatings.includes(entry.transparency)) &&
+        (entry.conditions === undefined || observingConditions.includes(entry.conditions)),
     )
     .slice(-500);
 }
@@ -80,12 +92,15 @@ export function ObservationPlanner({
   onHour,
   mode = "observe",
   requestedTarget,
+  isActive = true,
 }: {
   plan: RankedPlan;
   hour: number;
   onHour: (hour: number) => void;
   mode?: "observe" | "journal" | "evidence";
   requestedTarget?: TargetId;
+  /** Prevent hidden planner views from changing the shared sky timeline. */
+  isActive?: boolean;
 }) {
   const [target, setTarget] = useState<TargetId>("saturn");
   const [equipment, setEquipment] = useState<Equipment>(
@@ -99,6 +114,9 @@ export function ObservationPlanner({
     target: "",
     equipment: "",
     notes: "",
+    visibility: "Not recorded" as VisibilityRating,
+    transparency: "Not recorded" as TransparencyRating,
+    conditions: "Not recorded" as ObservingConditions,
   });
   const [ready, setReady] = useState(false);
   const [storageWritable, setStorageWritable] = useState(true);
@@ -177,12 +195,13 @@ export function ObservationPlanner({
     [plan.latitude, plan.longitude, plan.weather.hourly, target],
   );
   useEffect(() => {
+    if (!isActive) return;
     if (
       visibleHours.length > 0 &&
       !visibleHours.some((entry) => entry.index === hour)
     )
       onHour(visibleHours[0].index);
-  }, [hour, onHour, visibleHours]);
+  }, [hour, isActive, onHour, visibleHours]);
   const model = useMemo(
     () => trainObservationModel(observations, target, equipment.kind),
     [observations, target, equipment.kind],
@@ -211,7 +230,7 @@ export function ObservationPlanner({
             0,
             Math.min(
               100,
-              100 - point.cloudCover * 0.55 - point.precipitationChance * 0.35 - Math.max(0, 25 - (selectedTarget?.altitude ?? 0)) * 1.25,
+              100 - point.cloudCover * 0.55 - point.precipitationChance * 0.35 - Math.max(0, 25 - (selectedTarget?.altitude ?? 0)) * 1.25 + viewingReadinessModifier(target, equipment.kind),
             ),
           ),
         )
@@ -363,9 +382,12 @@ export function ObservationPlanner({
         target: journalDraft.target.trim() || "Not specified",
         equipment: journalDraft.equipment.trim() || "Not specified",
         notes: journalDraft.notes.trim(),
+        visibility: journalDraft.visibility,
+        transparency: journalDraft.transparency,
+        conditions: journalDraft.conditions,
       },
     ]);
-    setJournalDraft({ observedAt: "", location: "", target: "", equipment: "", notes: "" });
+    setJournalDraft({ observedAt: "", location: "", target: "", equipment: "", notes: "", visibility: "Not recorded", transparency: "Not recorded", conditions: "Not recorded" });
     setMessage("Journal entry saved on this device.");
   }
 
@@ -488,6 +510,10 @@ export function ObservationPlanner({
           with this equipment. Resolving rings, moons or surface detail is a
           separate goal.
         </p>
+        <div className="viewing-difficulty" aria-label="Viewing difficulty by equipment">
+          {(Object.keys(equipmentNames) as Equipment["kind"][]).map((kind) => <span key={kind}><strong>{equipmentNames[kind]}</strong> {viewingProfile(target)[kind]}</span>)}
+          <a href={viewingProfile(target).sourceUrl} target="_blank" rel="noreferrer">Evidence: {viewingProfile(target).source}</a>
+        </div>
         <div className="observation-result" aria-live="polite">
           <div>
             <span className="kicker">
@@ -679,6 +705,24 @@ export function ObservationPlanner({
                 }
               />
             </label>
+            <label>
+              Visibility
+              <select value={journalDraft.visibility} onChange={(event) => setJournalDraft({ ...journalDraft, visibility: event.target.value as VisibilityRating })}>
+                {visibilityRatings.map((rating) => <option key={rating}>{rating}</option>)}
+              </select>
+            </label>
+            <label>
+              Transparency
+              <select value={journalDraft.transparency} onChange={(event) => setJournalDraft({ ...journalDraft, transparency: event.target.value as TransparencyRating })}>
+                {visibilityRatings.map((rating) => <option key={rating}>{rating}</option>)}
+              </select>
+            </label>
+            <label>
+              Conditions
+              <select value={journalDraft.conditions} onChange={(event) => setJournalDraft({ ...journalDraft, conditions: event.target.value as ObservingConditions })}>
+                {observingConditions.map((condition) => <option key={condition}>{condition}</option>)}
+              </select>
+            </label>
             <label className="journal-notes-field">
               Notes
               <textarea
@@ -728,6 +772,9 @@ export function ObservationPlanner({
                         dateStyle: "medium",
                         timeStyle: "short",
                       }).format(new Date(entry.observedAt))} / {entry.equipment}
+                    </span>
+                    <span className="journal-entry-conditions">
+                      Visibility: {entry.visibility ?? "Not recorded"} · Transparency: {entry.transparency ?? "Not recorded"} · Conditions: {entry.conditions ?? "Not recorded"}
                     </span>
                     <p>{entry.notes}</p>
                   </div>

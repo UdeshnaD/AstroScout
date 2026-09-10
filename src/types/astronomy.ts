@@ -11,6 +11,25 @@ export type NightSkyHighlight = {
   azimuth?: number;
   magnitude?: number;
   reference?: { label: string; url: string };
+  technical?: {
+    rightAscension: number;
+    declination: number;
+    constellation: string;
+    rise: string;
+    transit: string;
+    set: string;
+    airmass: number | null;
+    sunSeparation: number;
+    moonSeparation: number;
+    visibility: string;
+  };
+};
+
+export type AuroraOutlook = {
+  potential: "Not visible" | "Very low" | "Low" | "Moderate";
+  visibility: "Daylight" | "Twilight" | "Dark sky";
+  direction: "Northern horizon" | "Southern horizon" | "Overhead";
+  description: string;
 };
 
 export type AstronomySummary = {
@@ -21,6 +40,7 @@ export type AstronomySummary = {
   moonset: string;
   bestViewingWindow: string;
   highlights: NightSkyHighlight[];
+  aurora: AuroraOutlook;
   sunAltitude?: number;
   source?: "astronomy-engine";
 };

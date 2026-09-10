@@ -159,6 +159,26 @@ test("sky positions change with time and observer coordinates", () => {
   assert.notEqual(first.highlights[0].altitude, later.highlights[0].altitude);
   assert.notEqual(first.highlights[0].altitude, other.highlights[0].altitude);
   assert.ok(first.moonIllumination >= 0 && first.moonIllumination <= 100);
+  const saturn = first.highlights.find((target) => target.id === "saturn");
+  assert.ok(saturn.technical);
+  assert.equal(typeof saturn.technical.rightAscension, "number");
+  assert.equal(typeof saturn.technical.declination, "number");
+  assert.ok(saturn.technical.constellation.length > 0);
+  assert.ok(saturn.technical.moonSeparation >= 0);
+  assert.ok(saturn.technical.moonSeparation <= 180);
+  assert.equal(first.aurora.direction, "Southern horizon");
+  assert.ok(["Not visible", "Very low", "Low", "Moderate"].includes(first.aurora.potential));
+  assert.ok(["Daylight", "Twilight", "Dark sky"].includes(first.aurora.visibility));
+  assert.equal(
+    astronomy.getAstronomySummary("2026-09-07T02:00:00Z", -33.77, 151.11)
+      .aurora.potential,
+    "Not visible",
+  );
+  assert.equal(
+    astronomy.getAstronomySummary("2026-09-07T10:00:00Z", 51.5, -0.1)
+      .aurora.direction,
+    "Northern horizon",
+  );
   assert.ok(
     first.highlights.every((p) => p.altitude >= -90 && p.altitude <= 90),
   );
@@ -200,23 +220,27 @@ test("valid provider data preserves zeroes and converts visibility from metres",
   assert.equal(result.visibilityKm, 20);
 });
 
-test("Tonight keeps 8pm available when the selected forecast hour is later", async () => {
-  const data = forecastData();
-  data.hourly.time.push("2026-09-07T12:00");
-  data.hourly.cloud_cover.push(30);
-  data.hourly.visibility.push(16000);
-  data.hourly.precipitation_probability.push(15);
-  data.hourly.wind_speed_10m.push(18);
-  data.hourly.temperature_2m.push(13);
+test("Tonight's noon-to-noon timeline retains afternoon and after-midnight hours", async () => {
+  const start = Date.parse("2026-09-07T02:00:00Z"); // 12pm Sydney time
+  const data = { hourly: { time: [], cloud_cover: [], visibility: [], precipitation_probability: [], wind_speed_10m: [], temperature_2m: [] } };
+  for (let offset = 0; offset < 26; offset += 1) {
+    data.hourly.time.push(new Date(start + offset * 3600000).toISOString().slice(0, 16));
+    data.hourly.cloud_cover.push(20);
+    data.hourly.visibility.push(20000);
+    data.hourly.precipitation_probability.push(0);
+    data.hourly.wind_speed_10m.push(10);
+    data.hourly.temperature_2m.push(15);
+  }
   const weather = load("src/lib/weather.ts", async () => ({
     ok: true,
     json: async () => data,
   }));
   const result = await weather.getWeatherForSpot(
     providerSpot,
-    "2026-09-07T12:00:00Z",
+    "2026-09-07T10:00:00Z", // 8pm Sydney time
   );
-  assert.equal(result.hourly[0].time, "2026-09-07T10:00:00.000Z");
+  assert.equal(result.hourly[0].time, "2026-09-07T02:00:00.000Z");
+  assert.ok(result.hourly.some((point) => point.time === "2026-09-07T14:00:00.000Z"));
 });
 
 test("missing data returns unavailable without generated values", async () => {
