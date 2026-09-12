@@ -72,7 +72,7 @@ export function JplNightPanel({
       aria-label="JPL overnight observing analysis"
     >
       <div className="jpl-state">
-        <span>At requested epoch: {night.status}</span>
+        <span>At your chosen time: {night.status}</span>
         <span>
           <Sun size={15} />
           {skyState(sun?.altitude)}
@@ -92,42 +92,44 @@ export function JplNightPanel({
         <div>
           <h3>
             {night.best
-              ? `${date(night.best.start, timezone)} – ${date(night.best.end, timezone)}`
-              : "No weather-qualified window"}
+              ? `${date(night.best.start, timezone)} to ${date(night.best.end, timezone)}`
+              : "No ideal viewing window found"}
           </h3>
           <p>
             {night.best
-              ? `Best sampled window / ${timezone}`
+              ? `Best time to look / ${timezone}`
               : night.reason}
           </p>
           {night.best && (
             <p>
-              Peak sampled altitude {night.best.peak.target.altitude.toFixed(1)}
-              °; Sun {night.best.peak.sun.altitude.toFixed(1)}°. Higher target
-              altitude, darkness and forecast conditions favour this interval.
+              The object reaches {night.best.peak.target.altitude.toFixed(1)}°
+              while the Sun is at {night.best.peak.sun.altitude.toFixed(1)}°. This
+              period offers the best balance of height, darkness and forecast weather.
             </p>
           )}
           {night.best &&
             Date.parse(night.best.end) < Date.parse(snapshot.utc) && (
               <p>
-                This window is earlier than the selected epoch, not an upcoming
-                recommendation.
+                This time has already passed. It is shown for the night you selected.
               </p>
             )}
         </div>
       </div>
       {!night.best && night.geometryOnly && (
         <p className="event-footnote">
-          Geometry-only interval: {date(night.geometryOnly.start, timezone)} –{" "}
+          The object is in a promising position from {date(night.geometryOnly.start, timezone)} to{" "}
           {date(night.geometryOnly.end, timezone)}. Weather suitability is not
-          established for this interval.
+          confirmed for this time.
         </p>
       )}
       {point && (
         <>
           <div className="jpl-chart-header">
-            <h3>Altitude through the night</h3>
-            <span>JPL samples / 5-minute spacing</span>
+            <div>
+              <h3>How the view changes tonight</h3>
+              <p>This graph follows your selected object and the Sun over time. Higher on the chart means higher in the sky.</p>
+            </div>
+            <span>Calculated every 5 minutes</span>
           </div>
           <div className="jpl-chart-legend" aria-label="Chart legend">
             <span><i className="target" />{exact?.name ?? "Target"}</span>
@@ -222,7 +224,7 @@ export function JplNightPanel({
             <span>{clock(night.points[night.points.length - 1].utc, timezone)}</span>
           </div>
           <label className="jpl-scrubber">
-            Selected JPL sample
+            Choose a time on the graph
             <input
               type="range"
               min="0"
@@ -236,24 +238,24 @@ export function JplNightPanel({
           </label>
           <div className="jpl-sample-readout">
             <strong>{date(point.utc, timezone)} / {timezone}</strong>
-            <span>Exact sample UTC: {point.utc}</span>
+            <span>UTC time: {point.utc}</span>
             <span>
               Target {point.target.altitude.toFixed(2)}° / Sun{" "}
               {point.sun.altitude.toFixed(2)}°
             </span>
             <span>
-              Open-Meteo forecast:{" "}
+              Weather forecast:{" "}
               {point.weather?.cloudCover != null
                 ? `${point.weather.cloudCover}% cloud, valid ${point.weather.time}`
-                : "unavailable at this sample"}
+                : "not available for this time"}
             </span>
             <button onClick={() => onEpoch(point.utc)}>
-              Use this exact epoch <ArrowUpRight size={16} />
+              View this exact time <ArrowUpRight size={16} />
             </button>
           </div>
           <p className="event-footnote">
-            The dotted guide marks 20° altitude. Lines connect JPL samples; no
-            intermediate positions are claimed.
+            The dotted guide marks 20° altitude. Each reading is calculated five
+            minutes apart; the lines make the overall movement easier to follow.
           </p>
         </>
       )}
@@ -262,11 +264,11 @@ export function JplNightPanel({
         {moonlightExplanation(moon)}
       </p>
       <p className="event-footnote">
-        NASA/JPL Horizons API / exact requested epoch: {snapshot.utc}
+        NASA/JPL Horizons calculation for: {snapshot.utc}
         <br />
-        Target response received: {source?.receivedAt ?? "unavailable"} / Sun:{" "}
-        {snapshot.objects.sun?.receivedAt ?? "unavailable"} / Moon:{" "}
-        {snapshot.objects.moon?.receivedAt ?? "unavailable"}
+        <br />Data received for target: {source?.receivedAt ?? "not available"} / Sun:{" "}
+        {snapshot.objects.sun?.receivedAt ?? "not available"} / Moon:{" "}
+        {snapshot.objects.moon?.receivedAt ?? "not available"}
       </p>
       {night.incomplete && (
         <p className="event-warning">
@@ -275,21 +277,16 @@ export function JplNightPanel({
         </p>
       )}
       <details>
-        <summary>Window method &amp; scientific limits</summary>
+        <summary>How this viewing time was chosen</summary>
         <p className="event-footnote">
-          The night containing the requested epoch is used when the Sun is below
-          0°; otherwise the next such interval is selected. At least 15 minutes
-          of consecutive samples must have Sun ≤ -18°, target ≥ 20°, cloud ≤
-          50%, precipitation ≤ 0.1 mm, visibility ≥ 10 km and wind ≤ 25 km/h.
-          Among eligible samples, altitude has weight 65%, clear-sky fraction
-          25% and calmer wind 10%. The window extends around the best sample
-          while the score stays within 0.1 of its peak. These explicit planning
-          thresholds are not a probability model. Nearest hourly forecasts must
-          be within 30 minutes. Boundaries have 5-minute sampling precision, not
-          second-level accuracy. Bright planets and the Moon can be visible
-          outside these preferred conditions. All Sun states use the airless
-          centre altitude; this is not an upper-limb, refraction-corrected
-          sunrise calculation.
+          AstroScout checks every five-minute reading during the selected night.
+          A promising period lasts at least 15 minutes, with the Sun at least 18°
+          below the horizon, the object at least 20° high, cloud at 50% or less,
+          almost no rain, visibility of at least 10 km and wind no stronger than
+          25 km/h. Higher objects, clearer skies and calmer wind receive a better
+          score. Weather forecasts are matched within 30 minutes. The result is
+          practical guidance, not a guarantee. Bright planets and the Moon may
+          still be visible outside these preferred conditions.
         </p>
       </details>
     </section>

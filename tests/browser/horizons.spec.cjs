@@ -38,13 +38,13 @@ test("real JPL scan preserves precision and qualifies actual forecast windows", 
 test("the clean dashboard exposes the planning views", async ({ page }) => {
   await page.route("**/api/event/**", (route) => route.abort("failed"));
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "What can you see tonight?" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Tonight's sky." })).toBeVisible();
   await page.getByRole("link", { name: "Calendar", exact: true }).click();
   await expect(
     page.getByRole("heading", { name: "Choose an observing date", exact: true }),
   ).toBeVisible();
   await page.getByRole("link", { name: "How it works", exact: true }).click();
   await expect(
-    page.getByRole("heading", { name: "Real sources. Explainable decisions." }),
+    page.getByRole("heading", { name: "Real sky data, explained clearly." }),
   ).toBeVisible();
 });

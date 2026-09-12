@@ -127,9 +127,9 @@ export function analyseNight(
     best: null,
     geometryOnly: null,
     later: false,
-    status: "NASA/JPL data unavailable",
+    status: "Sky position unavailable",
     reason:
-      "Target and Sun ephemerides are required; no replacement positions are generated.",
+      "We need both the object and Sun positions before we can assess the night.",
     incomplete: false,
   };
   if (
@@ -153,7 +153,7 @@ export function analyseNight(
     return {
       ...empty,
       status: "Daylight",
-      reason: "No Sun-below-horizon interval occurs in the requested JPL scan.",
+      reason: "The Sun does not go below the horizon during the period checked.",
     };
   let end = start;
   while (end + 1 < suns.length && suns[end + 1].altitude < 0) end++;
@@ -220,16 +220,16 @@ export function analyseNight(
     status,
     incomplete: start === 0 || end === suns.length - 1,
     reason: best
-      ? "Best sampled window: Sun at or below -18°, target at or above 20°, with suitable forecast conditions. Higher altitude and clearer, calmer weather rank first."
+      ? "This period offers the best mix of darkness, object height, clear sky and calm wind."
       : geometryOnly
-        ? "A geometrically favourable window exists, but no sustained window meets the available weather criteria. No weather-qualified best time is claimed."
-        : "No sustained interval in this scan meets astronomical darkness and target altitude of at least 20°. This does not mean bright planets or the Moon cannot be seen in twilight.",
+        ? "The object reaches a good position, but the weather forecast does not support a recommended time."
+        : "The object does not stay at least 20° high during full darkness. Bright planets and the Moon may still be visible in twilight.",
   };
 }
 export function moonlightExplanation(moon: JplPosition | null | undefined) {
   if (!moon || moon.illumination === null)
-    return "NASA/JPL data unavailable for Moon altitude or illumination.";
+    return "Moon position or brightness information is not available right now.";
   if (moon.altitude <= 0)
-    return `The Moon is ${Math.abs(moon.altitude).toFixed(1)}° below the geometric horizon (${moon.illumination.toFixed(1)}% illuminated). Direct moonlight is not above this horizon; local sky brightness is not measured.`;
-  return `The Moon is ${moon.altitude.toFixed(1)}° high and ${moon.illumination.toFixed(1)}% illuminated. Moonlight can reduce contrast for faint deep-sky objects${moon.illumination >= 75 ? ", especially with this strongly illuminated Moon" : ""}. Separation from your target, atmosphere and local light pollution also matter; this is not a measured sky-brightness estimate.`;
+    return `The Moon is ${Math.abs(moon.altitude).toFixed(1)}° below the horizon and ${moon.illumination.toFixed(1)}% illuminated, so direct moonlight should not affect this view.`;
+  return `The Moon is ${moon.altitude.toFixed(1)}° high and ${moon.illumination.toFixed(1)}% illuminated. Moonlight can make faint objects harder to see${moon.illumination >= 75 ? ", especially while the Moon is this bright" : ""}. Local light pollution and haze will also affect your view.`;
 }

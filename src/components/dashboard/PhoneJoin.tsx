@@ -49,7 +49,7 @@ export function PhoneJoin() {
         <p className="event-kicker">ASTRONOMY NIGHT CHECK-IN</p>
         <h2 id="phone-join-heading">Scan once. Explore the sky on your phone.</h2>
         <p>
-          Point your phone camera at the code. It opens this deployed AstroScout address—no account, download or personal details required.
+          Point your phone camera at the code. It opens this AstroScout website directly. No account, download or personal details are required.
         </p>
         <ol>
           <li><span>1</span> Scan the QR code with your camera.</li>

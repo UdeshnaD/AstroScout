@@ -200,8 +200,8 @@ export function NearbyPlacesExplorer({
                 </div>
                 <div className="places-explorer__facts">
                   <span><MapPin size={16} /> {distance(selected.distanceMeters)}</span>
-                  <span><Car size={16} /> {routeLoading ? "Calculating route…" : route ? `${duration(route.durationSeconds)} · ${(route.distanceMeters / 1000).toFixed(1)} km by road` : "Route estimate unavailable"}</span>
-                  <span><Cloud size={16} /> {weatherLoading ? "Loading local weather…" : currentWeather?.cloudCover != null ? `${currentWeather.cloudCover}% cloud · ${currentWeather.wind ?? "—"} km/h wind` : "Weather unavailable"}</span>
+                  <span><Car size={16} /> {routeLoading ? "Calculating route…" : route ? `${duration(route.durationSeconds)}, ${(route.distanceMeters / 1000).toFixed(1)} km by road` : "Route estimate unavailable"}</span>
+                  <span><Cloud size={16} /> {weatherLoading ? "Loading local weather…" : currentWeather?.cloudCover != null ? `${currentWeather.cloudCover}% cloud, ${currentWeather.wind ?? "not available"} km/h wind` : "Weather unavailable"}</span>
                 </div>
                 <div className="places-explorer__actions">
                   <Link className="event-primary event-link-button" href="/">Use for tonight’s sky</Link>

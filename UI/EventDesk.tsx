@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
 import { JplNightPanel } from "./JplNightPanel";
+import { SkyPositionPanel } from "./SkyPositionPanel";
 import { NearbyPlacesExplorer } from "@/components/dashboard/NearbyPlacesExplorer";
 import { ObservationJournal } from "@/components/dashboard/ObservationJournal";
 import { OfflineReady } from "@/components/dashboard/OfflineReady";
@@ -88,6 +89,21 @@ function unavailable<T>(source: string, error: string): SourceResult<T> {
   };
 }
 
+async function readApiResponse<T extends { error?: string }>(
+  response: Response,
+  label: string,
+): Promise<T> {
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    throw new Error(`${label} is temporarily unavailable. Please refresh the page.`);
+  }
+  const data = (await response.json()) as T;
+  if (!response.ok) {
+    throw new Error(data.error || `${label} could not be loaded. Please try again.`);
+  }
+  return data;
+}
+
 const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }> = {
   "/": {
     eyebrow: "Live observing desk",
@@ -105,7 +121,7 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
     eyebrow: "Plan another night",
     title: "Choose an observing date.",
     intro:
-      "Select a UTC date, then return to Tonight to inspect the JPL-calculated sky for that epoch.",
+      "Choose a date and time, then return to Tonight to see the calculated sky for that moment.",
   },
   "/journal": {
     eyebrow: "Observation journal",
@@ -114,10 +130,10 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
       "Save observing notes and build personal target lists that stay on this device.",
   },
   "/method": {
-    eyebrow: "Data and method",
-    title: "Real sources. Explainable decisions.",
+    eyebrow: "How it works",
+    title: "Real sky data, explained clearly.",
     intro:
-      "AstroScout combines authoritative astronomy data with weather forecasts using visible, deterministic rules.",
+      "See where every answer comes from and how AstroScout chooses a good time to look up.",
   },
   "/join": {
     eyebrow: "Join Astronomy Night",
@@ -251,8 +267,11 @@ export function EventDesk({
         const response = await fetch(`/api/event/horizons?${params}`, {
           signal: controller.signal,
         });
-        const data = (await response.json()) as HorizonsSnapshot & { error?: string };
-        if (!response.ok || !data.objects || data.utc !== utc)
+        const data = await readApiResponse<HorizonsSnapshot & { error?: string }>(
+          response,
+          "Sky information",
+        );
+        if (!data.objects || data.utc !== utc)
           throw new Error(data.error || "JPL returned an invalid response.");
         if (generation === requestGeneration.current) setPositions(data);
       } catch (error) {
@@ -270,9 +289,9 @@ export function EventDesk({
         const response = await fetch(`/api/event/weather?${params}`, {
           signal: controller.signal,
         });
-        const data = (await response.json()) as SourceResult<EventWeather> & {
+        const data = await readApiResponse<SourceResult<EventWeather> & {
           error?: string;
-        };
+        }>(response, "Weather information");
         if (!data.status) throw new Error(data.error || "Weather response was invalid.");
         if (generation === requestGeneration.current) setWeather(data);
       } catch (error) {
@@ -480,20 +499,55 @@ export function EventDesk({
 
       <OfflineReady />
 
-      <main id="event-content" className="event-main">
-        <div className="event-heading">
-          <div>
-            <p className="event-eyebrow">{copy.eyebrow}</p>
-            <h1>{copy.title}</h1>
-            <p>{copy.intro}</p>
-          </div>
-          {pathname === "/" && (
-            <button className="event-primary" onClick={refresh} disabled={positionLoading}>
-              <RefreshCw size={17} />
-              Refresh to now
+      {pathname === "/" && (
+        <section className="saturn-hero" aria-labelledby="saturn-hero-heading">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://science.nasa.gov/wp-content/uploads/2023/05/saturn-farewell-pia21345-sse-banner-1920x640-1.jpg?w=1536"
+            alt="Saturn and its rings photographed by NASA's Cassini spacecraft"
+            fetchPriority="high"
+          />
+          <div className="saturn-hero__inner">
+            <p>LOOK UP / {locationName.toUpperCase()}</p>
+            <h1 id="saturn-hero-heading">Tonight&apos;s sky.</h1>
+            <span>The Moon and planets, above your exact location.</span>
+            <div className="saturn-hero__focus">
+              <small>IN FOCUS</small>
+              <strong>Saturn</strong>
+              <span>
+                {positionLoading
+                  ? "Calculating the current view…"
+                  : positions?.objects.saturn?.data
+                    ? `${positions.objects.saturn.data.altitude.toFixed(1)}° altitude · ${positions.objects.saturn.data.compass}`
+                    : "Position currently unavailable"}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setTarget("saturn");
+                document.getElementById("where-to-look")?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Explore Saturn <Telescope size={18} />
             </button>
-          )}
-        </div>
+          </div>
+          <a href="https://science.nasa.gov/saturn/" target="_blank" rel="noreferrer" className="saturn-hero__credit">
+            Cassini image / NASA, JPL-Caltech, SSI
+          </a>
+        </section>
+      )}
+
+      <main id="event-content" className="event-main">
+        {pathname !== "/" && (
+          <div className="event-heading">
+            <div>
+              <p className="event-eyebrow">{copy.eyebrow}</p>
+              <h1>{copy.title}</h1>
+              <p>{copy.intro}</p>
+            </div>
+          </div>
+        )}
 
         {notice && <p className="event-notice" role="status">{notice}</p>}
         {formError && <p className="event-error" role="alert">{formError}</p>}
@@ -576,28 +630,28 @@ export function EventDesk({
           <div className="event-method-grid">
             <section>
               <Database size={24} />
-              <h2>Three real data sources</h2>
+              <h2>Where the information comes from</h2>
               <ul>
-                <li><strong>NASA/JPL Horizons</strong> calculates apparent altitude, azimuth, direction, magnitude and illumination.</li>
-                <li><strong>Open-Meteo</strong> supplies forecast cloud, rain, visibility, wind and temperature.</li>
-                <li><strong>Geoapify</strong> converts searches into coordinates, discovers nearby outdoor places and estimates driving routes; Open-Meteo provides the no-key city fallback.</li>
+                <li><strong>NASA/JPL Horizons</strong> tells us where the Moon and planets appear in your sky.</li>
+                <li><strong>Open-Meteo</strong> provides the cloud, rain, visibility, wind and temperature forecast.</li>
+                <li><strong>Geoapify</strong> finds real places near your search and estimates the road journey.</li>
               </ul>
             </section>
             <section>
               <Compass size={24} />
-              <h2>Explainable data-science scoring</h2>
+              <h2>How a good viewing time is chosen</h2>
               <p>
-                A preferred sample requires the Sun at or below −18°, the target at or above 20°, cloud at or below 50%, rain at or below 0.1 mm, visibility of at least 10 km and wind at or below 25 km/h.
+                We look for a dark sky, an object at least 20° above the horizon, no more than 50% cloud, very little rain, at least 10 km visibility and manageable wind.
               </p>
               <p>
-                Eligible samples rank by target altitude (65%), clear-sky fraction (25%) and calmer wind (10%). These are visible planning rules—not a trained AI model or a probability claim.
+                The score favours a higher object, clearer skies and calmer wind. The rules are shown openly. This is a planning tool, not a visibility guarantee.
               </p>
             </section>
             <section className="event-method-wide">
               <Info size={24} />
-              <h2>What AstroScout does not claim</h2>
+              <h2>What you should still check</h2>
               <p>
-                It does not identify objects from photographs, measure local light pollution, verify that a searched place is safe or accessible, or guarantee that an object will be visible. JPL values are calculations; weather values are forecasts.
+                AstroScout cannot see local trees or buildings, measure light pollution at your exact spot, confirm that a place is open and safe, or promise a clear view. Always check access and conditions before leaving.
               </p>
             </section>
           </div>
@@ -614,9 +668,15 @@ export function EventDesk({
               <div>
                 <span>Requested time</span>
                 <strong>{utc ? localTime(utc, timezone) : "Loading"}</strong>
-                <small>{utc || "Preparing UTC epoch"}</small>
+                <small>{utc || "Preparing the time"}</small>
               </div>
-              <Link href="/places">Change location</Link>
+              <div className="event-session-actions">
+                <button className="event-primary" onClick={refresh} disabled={positionLoading}>
+                  <RefreshCw size={16} />
+                  Update to now
+                </button>
+                <Link href="/places">Change location</Link>
+              </div>
             </section>
 
             <details className="event-settings">
@@ -643,6 +703,21 @@ export function EventDesk({
                 </button>
               </form>
             </details>
+
+            {!positionLoading && positions && (
+              <SkyPositionPanel
+                snapshot={positions}
+                target={target}
+                locationName={locationName}
+                timezone={timezone}
+                onTarget={setTarget}
+                onEpoch={(time) => {
+                  setUtc(time);
+                  setEpochInput(time.slice(0, -1));
+                  setNotice(`Showing the sky at ${localTime(time, timezone)}.`);
+                }}
+              />
+            )}
 
             <section className="event-targets" aria-labelledby="target-heading">
               <div className="event-section-heading">
@@ -684,7 +759,7 @@ export function EventDesk({
                   <span>{position?.status === "available" ? "Live calculation" : "Unavailable"}</span>
                 </div>
                 {positionLoading ? (
-                  <p className="event-loading"><Loader2 className="spin" size={18} /> Requesting JPL observer positions…</p>
+                  <p className="event-loading"><Loader2 className="spin" size={18} /> Checking the sky from your location…</p>
                 ) : body ? (
                   <>
                     <p className="event-position-summary">
@@ -692,9 +767,7 @@ export function EventDesk({
                         ? `${body.name} is ${body.altitude.toFixed(1)}° above the ${body.compass} horizon.`
                         : `${body.name} is ${Math.abs(body.altitude).toFixed(1)}° below the ${body.compass} horizon.`}
                     </p>
-                    <p className="event-horizon-note">
-                      Local trees, hills and buildings can still block an object that is calculated above the geometric horizon.
-                    </p>
+                    <p className="event-horizon-note">Trees, hills and buildings near you may still block the view.</p>
                     <div className="event-metrics">
                       <div><span>Altitude</span><strong>{body.altitude.toFixed(1)}°</strong></div>
                       <div><span>Direction</span><strong>{body.compass}</strong><small>{body.azimuth.toFixed(1)}° azimuth</small></div>
@@ -725,7 +798,7 @@ export function EventDesk({
                     )}
                   </>
                 ) : (
-                  <p className="event-error">NASA/JPL data unavailable: {positionError || position?.error}</p>
+                  <p className="event-error">We could not load the sky position: {positionError || position?.error}</p>
                 )}
               </section>
 
@@ -749,7 +822,7 @@ export function EventDesk({
                     <div><span>Humidity</span><strong>{metric(currentWeather.humidity, "%", 0)}</strong></div>
                   </div>
                 ) : (
-                  <p className="event-error">Live weather unavailable: {weather?.error}</p>
+                  <p className="event-error">We could not load the local weather: {weather?.error}</p>
                 )}
               </section>
             </div>
@@ -764,7 +837,7 @@ export function EventDesk({
                 onEpoch={(time) => {
                   setUtc(time);
                   setEpochInput(time.slice(0, -1));
-                  setNotice(`Using the selected timeline sample: ${localTime(time, timezone)}.`);
+                  setNotice(`Showing the sky at ${localTime(time, timezone)}.`);
                 }}
               />
             )}
@@ -774,7 +847,7 @@ export function EventDesk({
 
       <footer className="event-footer">
         <span>AstroScout / Macquarie University Astronomy Night</span>
-        <span>JPL calculations · Open-Meteo forecasts · Explainable scoring</span>
+        <span>Sky positions from NASA/JPL · Weather from Open-Meteo</span>
       </footer>
     </div>
   );
