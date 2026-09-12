@@ -167,7 +167,8 @@ export function TonightView({
           )}
         </div>
         <div className="sky-position-layout">
-          <div className="horizon-chart">
+          <div className="sky-observing-pane">
+            <div className="horizon-chart">
             <svg
               viewBox="0 0 800 350"
               role="group"
@@ -324,15 +325,25 @@ export function TonightView({
               </div>
             )}
             <p>Calculated positions / flat horizon / Moon and planets only</p>
+            <details className="sky-explainer">
+              <summary>Why does the sky move?</summary>
+              <p>
+                Earth&apos;s rotation makes the sky appear to drift from east to
+                west. The chart updates each hour so you can see where an
+                object will be in your local sky.
+              </p>
+            </details>
             <div className="horizon-obstruction" role="note">
               <strong>Horizon obstruction</strong>
               <span>
-                Trees, hills, buildings, and other obstacles can hide an object
-                even when it is technically above the horizon.
+                An object may be difficult or impossible to see if the horizon
+                is blocked by trees, hills, buildings, or other obstacles, even
+                when it is technically above the horizon.
               </span>
             </div>
+            </div>
             {aurora && (
-              <div className="aurora-outlook horizon-aurora">
+              <div className="aurora-outlook" role="note">
                 <span>Aurora outlook / {aurora.direction}</span>
                 <strong>
                   {aurora.visibility} · {aurora.potential} potential

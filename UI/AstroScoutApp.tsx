@@ -1048,6 +1048,14 @@ export function AstroScoutApp() {
                           Bortle {selected.bortleRating} (est.)
                         </span>
                       </div>
+                      <details className="place-extra place-explainer">
+                        <summary>Learn more: Bortle scale</summary>
+                        <p>
+                          The Bortle scale describes night-sky brightness from
+                          1 (very dark) to 9 (bright city sky). Lower numbers
+                          make faint stars, galaxies and nebulae easier to see.
+                        </p>
+                      </details>
                       <div className="place-actions">
                         <Link
                           className="button button--primary"

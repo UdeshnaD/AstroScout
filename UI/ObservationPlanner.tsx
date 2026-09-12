@@ -468,6 +468,16 @@ export function ObservationPlanner({
               )}
             </ToggleGroup.Root>
           </fieldset>
+          <details className="equipment-explainer">
+            <summary>Why? Equipment and aperture</summary>
+            <p>
+              Binoculars make wide, bright targets easier to find. Telescopes
+              show smaller targets larger; a larger aperture gathers more light
+              and can reveal fainter detail, but clear skies and steady air
+              still matter. Start with realistic goals such as locating the
+              object before expecting fine surface detail.
+            </p>
+          </details>
           {equipment.kind !== "eye" && (
             <>
               <label>
@@ -514,6 +524,14 @@ export function ObservationPlanner({
           {(Object.keys(equipmentNames) as Equipment["kind"][]).map((kind) => <span key={kind}><strong>{equipmentNames[kind]}</strong> {viewingProfile(target)[kind]}</span>)}
           <a href={viewingProfile(target).sourceUrl} target="_blank" rel="noreferrer">Evidence: {viewingProfile(target).source}</a>
         </div>
+        <details className="observation-explainer">
+          <summary>Why? Moonlight and visibility</summary>
+          <p>
+            A bright Moon adds light to the sky and reduces contrast, so faint
+            galaxies and nebulae can be harder to see. Bright targets such as
+            the Moon and planets are usually less affected.
+          </p>
+        </details>
         <div className="observation-result" aria-live="polite">
           <div>
             <span className="kicker">
@@ -559,6 +577,12 @@ export function ObservationPlanner({
                 <li key={reason}>{reason}</li>
               ))}
             </ul>
+            <p className="horizon-obstruction-note" role="note">
+              <strong>Horizon obstruction.</strong> An object may be difficult
+              or impossible to see if the horizon is blocked by trees, hills,
+              buildings, or other obstacles, even when it is technically above
+              the horizon.
+            </p>
           </div>
         </div>
         {selectedTarget?.reference && (

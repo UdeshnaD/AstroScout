@@ -296,6 +296,12 @@
   gap: 40px;
   align-items: start;
 }
+.sky-observing-pane {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  align-content: start;
+}
 .horizon-chart {
   background: #172225;
   padding: 20px 18px 12px;
@@ -310,6 +316,21 @@
   margin: 10px 0 0;
   font-size: 11px;
   text-align: center;
+}
+.sky-explainer {
+  margin-top: 10px;
+  color: #c9d5d1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sky-explainer summary {
+  cursor: pointer;
+  color: #e2e9e6;
+  font-weight: 600;
+}
+.sky-explainer p {
+  margin: 6px 0 0;
+  text-align: left;
 }
 .horizon-obstruction {
   display: grid;
@@ -414,9 +435,11 @@
 .aurora-outlook {
   display: grid;
   gap: 4px;
-  margin: 20px 0 2px;
-  padding: 14px 0 0;
-  border-top: 1px solid #d5ded8;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #c5d4cc;
+  border-left: 3px solid #3d6b58;
+  background: #f4f8f6;
 }
 .aurora-outlook > span {
   color: #69746e;
@@ -434,16 +457,9 @@
   margin: 0;
   font-size: 13px;
   line-height: 1.55;
+  color: #56615c;
+  text-align: left;
 }
-.horizon-aurora {
-  margin-top: 14px;
-  padding: 12px;
-  border: 1px solid #405756;
-  background: #202c2e;
-}
-.horizon-chart .horizon-aurora > span { color: #aabdb7; }
-.horizon-chart .horizon-aurora > strong { color: #b9ddc6; }
-.horizon-chart .horizon-aurora > p { color: #d6dfdc; text-align: left; }
 .transient-events {
   margin-top: 42px;
   max-width: 760px;
@@ -664,6 +680,14 @@
 .place-extra summary {
   cursor: pointer;
   font-size: 14px;
+}
+.place-explainer {
+  color: #69796e;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.place-explainer p {
+  margin: 7px 0 0;
 }
 .place-feedback {
   display: flex;
@@ -1387,6 +1411,13 @@
 .dark .astro-site .tonight-next,
 .astro-site.dark .tonight-next {
   background: var(--surface-subtle);
+}
+
+.astro-site[data-theme="dark"] .aurora-outlook,
+.dark .astro-site .aurora-outlook,
+.astro-site.dark .aurora-outlook {
+  background: var(--surface-subtle);
+  border-color: var(--line);
 }
 
 @media (max-width: 760px) {
