@@ -46,6 +46,16 @@ export type ObservingList = {
   targets: string[];
 };
 
+export type PlannedAttempt = {
+  id: string;
+  plannedFor: string;
+  location: string;
+  target: string;
+  plannedEquipment: "Unaided eye" | "Binoculars" | "Telescope";
+  forecast: { fetchedAt: string; time: string; cloudCover: number | null; precipitation: number | null; visibility: number | null; wind: number | null };
+  status: "planned" | "attempted" | "missed";
+};
+
 const cleanText = (value: unknown, limit: number) =>
   typeof value === "string" && value.trim() && value.trim().length <= limit
     ? value.trim()
@@ -108,6 +118,20 @@ export function mergeJournalEntries(
   return [...merged.values()]
     .sort((a, b) => Date.parse(b.observedAt) - Date.parse(a.observedAt))
     .slice(0, 500);
+}
+
+export function validPlannedAttempts(value: unknown): PlannedAttempt[] {
+  if (!Array.isArray(value)) return [];
+  return value.flatMap((candidate) => {
+    if (!candidate || typeof candidate !== "object") return [];
+    const row = candidate as Record<string, unknown>;
+    const forecast = row.forecast as Record<string, unknown> | undefined;
+    const id = cleanText(row.id, 120), plannedFor = cleanText(row.plannedFor, 40);
+    const location = cleanText(row.location, 180), target = cleanText(row.target, 100);
+    if (!id || !plannedFor || !location || !target || !forecast || !Number.isFinite(Date.parse(plannedFor)) || !Number.isFinite(Date.parse(String(forecast.fetchedAt))) || !Number.isFinite(Date.parse(String(forecast.time))) || !["Unaided eye", "Binoculars", "Telescope"].includes(String(row.plannedEquipment)) || !["planned", "attempted", "missed"].includes(String(row.status))) return [];
+    const number = (key: string) => typeof forecast[key] === "number" && Number.isFinite(forecast[key]) ? forecast[key] : null;
+    return [{ id, plannedFor: new Date(plannedFor).toISOString(), location, target, plannedEquipment: row.plannedEquipment as PlannedAttempt["plannedEquipment"], status: row.status as PlannedAttempt["status"], forecast: { fetchedAt: String(forecast.fetchedAt), time: String(forecast.time), cloudCover: number("cloudCover"), precipitation: number("precipitation"), visibility: number("visibility"), wind: number("wind") } }];
+  }).slice(-200);
 }
 
 export function validObservingLists(value: unknown): ObservingList[] {

@@ -76,6 +76,139 @@ export type NightAnalysis = {
   incomplete: boolean;
 };
 
+export type ReadinessAssessment = {
+  score: number | null;
+  reason: string;
+  factors: {
+    darkness: number;
+    targetAltitude: number;
+    cloud: number | null;
+    rain: number | null;
+    visibility: number | null;
+    wind: number | null;
+  };
+};
+
+export type AuroraAssessment = {
+  direction: "Northern horizon" | "Southern horizon" | "Overhead";
+  darkness: string;
+  latitude: string;
+  horizon: string;
+  weather: string;
+  geomagnetic: string;
+  solar: string;
+  summary: string;
+};
+
+const clamp = (value: number) => Math.max(0, Math.min(100, value));
+
+/**
+ * A planning interpretation of one exact JPL sample. This intentionally does
+ * not participate in bestWindow: its thresholded, five-minute result remains
+ * the authoritative observing recommendation.
+ */
+export function readinessAt(point: NightPoint | undefined): ReadinessAssessment {
+  const unavailable = {
+    score: null,
+    reason: "A matching JPL position and Open-Meteo forecast are required for this planning guide.",
+  };
+  if (!point || !point.weather) {
+    return {
+      ...unavailable,
+      factors: { darkness: 0, targetAltitude: 0, cloud: null, rain: null, visibility: null, wind: null },
+    };
+  }
+  const { cloudCover, precipitation, visibility, wind } = point.weather;
+  if (
+    cloudCover === null ||
+    precipitation === null ||
+    visibility === null ||
+    wind === null
+  ) {
+    return {
+      ...unavailable,
+      factors: {
+        darkness: clamp(((-point.sun.altitude - 6) / 12) * 100),
+        targetAltitude: clamp((point.target.altitude / 40) * 100),
+        cloud: cloudCover === null ? null : clamp(100 - cloudCover),
+        rain: precipitation === null ? null : clamp(100 - (precipitation / 0.1) * 100),
+        visibility: visibility === null ? null : clamp((visibility / 10000) * 100),
+        wind: wind === null ? null : clamp(100 - (wind / 25) * 100),
+      },
+    };
+  }
+  const factors = {
+    darkness: clamp(((-point.sun.altitude - 6) / 12) * 100),
+    targetAltitude: clamp((point.target.altitude / 40) * 100),
+    cloud: clamp(100 - cloudCover),
+    rain: clamp(100 - (precipitation / 0.1) * 100),
+    visibility: clamp((visibility / 10000) * 100),
+    wind: clamp(100 - (wind / 25) * 100),
+  };
+  return {
+    score: Math.round(
+      factors.darkness * 0.25 +
+        factors.targetAltitude * 0.25 +
+        factors.cloud * 0.2 +
+        factors.rain * 0.12 +
+        factors.visibility * 0.1 +
+        factors.wind * 0.08,
+    ),
+    factors,
+    reason:
+      "Planning guide from this exact JPL sample and its matched Open-Meteo forecast; it is not a sighting probability or a replacement for the preferred observing window.",
+  };
+}
+
+/**
+ * Aurora visibility cannot be inferred from darkness alone. We deliberately
+ * expose missing live space-weather inputs rather than manufacturing an alert.
+ */
+export function assessAurora(
+  sunAltitude: number | null | undefined,
+  latitude: number,
+  weather: WeatherPoint | null | undefined,
+): AuroraAssessment {
+  const direction =
+    Math.abs(latitude) >= 70
+      ? "Overhead"
+      : latitude < 0
+        ? "Southern horizon"
+        : "Northern horizon";
+  const darkness =
+    sunAltitude == null
+      ? "Sun altitude unavailable"
+      : sunAltitude <= -18
+        ? "Astronomical darkness"
+        : sunAltitude < 0
+          ? "Twilight"
+          : "Daylight";
+  const absoluteLatitude = Math.abs(latitude);
+  const latitudeBand =
+    absoluteLatitude >= 55
+      ? "High-latitude observer"
+      : absoluteLatitude >= 40
+        ? "Mid-latitude observer"
+        : "Low-latitude observer; a stronger storm is usually needed";
+  const weatherDescription =
+    !weather || weather.cloudCover == null || weather.visibility == null
+      ? "Cloud/visibility forecast unavailable"
+      : weather.cloudCover > 50 || weather.visibility < 10000
+        ? `${weather.cloudCover}% cloud and ${(weather.visibility / 1000).toFixed(1)} km visibility may limit contrast`
+        : `${weather.cloudCover}% cloud and ${(weather.visibility / 1000).toFixed(1)} km visibility support contrast`;
+  return {
+    direction,
+    darkness,
+    latitude: latitudeBand,
+    horizon: `Look toward the ${direction.toLowerCase()}; local terrain, trees and light pollution can block a low display.`,
+    weather: weatherDescription,
+    geomagnetic: "Live geomagnetic activity is not available from the current data sources.",
+    solar: "Live solar-wind and solar-activity data are not available from the current data sources.",
+    summary:
+      "Check a live space-weather service before travelling. Darkness is only one of the required aurora factors, not an aurora prediction.",
+  };
+}
+
 function bestWindow(
   points: NightPoint[],
   includeWeather: boolean,

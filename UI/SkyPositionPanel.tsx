@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { eventTargets } from "@/lib/event-types";
-import type { EventTarget, HorizonsSnapshot, JplPosition } from "@/lib/event-types";
+import { assessAurora, forecastAt } from "@/lib/horizons-analysis";
+import type { EventTarget, EventWeather, HorizonsSnapshot, JplPosition } from "@/lib/event-types";
 
 const visibleTargets = eventTargets.filter((item) => item.id !== "sun");
 const playbackStep = 12; // Twelve five-minute JPL samples = one hour.
@@ -31,6 +32,7 @@ export function SkyPositionPanel({
   target,
   locationName,
   timezone,
+  weather,
   onTarget,
   onEpoch,
 }: {
@@ -38,6 +40,7 @@ export function SkyPositionPanel({
   target: EventTarget;
   locationName: string;
   timezone: string;
+  weather?: EventWeather | null;
   onTarget: (target: EventTarget) => void;
   onEpoch: (utc: string) => void;
 }) {
@@ -83,8 +86,11 @@ export function SkyPositionPanel({
         Boolean(entry.position),
     );
   const sun = at("sun");
-  const auroraDirection = snapshot.location.latitude < 0 ? "southern" : "northern";
-  const skyIsDark = (sun?.altitude ?? 90) <= -18;
+  const aurora = assessAurora(
+    sun?.altitude,
+    snapshot.location.latitude,
+    forecastAt(weather, utc),
+  );
   const move = (amount: number) => {
     setPlaying(false);
     setIndex((current) =>
@@ -211,13 +217,16 @@ export function SkyPositionPanel({
       </div>
 
       <div className="aurora-readiness" role="note">
-        <span>AURORA READINESS / {auroraDirection.toUpperCase()} HORIZON</span>
-        <strong>{skyIsDark ? "The sky is dark enough" : "The sky is still too bright"}</strong>
-        <p>
-          {skyIsDark
-            ? "Darkness is only one requirement for an aurora. Check a live aurora service for current solar activity."
-            : "An aurora would be washed out by daylight or bright twilight. Check again when the sky is fully dark."}
-        </p>
+        <span>AURORA READINESS / {aurora.direction.toUpperCase()}</span>
+        <strong>{aurora.darkness}</strong>
+        <p>{aurora.summary}</p>
+        <ul>
+          <li>{aurora.latitude}</li>
+          <li>{aurora.horizon}</li>
+          <li>{aurora.weather}</li>
+          <li>{aurora.geomagnetic}</li>
+          <li>{aurora.solar}</li>
+        </ul>
       </div>
     </section>
   );

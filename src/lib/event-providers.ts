@@ -59,11 +59,12 @@ export function horizonsUrl(
   utc: string,
 ) {
   const object = eventTargets.find((item) => item.id === target);
-  if (!object) throw new Error("Unsupported astronomical target.");
+  if (!object?.horizons)
+    throw new Error("This catalogue target has no JPL Horizons observer-table target.");
   const url = new URL("https://ssd.jpl.nasa.gov/api/horizons.api");
   url.searchParams.set("format", "json");
   const params = {
-    COMMAND: object.command,
+    COMMAND: object.horizons.command,
     OBJ_DATA: "NO",
     MAKE_EPHEM: "YES",
     EPHEM_TYPE: "OBSERVER",
@@ -72,7 +73,7 @@ export function horizonsUrl(
     SITE_COORD: `${location.longitude},${location.latitude},${location.elevation / 1000}`,
     TLIST: utc.replace("T", " ").replace("Z", ""),
     TIME_TYPE: "UT",
-    QUANTITIES: "2,4,9,10",
+    QUANTITIES: "2,4,9,10,23,25,29",
     ANG_FORMAT: "DEG",
     CSV_FORMAT: "YES",
     CAL_FORMAT: "BOTH",
@@ -123,11 +124,11 @@ export function parseHorizonsSeries(
     data.signature?.source !== "NASA/JPL Horizons API"
   )
     throw new Error("JPL returned an error or an unrecognised response.");
-  const command = eventTargets.find((item) => item.id === target)?.command;
+  const definition = eventTargets.find((item) => item.id === target);
   const targetLine = data.result
     .split(/\r?\n/)
     .find((line) => line.startsWith("Target body name:"));
-  if (!command || !targetLine?.includes(`(${command})`))
+  if (!definition?.horizons || !targetLine?.includes(definition.horizons.validationId))
     throw new Error(
       "JPL returned a different target from the requested object.",
     );
@@ -153,6 +154,10 @@ export function parseHorizonsSeries(
   return rows.map((row, index) => {
     const utc = epochs[index];
     const get = (name: string) => optionalNumber(row[columns.indexOf(name)]);
+    const text = (name: string) => {
+      const value = row[columns.indexOf(name)]?.trim();
+      return value && value !== "n.a." ? value : null;
+    };
     const altitude = get("Elev_(a-app)");
     const azimuth = get("Azi_(a-app)");
     const jd = get("Date_________JDUT");
@@ -198,6 +203,10 @@ export function parseHorizonsSeries(
       declination: get("DEC_(a-app)"),
       magnitude: get("APmag"),
       illumination: get("Illu%"),
+      objectType: definition.objectType,
+      constellation: text("Cnst"),
+      sunSeparation: get("S-O-T"),
+      moonSeparation: get("T-O-M"),
       eventMarker: ["r", "e", "t", "s"].includes(row[3]) ? row[3] : null,
       riseTime: null,
       setTime: null,
@@ -235,6 +244,18 @@ export function getHorizons(
       );
       for (const target of eventTargets) {
         const requestedAt = new Date().toISOString();
+        if (!target.horizons) {
+          series[target.id] = [];
+          objects[target.id] = {
+            status: "unavailable",
+            source: "Catalogue entry",
+            requestedAt,
+            receivedAt: requestedAt,
+            data: null,
+            error: "This catalogue target has guidance and metadata, but no JPL Horizons observer-table target.",
+          };
+          continue;
+        }
         try {
           const url = horizonsUrl(target.id, location, utc);
           url.searchParams.delete("TLIST");

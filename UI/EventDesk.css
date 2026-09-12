@@ -355,6 +355,15 @@
 }
 .aurora-readiness strong { color: #2f654f; font-size: 15px; }
 .aurora-readiness p { margin: 0; color: var(--muted); font-size: 12px; }
+.aurora-readiness ul {
+  display: grid;
+  gap: 4px;
+  margin: 3px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
 .event-eyebrow,
 .event-kicker {
   margin: 0;
@@ -1415,6 +1424,34 @@
 .jpl-window p {
   color: #6b5a39;
   font-size: 12px;
+}
+.jpl-readiness {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(0, 1fr);
+  gap: 18px;
+  align-items: center;
+  margin: -12px 0 26px;
+  padding: 15px 16px;
+  border: 1px solid #bed3c6;
+  background: #eff6f1;
+}
+.jpl-readiness > div { display: grid; gap: 3px; }
+.jpl-readiness span {
+  color: #4b6658;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .1em;
+}
+.jpl-readiness strong {
+  color: var(--forest-dark);
+  font-size: 26px;
+  font-variant-numeric: tabular-nums;
+}
+.jpl-readiness p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 .jpl-chart-header {
   display: flex;

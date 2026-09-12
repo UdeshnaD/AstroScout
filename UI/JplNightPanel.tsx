@@ -4,6 +4,7 @@ import { Clock3, Moon, Sun, ArrowUpRight } from "lucide-react";
 import {
   analyseNight,
   moonlightExplanation,
+  readinessAt,
   skyState,
 } from "@/lib/horizons-analysis";
 import type {
@@ -58,6 +59,9 @@ export function JplNightPanel({
     sun = snapshot.objects.sun?.data;
   const moon = snapshot.objects.moon?.data;
   const point = night.points[Math.min(index, night.points.length - 1)];
+  const readiness = readinessAt(
+    night.points.find((candidate) => candidate.utc === snapshot.utc),
+  );
   const x = (i: number) =>
     night.points.length < 2 ? 0 : (i * 800) / (night.points.length - 1);
   const y = (alt: number) => 15 + ((90 - alt) / 180) * 180;
@@ -114,6 +118,13 @@ export function JplNightPanel({
               </p>
             )}
         </div>
+      </div>
+      <div className="jpl-readiness" role="note">
+        <div>
+          <span>TONIGHT&apos;S READINESS</span>
+          <strong>{readiness.score === null ? "Unavailable" : `${readiness.score}%`}</strong>
+        </div>
+        <p>{readiness.reason}</p>
       </div>
       {!night.best && night.geometryOnly && (
         <p className="event-footnote">

@@ -32,12 +32,14 @@ import { eventTargets, mqLocation } from "@/lib/event-types";
 import {
   objectGuidance,
   smartphonePhotographyGuide,
+  stellariumWeb,
 } from "@/lib/object-guidance";
 import type {
   EventLocation,
   EventTarget,
   EventWeather,
   HorizonsSnapshot,
+  JplPosition,
   SourceResult,
 } from "@/lib/event-types";
 import "./EventDesk.css";
@@ -75,6 +77,23 @@ function airmass(altitude: number) {
     (Math.cos((zenithAngle * Math.PI) / 180) +
       0.50572 * Math.pow(96.07995 - zenithAngle, -1.6364));
   return value.toFixed(2);
+}
+
+function scanEventTime(
+  series: JplPosition[] | undefined,
+  marker: JplPosition["eventMarker"],
+  timezone: string,
+) {
+  const event = series?.find((sample) => sample.eventMarker === marker);
+  return event
+    ? `About ${localTime(event.utc, timezone)}`
+    : "Not in this 48-hour JPL scan";
+}
+
+function catalogueConstellation(
+  target: (typeof eventTargets)[number] | undefined,
+) {
+  return target && "constellation" in target ? target.constellation : undefined;
 }
 
 function unavailable<T>(source: string, error: string): SourceResult<T> {
@@ -444,7 +463,11 @@ export function EventDesk({
 
   const position = positions?.objects[target];
   const body = position?.data;
+  const selectedDefinition = eventTargets.find((item) => item.id === target);
   const guidance = objectGuidance(target);
+  const rise = scanEventTime(positions?.series[target], "r", timezone);
+  const transit = scanEventTime(positions?.series[target], "t", timezone);
+  const set = scanEventTime(positions?.series[target], "s", timezone);
   const currentWeather = weather?.data?.current;
   const searchValue: LocationPreset = {
     label: locationName,
@@ -710,6 +733,7 @@ export function EventDesk({
                 target={target}
                 locationName={locationName}
                 timezone={timezone}
+                weather={weather?.data}
                 onTarget={setTarget}
                 onEpoch={(time) => {
                   setUtc(time);
@@ -740,8 +764,10 @@ export function EventDesk({
                         {positionLoading
                           ? "Loading…"
                           : targetPosition
-                            ? `${targetPosition.altitude.toFixed(1)}° altitude`
-                            : "Unavailable"}
+                          ? `${targetPosition.altitude.toFixed(1)}° altitude`
+                            : item.horizons
+                              ? "Unavailable"
+                              : `${item.objectType} · catalogue guidance`}
                       </span>
                     </button>
                   );
@@ -756,7 +782,7 @@ export function EventDesk({
                     <p className="event-kicker">02 / POSITION</p>
                     <h2>{eventTargets.find((item) => item.id === target)?.name}</h2>
                   </div>
-                  <span>{position?.status === "available" ? "Live calculation" : "Unavailable"}</span>
+                  <span>{position?.status === "available" ? "Live calculation" : selectedDefinition?.horizons ? "Unavailable" : "Catalogue guidance"}</span>
                 </div>
                 {positionLoading ? (
                   <p className="event-loading"><Loader2 className="spin" size={18} /> Checking the sky from your location…</p>
@@ -777,10 +803,12 @@ export function EventDesk({
                     {guidance && viewMode === "observer" && (
                       <div className="event-object-guidance">
                         <strong>Observing guidance</strong>
+                        <p><b>{guidance.beginner}</b> · <b>Astrophotography: {guidance.astrophotography}</b></p>
                         <p>{guidance.starter}</p>
                         <p>{guidance.equipment}</p>
                         <p>{guidance.photography} <a href={smartphonePhotographyGuide} target="_blank" rel="noreferrer">Smartphone photography guide</a></p>
                         <a href={guidance.sourceUrl} target="_blank" rel="noreferrer">{guidance.sourceLabel} <ExternalLink size={13} /></a>
+                        <a href={stellariumWeb} target="_blank" rel="noreferrer">Open in Stellarium Web <ExternalLink size={13} /></a>
                       </div>
                     )}
                     {viewMode === "astronomer" && (
@@ -790,12 +818,39 @@ export function EventDesk({
                           <div><dt>Declination</dt><dd>{metric(body.declination, "°", 4)}</dd></div>
                           <div><dt>Julian day</dt><dd>{body.julianDay.toFixed(6)}</dd></div>
                           <div><dt>Airmass</dt><dd>{airmass(body.altitude)}</dd></div>
+                          <div><dt>Object type</dt><dd>{body.objectType}</dd></div>
+                          <div><dt>Constellation</dt><dd>{body.constellation ?? catalogueConstellation(selectedDefinition) ?? "Unavailable"}</dd></div>
+                          <div><dt>Rise</dt><dd>{rise}</dd></div>
+                          <div><dt>Transit</dt><dd>{transit}</dd></div>
+                          <div><dt>Set</dt><dd>{set}</dd></div>
+                          <div><dt>Angular separation (Sun)</dt><dd>{metric(body.sunSeparation, "°", 1)}</dd></div>
+                          <div><dt>Moon separation</dt><dd>{metric(body.moonSeparation, "°", 1)}</dd></div>
                           <div><dt>Requested UTC</dt><dd>{body.utc}</dd></div>
                           <div><dt>API version</dt><dd>{body.apiVersion}</dd></div>
                         </dl>
                         <a href={body.requestUrl} target="_blank" rel="noreferrer">Open the exact JPL request <ExternalLink size={14} /></a>
                       </div>
                     )}
+                  </>
+                ) : selectedDefinition && guidance ? (
+                  <>
+                    <p className="event-position-summary">
+                      {selectedDefinition.name} is a catalogue target. Its static metadata and observing guidance are available here; this dashboard does not substitute a second astronomy engine for the authoritative JPL calculation.
+                    </p>
+                    <p className="event-horizon-note">Trees, hills and buildings near you may still block the view. AstroScout does not model local terrain line of sight.</p>
+                    <div className="event-metrics">
+                      <div><span>Object type</span><strong>{selectedDefinition.objectType}</strong></div>
+                      <div><span>Constellation</span><strong>{catalogueConstellation(selectedDefinition) ?? "Varies"}</strong></div>
+                    </div>
+                    <div className="event-object-guidance">
+                      <strong>Observing guidance</strong>
+                      <p><b>{guidance.beginner}</b> · <b>Astrophotography: {guidance.astrophotography}</b></p>
+                      <p>{guidance.starter}</p>
+                      <p>{guidance.equipment}</p>
+                      <p>{guidance.photography}</p>
+                      <a href={guidance.sourceUrl} target="_blank" rel="noreferrer">{guidance.sourceLabel} <ExternalLink size={13} /></a>
+                      <a href={stellariumWeb} target="_blank" rel="noreferrer">Open in Stellarium Web <ExternalLink size={13} /></a>
+                    </div>
                   </>
                 ) : (
                   <p className="event-error">We could not load the sky position: {positionError || position?.error}</p>
@@ -827,7 +882,7 @@ export function EventDesk({
               </section>
             </div>
 
-            {!positionLoading && positions && (
+            {!positionLoading && positions && selectedDefinition?.horizons && (
               <JplNightPanel
                 snapshot={positions}
                 target={target}

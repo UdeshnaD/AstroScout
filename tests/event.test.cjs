@@ -46,6 +46,36 @@ test("Horizons requests use the observer's exact coordinates and UTC", () => {
   assert.equal(url.searchParams.get("CENTER"), "'coord@399'");
   assert.equal(url.searchParams.get("TIME_TYPE"), "'UT'");
   assert.equal(url.searchParams.get("TLIST"), "'2026-09-08 10:00:00.000'");
+  assert.equal(url.searchParams.get("QUANTITIES"), "'2,4,9,10,23,25,29'");
+});
+
+test("target catalogue keeps planets and adds deep-sky and moving-sky entries", () => {
+  for (const id of [
+    "moon", "venus", "mars", "jupiter", "saturn", "milky-way-core",
+    "andromeda", "large-magellanic-cloud", "small-magellanic-cloud",
+    "orion-nebula", "eta-carinae", "pleiades", "omega-centauri", "hyades",
+    "hercules-cluster", "eta-aquariids", "vesta", "iss",
+  ]) assert.ok(types.eventTargets.some((target) => target.id === id));
+  assert.throws(() => providers.horizonsUrl("andromeda", types.mqLocation, utc), /no JPL Horizons observer-table target/);
+  assert.equal(types.eventTargets.find((target) => target.id === "andromeda").constellation, "Andromeda");
+});
+
+test("JPL metadata fields retain source-provided constellation and angular separations", () => {
+  const payload = {
+    signature: { source: "NASA/JPL Horizons API", version: "1.2" },
+    result: [
+      "Target body name: Mars (499)",
+      "Date__(UT)__HR:MN:SC.fff,Date_________JDUT,,,R.A._(a-app),DEC_(a-app),Azi_(a-app),Elev_(a-app),APmag,S-brt,Illu%,S-O-T,/r,T-O-M,MN_Illu%,Cnst,",
+      "$$SOE",
+      "2026-Sep-08 10:00:00.000,2461291.916666667,,,112.98725,22.49200,177.454763,-78.708247,1.235,4.480,91.27221,59.4919,/L,86.8,5.6919,Gem,",
+      "$$EOE",
+    ].join("\n"),
+  };
+  const parsed = providers.parseHorizons(payload, "mars", utc, "https://example.test/jpl");
+  assert.equal(parsed.objectType, "Planet");
+  assert.equal(parsed.constellation, "Gem");
+  assert.equal(parsed.sunSeparation, 59.4919);
+  assert.equal(parsed.moonSeparation, 86.8);
 });
 
 test("invalid observer details and ambiguous epochs are rejected", () => {
@@ -68,6 +98,26 @@ test("night analysis only recommends real dark, elevated intervals", () => {
   assert.equal(night.skyState(-18), "Astronomical night");
   assert.equal(night.analyseNight(undefined, "saturn", null).best, null);
   assert.equal(night.weatherSuitable(null), null);
+});
+
+test("readiness is an additive interpretation and aurora keeps all required factors", () => {
+  const point = {
+    utc,
+    target: { altitude: 42 },
+    sun: { altitude: -22 },
+    moon: null,
+    weather: { cloudCover: 20, precipitation: 0, visibility: 15000, wind: 8 },
+    geometric: true,
+    suitable: true,
+    score: 1,
+  };
+  const readiness = night.readinessAt(point);
+  assert.equal(typeof readiness.score, "number");
+  assert.match(readiness.reason, /not a sighting probability/);
+  const aurora = night.assessAurora(-22, -33.77, point.weather);
+  assert.match(aurora.geomagnetic, /not available/);
+  assert.match(aurora.solar, /not available/);
+  assert.match(aurora.weather, /support contrast/);
 });
 
 test("Geoapify place features become usable observing-place records", () => {
