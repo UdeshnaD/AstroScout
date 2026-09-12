@@ -8,11 +8,30 @@ import { QRCodeSVG } from "qrcode.react";
 export function PhoneJoin() {
   const [joinUrl, setJoinUrl] = useState("");
   const [copied, setCopied] = useState(false);
+  const [localLink, setLocalLink] = useState(false);
 
   useEffect(() => {
-    const url = new URL("/", window.location.origin);
-    url.searchParams.set("from", "astronomy-night-qr");
-    setJoinUrl(url.toString());
+    async function prepareLink() {
+      const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+      let origin = configured || window.location.origin;
+      const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+      if (!configured && isLocal) {
+        try {
+          const response = await fetch("/api/local-address", { cache: "no-store" });
+          const data = (await response.json()) as { origin?: string };
+          if (response.ok && data.origin) {
+            origin = data.origin;
+            setLocalLink(true);
+          }
+        } catch {
+          // Keep localhost as a visible fallback if network detection fails.
+        }
+      }
+      const url = new URL("/", origin);
+      url.searchParams.set("from", "astronomy-night-qr");
+      setJoinUrl(url.toString());
+    }
+    void prepareLink();
   }, []);
 
   async function copyLink() {
@@ -51,6 +70,11 @@ export function PhoneJoin() {
         <p>
           Point your phone camera at the code. It opens this AstroScout website directly. No account, download or personal details are required.
         </p>
+        {localLink && (
+          <p className="phone-join__local-note">
+            Local test link: keep this laptop running and connect your phone to the same Wi-Fi network. Phone location may require the deployed HTTPS version.
+          </p>
+        )}
         <ol>
           <li><span>1</span> Scan the QR code with your camera.</li>
           <li><span>2</span> Allow location access, or search for a place.</li>
@@ -86,7 +110,7 @@ export function PhoneJoin() {
               title="QR code that opens AstroScout"
             />
             <strong>Open AstroScout</strong>
-            <span>{new URL(joinUrl).host}</span>
+            <span>{new URL(joinUrl).host}{localLink ? " / same Wi-Fi only" : ""}</span>
           </>
         ) : (
           <div className="phone-join__placeholder">Preparing this site’s QR code…</div>

@@ -719,6 +719,16 @@
   color: #cbd9d1;
   line-height: 1.65;
 }
+.phone-join__local-note {
+  max-width: 58ch;
+  margin: 14px 0 0;
+  padding: 10px 12px;
+  border-left: 2px solid var(--gold);
+  background: rgb(255 255 255 / 8%);
+  color: #f0e0b9;
+  font-size: 12px;
+  line-height: 1.55;
+}
 .phone-join .event-kicker {
   color: #bfcfc6;
 }
