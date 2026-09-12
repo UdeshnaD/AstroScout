@@ -35,6 +35,8 @@ const providers = load("src/lib/event-providers.ts");
 const types = load("src/lib/event-types.ts");
 const night = load("src/lib/horizons-analysis.ts");
 const nearby = load("src/lib/nearby-places.ts");
+const journal = load("src/lib/journal.ts");
+const guidance = load("src/lib/object-guidance.ts");
 const utc = "2026-09-08T10:00:00.000Z";
 
 test("Horizons requests use the observer's exact coordinates and UTC", () => {
@@ -110,4 +112,36 @@ test("Geoapify route results retain real road distance and duration", () => {
     { distanceMeters: 24310.5, durationSeconds: 1982.4 },
   );
   assert.equal(nearby.parseGeoapifyRoute({ features: [] }), null);
+});
+
+test("journal imports preserve valid teammate entries and reject malformed data", () => {
+  const entries = journal.validJournalEntries([
+    {
+      id: "entry-1",
+      observedAt: "2026-09-10T10:00:00.000Z",
+      location: "Macquarie University",
+      target: "Saturn",
+      equipment: "Telescope",
+      notes: "Rings visible in steady moments.",
+      visibility: "Good",
+      transparency: "Fair",
+      conditions: "Clear",
+    },
+    { id: "bad", observedAt: "not-a-date" },
+  ]);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].target, "Saturn");
+  assert.equal(entries[0].conditions, "Clear");
+});
+
+test("observing lists retain supported and imported catalogue targets", () => {
+  const lists = journal.validObservingLists([
+    {
+      id: "list-1",
+      name: "Southern sky",
+      targets: ["Moon", "Large Magellanic Cloud", "Moon"],
+    },
+  ]);
+  assert.deepEqual(lists[0].targets, ["Moon", "Large Magellanic Cloud"]);
+  assert.match(guidance.objectGuidance("jupiter").equipment, /Binoculars/);
 });

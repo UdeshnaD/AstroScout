@@ -180,6 +180,16 @@
   background: #fbebee;
   color: #842436;
 }
+.event-offline {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px max(28px, calc((100% - 1180px) / 2));
+  border-bottom: 1px solid #d8c59f;
+  background: #fbf3df;
+  color: #644f27;
+  font-size: 12px;
+}
 
 .event-place-finder {
   display: grid;
@@ -684,6 +694,26 @@
 .event-targets {
   margin-bottom: 32px;
 }
+.event-view-mode {
+  display: inline-flex;
+  overflow: hidden;
+  border: 1px solid #aebdb5;
+  border-radius: 999px;
+  background: #fff;
+}
+.event-view-mode button {
+  min-height: 34px;
+  padding: 6px 11px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+.event-view-mode button[aria-pressed="true"] {
+  background: var(--forest-dark);
+  color: #fff;
+}
 .event-section-heading {
   display: flex;
   align-items: center;
@@ -716,6 +746,279 @@
   background: #fff;
   color: var(--ink);
   text-align: left;
+}
+.event-horizon-note {
+  margin: 11px 0 18px;
+  padding: 9px 11px;
+  border-left: 2px solid var(--gold);
+  background: #f7f2e8;
+  color: #665537;
+  font-size: 11px;
+  line-height: 1.5;
+}
+.event-object-guidance,
+.event-technical {
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+.event-object-guidance > strong {
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 18px;
+  font-weight: 550;
+}
+.event-object-guidance p {
+  margin: 7px 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+.event-object-guidance a,
+.event-technical > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.event-technical dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px 18px;
+  margin: 0 0 16px;
+}
+.event-technical dl > div {
+  min-width: 0;
+}
+.event-technical dt {
+  color: var(--muted);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.event-technical dd {
+  margin: 4px 0 0;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.journal-page {
+  display: grid;
+  gap: 24px;
+}
+.journal-tools {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 22px 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+}
+.journal-tools h2,
+.journal-card h2,
+.journal-history h2 {
+  margin: 5px 0 6px;
+  font-family: var(--font-editorial), Georgia, serif;
+  font-size: 25px;
+  font-weight: 500;
+}
+.journal-tools p:last-child,
+.journal-card__heading p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.journal-tools__actions {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.journal-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+  gap: 20px;
+  align-items: start;
+}
+.journal-card,
+.journal-history {
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+}
+.journal-card__heading {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.journal-card__heading > svg {
+  flex: 0 0 auto;
+  margin-top: 5px;
+  color: var(--forest);
+}
+.journal-form {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 13px;
+}
+.journal-form label,
+.observing-list-target {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+}
+.journal-form input,
+.journal-form select,
+.journal-form textarea,
+.observing-list-create input,
+.observing-list-target select {
+  width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 10px;
+  border: 1px solid #b9c6bf;
+  border-radius: 4px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+}
+.journal-form__notes {
+  grid-column: 1 / -1;
+}
+.journal-form textarea {
+  min-height: 110px;
+  resize: vertical;
+}
+.journal-form > button {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+.observing-list-create {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 13px;
+}
+.observing-list-create input {
+  flex: 1;
+}
+.observing-list-target {
+  margin-bottom: 16px;
+}
+.observing-list-grid {
+  display: grid;
+  gap: 10px;
+}
+.observing-list-grid article {
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+}
+.observing-list-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.observing-list-title > button,
+.observing-list-grid li button,
+.journal-history article > button {
+  display: grid;
+  place-items: center;
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #7c554c;
+}
+.observing-list-title > button:hover,
+.observing-list-grid li button:hover,
+.journal-history article > button:hover {
+  background: #f7ece9;
+}
+.observing-list-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 8px;
+  padding: 5px 0;
+  border: 0;
+  background: transparent;
+  color: var(--forest);
+  font-size: 11px;
+  font-weight: 700;
+}
+.observing-list-add:disabled {
+  color: var(--muted);
+}
+.observing-list-grid ul {
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.observing-list-grid li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 38px;
+  border-top: 1px solid #e7ece9;
+  color: var(--muted);
+  font-size: 12px;
+}
+.observing-list-grid article > p,
+.journal-empty {
+  color: var(--muted);
+  font-size: 12px;
+}
+.journal-history article {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 0;
+  border-top: 1px solid var(--line);
+}
+.journal-history article > div {
+  flex: 1;
+  min-width: 0;
+}
+.journal-history article strong,
+.journal-history article span,
+.journal-history article small {
+  display: block;
+  overflow-wrap: anywhere;
+}
+.journal-history article strong {
+  font-size: 14px;
+}
+.journal-history article span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 12px;
+}
+.journal-history article small {
+  margin-top: 5px;
+  color: #718078;
+  font-size: 10px;
+}
+.journal-history article p {
+  margin: 9px 0 0;
+  color: #44564d;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
 }
 .event-target-grid button:hover,
 .event-target-grid button[aria-pressed="true"] {
@@ -1026,6 +1329,7 @@
   .phone-join { grid-template-columns: 1fr; }
   .phone-join__copy h2 { max-width: 16ch; }
   .phone-join__code { width: min(100%, 420px); justify-self: center; }
+  .journal-layout { grid-template-columns: 1fr; }
   .event-settings form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .event-settings form button { justify-self: start; }
   .jpl-sample-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -1051,6 +1355,7 @@
   .event-location-strip > div { flex-wrap: wrap; gap: 4px 8px; }
   .event-location-strip > div span { width: 100%; padding-left: 25px; }
   .event-location-strip time { display: none; }
+  .event-offline { align-items: flex-start; padding: 10px 18px; }
   .event-main { width: min(100% - 32px, 1180px); padding-top: 30px; }
   .event-heading { display: grid; }
   .event-heading h1 { font-size: 38px; }
@@ -1093,6 +1398,21 @@
   .phone-join__actions > button { flex: 1 1 calc(50% - 9px); }
   .phone-join__actions > button:first-child { flex-basis: 100%; }
   .phone-join__code { min-height: 0; padding: 20px; }
+  .event-section-heading:has(.event-view-mode) {
+    display: grid;
+  }
+  .event-view-mode { justify-self: start; }
+  .event-technical dl,
+  .journal-form { grid-template-columns: 1fr; }
+  .journal-tools { display: grid; padding: 20px; }
+  .journal-tools__actions { width: 100%; }
+  .journal-tools__actions > button { flex: 1; }
+  .journal-card,
+  .journal-history { padding: 19px; }
+  .journal-form__notes,
+  .journal-form > button { grid-column: auto; }
+  .journal-form > button { width: 100%; }
+  .observing-list-create { display: grid; }
   .event-session-card { grid-template-columns: 1fr; gap: 12px; }
   .event-settings form { grid-template-columns: 1fr; }
   .event-target-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }

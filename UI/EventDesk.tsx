@@ -20,12 +20,18 @@ import {
 import { CalendarView } from "./CalendarView";
 import { JplNightPanel } from "./JplNightPanel";
 import { NearbyPlacesExplorer } from "@/components/dashboard/NearbyPlacesExplorer";
+import { ObservationJournal } from "@/components/dashboard/ObservationJournal";
+import { OfflineReady } from "@/components/dashboard/OfflineReady";
 import { PhoneJoin } from "@/components/dashboard/PhoneJoin";
 import {
   LocationSearch,
   type LocationPreset,
 } from "@/components/dashboard/LocationSearch";
 import { eventTargets, mqLocation } from "@/lib/event-types";
+import {
+  objectGuidance,
+  smartphonePhotographyGuide,
+} from "@/lib/object-guidance";
 import type {
   EventLocation,
   EventTarget,
@@ -60,6 +66,16 @@ const metric = (
     ? "Unavailable"
     : `${number.toFixed(digits)}${suffix}`;
 
+function airmass(altitude: number) {
+  if (altitude <= 0) return "Below horizon";
+  const zenithAngle = 90 - altitude;
+  const value =
+    1 /
+    (Math.cos((zenithAngle * Math.PI) / 180) +
+      0.50572 * Math.pow(96.07995 - zenithAngle, -1.6364));
+  return value.toFixed(2);
+}
+
 function unavailable<T>(source: string, error: string): SourceResult<T> {
   const time = new Date().toISOString();
   return {
@@ -90,6 +106,12 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
     title: "Choose an observing date.",
     intro:
       "Select a UTC date, then return to Tonight to inspect the JPL-calculated sky for that epoch.",
+  },
+  "/journal": {
+    eyebrow: "Observation journal",
+    title: "Keep a record of the sky.",
+    intro:
+      "Save observing notes and build personal target lists that stay on this device.",
   },
   "/method": {
     eyebrow: "Data and method",
@@ -137,6 +159,9 @@ export function EventDesk({
   const [utc, setUtc] = useState("");
   const [epochInput, setEpochInput] = useState("");
   const [target, setTarget] = useState<EventTarget>("saturn");
+  const [viewMode, setViewMode] = useState<"observer" | "astronomer">(
+    "observer",
+  );
   const [positions, setPositions] = useState<HorizonsSnapshot>();
   const [weather, setWeather] = useState<SourceResult<EventWeather>>();
   const [positionLoading, setPositionLoading] = useState(true);
@@ -147,6 +172,19 @@ export function EventDesk({
   const [locating, setLocating] = useState(false);
   const [revision, setRevision] = useState(0);
   const requestGeneration = useRef(0);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("astroscout.view-mode.v1");
+    if (saved === "observer" || saved === "astronomer") setViewMode(saved);
+  }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("astroscout.view-mode.v1", viewMode);
+    } catch {
+      // The mode remains available for this visit when storage is restricted.
+    }
+  }, [viewMode]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -387,6 +425,7 @@ export function EventDesk({
 
   const position = positions?.objects[target];
   const body = position?.data;
+  const guidance = objectGuidance(target);
   const currentWeather = weather?.data?.current;
   const searchValue: LocationPreset = {
     label: locationName,
@@ -412,6 +451,7 @@ export function EventDesk({
             ["/", "Tonight"],
             ["/places", "Explore places"],
             ["/calendar", "Calendar"],
+            ["/journal", "Journal"],
             ["/method", "How it works"],
           ].map(([href, label]) => (
             <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>
@@ -437,6 +477,8 @@ export function EventDesk({
           <small>{timezone}</small>
         </time>
       </div>
+
+      <OfflineReady />
 
       <main id="event-content" className="event-main">
         <div className="event-heading">
@@ -506,6 +548,13 @@ export function EventDesk({
         )}
 
         {pathname === "/join" && <PhoneJoin />}
+
+        {pathname === "/journal" && (
+          <ObservationJournal
+            locationName={locationName}
+            selectedTarget={target}
+          />
+        )}
 
         {pathname === "/calendar" && (
           <div className="event-calendar-page">
@@ -601,7 +650,10 @@ export function EventDesk({
                   <p className="event-kicker">01 / TARGET</p>
                   <h2 id="target-heading">Choose an object</h2>
                 </div>
-                <span>NASA/JPL Horizons</span>
+                <div className="event-view-mode" role="group" aria-label="Information detail">
+                  <button type="button" aria-pressed={viewMode === "observer"} onClick={() => setViewMode("observer")}>Observer</button>
+                  <button type="button" aria-pressed={viewMode === "astronomer"} onClick={() => setViewMode("astronomer")}>Astronomer</button>
+                </div>
               </div>
               <div className="event-target-grid">
                 {eventTargets.filter((item) => item.id !== "sun").map((item) => {
@@ -640,18 +692,37 @@ export function EventDesk({
                         ? `${body.name} is ${body.altitude.toFixed(1)}° above the ${body.compass} horizon.`
                         : `${body.name} is ${Math.abs(body.altitude).toFixed(1)}° below the ${body.compass} horizon.`}
                     </p>
+                    <p className="event-horizon-note">
+                      Local trees, hills and buildings can still block an object that is calculated above the geometric horizon.
+                    </p>
                     <div className="event-metrics">
                       <div><span>Altitude</span><strong>{body.altitude.toFixed(1)}°</strong></div>
                       <div><span>Direction</span><strong>{body.compass}</strong><small>{body.azimuth.toFixed(1)}° azimuth</small></div>
                       <div><span>Magnitude</span><strong>{metric(body.magnitude, "", 2)}</strong></div>
                       <div><span>Illumination</span><strong>{metric(body.illumination, "%", 1)}</strong></div>
                     </div>
-                    <details>
-                      <summary>Exact JPL fields and provenance</summary>
-                      <p>Right ascension: {metric(body.rightAscension, "°", 4)} · Declination: {metric(body.declination, "°", 4)}</p>
-                      <p>Requested epoch: {body.utc} · Response received: {position?.receivedAt}</p>
-                      <a href={body.requestUrl} target="_blank" rel="noreferrer">Open the exact JPL request <ExternalLink size={14} /></a>
-                    </details>
+                    {guidance && viewMode === "observer" && (
+                      <div className="event-object-guidance">
+                        <strong>Observing guidance</strong>
+                        <p>{guidance.starter}</p>
+                        <p>{guidance.equipment}</p>
+                        <p>{guidance.photography} <a href={smartphonePhotographyGuide} target="_blank" rel="noreferrer">Smartphone photography guide</a></p>
+                        <a href={guidance.sourceUrl} target="_blank" rel="noreferrer">{guidance.sourceLabel} <ExternalLink size={13} /></a>
+                      </div>
+                    )}
+                    {viewMode === "astronomer" && (
+                      <div className="event-technical">
+                        <dl>
+                          <div><dt>Right ascension</dt><dd>{metric(body.rightAscension, "°", 4)}</dd></div>
+                          <div><dt>Declination</dt><dd>{metric(body.declination, "°", 4)}</dd></div>
+                          <div><dt>Julian day</dt><dd>{body.julianDay.toFixed(6)}</dd></div>
+                          <div><dt>Airmass</dt><dd>{airmass(body.altitude)}</dd></div>
+                          <div><dt>Requested UTC</dt><dd>{body.utc}</dd></div>
+                          <div><dt>API version</dt><dd>{body.apiVersion}</dd></div>
+                        </dl>
+                        <a href={body.requestUrl} target="_blank" rel="noreferrer">Open the exact JPL request <ExternalLink size={14} /></a>
+                      </div>
+                    )}
                   </>
                 ) : (
                   <p className="event-error">NASA/JPL data unavailable: {positionError || position?.error}</p>
