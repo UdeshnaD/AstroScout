@@ -1,0 +1,1441 @@
+.astro-site {
+  --accent: #a32742;
+  --green: #28634c;
+  --cyan: #346378;
+  background: #fff;
+  color: #22262a;
+}
+.astro-site [hidden] {
+  display: none !important;
+}
+.astro-header {
+  min-height: 84px;
+  padding: 16px 4%;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  background: #121719;
+  color: #fff;
+}
+.astro-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 25px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.astro-brand .brand-period {
+  color: #ddae6c;
+}
+.astro-header nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 30px;
+}
+.astro-header nav a {
+  font-size: 15px;
+  padding: 10px 0;
+  border-bottom: 2px solid transparent;
+  color: #cbd1d3;
+  white-space: nowrap;
+}
+.astro-header nav a[aria-current="page"] {
+  color: #fff;
+  border-color: #d5ad76;
+}
+.astro-header nav a:hover {
+  color: #fff;
+}
+.astro-header > .icon-button {
+  color: #fff;
+  background: transparent;
+  border-color: #41484b;
+}
+.astro-context {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 4%;
+  background: #f4f6f5;
+  border-bottom: 1px solid #e0e5e2;
+  font-size: 14px;
+}
+.astro-context > span {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.context-divider {
+  color: #9baba3;
+  margin: 0 4px;
+}
+.astro-context button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #40594d;
+  padding: 4px 0;
+  font-size: 14px;
+}
+.astro-site .desk-main {
+  max-width: none;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+.astro-page-heading {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 54px 40px 35px;
+}
+.astro-page-heading h1 {
+  font-size: 42px;
+  line-height: 1.16;
+  margin: 12px 0 14px;
+  font-weight: 650;
+}
+.astro-page-heading > p {
+  color: #646d71;
+  font-size: 17px;
+  margin: 0;
+}
+.astro-settings {
+  padding: 20px 4%;
+  border-bottom: 1px solid #dbe2df;
+  background: #f4f6f5;
+}
+.astro-site .session-toolbar {
+  max-width: 1280px;
+  margin: 0 auto;
+  box-shadow: none;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.astro-site .error-banner,
+.astro-site .notice,
+.astro-site .pending-note,
+.astro-site .offline-banner {
+  max-width: 1200px;
+  margin: 12px auto;
+}
+.offline-banner {
+  display: grid;
+  gap: 2px;
+  padding: 10px 14px;
+  border-left: 3px solid #547b92;
+  background: #edf4f7;
+  color: #29485a;
+  font-size: 13px;
+}
+.offline-banner strong { font-size: 14px; }
+.offline-banner em { color: #59707b; font-size: 12px; }
+.astro-site .desk-footer {
+  margin: 64px 0 0;
+  padding: 34px 4%;
+  background: #141a1c;
+  color: #b6c2c1;
+  border: 0;
+  font-size: 13px;
+}
+.astro-site .desk-footer strong {
+  color: #fff;
+  font-size: 19px;
+}
+.astro-site .desk-footer a:hover {
+  color: #fff;
+}
+.sky-feature {
+  position: relative;
+  isolation: isolate;
+  background: #050707;
+  color: #fff;
+  height: calc(100svh - 210px);
+  min-height: 430px;
+  max-height: 590px;
+  overflow: hidden;
+}
+.saturn-photograph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: -1;
+}
+.sky-feature-copy {
+  position: relative;
+  padding: 48px 5%;
+  max-width: 560px;
+  text-shadow: 0 2px 14px #000;
+}
+.feature-eyebrow {
+  color: #c9d2d1;
+  font-size: 12px;
+  letter-spacing: 0;
+  font-weight: 600;
+}
+.sky-feature h1 {
+  font-size: 56px;
+  font-weight: 600;
+  line-height: 1.08;
+  margin: 14px 0;
+}
+.feature-intro {
+  font-size: 19px;
+  line-height: 1.5;
+  color: #d0d7d5;
+  margin: 0 0 28px;
+}
+.featured-object > span {
+  font-size: 11px;
+  color: #d6b789;
+}
+.featured-object h2 {
+  margin: 2px 0 4px;
+  font-weight: 500;
+  font-size: 28px;
+}
+.featured-object p {
+  font-size: 13px;
+  color: #d6dedb;
+  max-width: 330px;
+  margin: 0;
+}
+.feature-cta {
+  display: inline-flex;
+  gap: 25px;
+  align-items: center;
+  border: 1px solid #d5ddda;
+  border-radius: 0;
+  color: #fff;
+  background: #151d1bb3;
+  padding: 12px 18px;
+  font-size: 15px;
+  margin-top: 20px;
+}
+.feature-cta:hover {
+  background: #fff;
+  color: #151b1a;
+}
+.feature-caption {
+  position: absolute;
+  bottom: 22px;
+  right: 4%;
+  text-align: right;
+  color: #b2bcba;
+  font-size: 11px;
+}
+.feature-caption span {
+  display: block;
+}
+.sky-scroll {
+  position: absolute;
+  bottom: 24px;
+  left: 5%;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  font-size: 13px;
+  color: #c8d3cf;
+}
+.sky-position-section,
+.sky-reading {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 58px 40px;
+}
+.section-intro {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  gap: 24px;
+  margin-bottom: 30px;
+}
+.section-intro h2,
+.tonight-next h2 {
+  font-size: 34px;
+  line-height: 1.18;
+  font-weight: 600;
+  margin: 12px 0 0;
+}
+.section-intro > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+.sky-hour-label {
+  display: grid;
+  gap: 5px;
+  font-size: 12px;
+  color: #66716c;
+}
+.sky-hour-label select,
+.calendar-toolbar select,
+.places-toolbar select {
+  border: 0;
+  border-bottom: 1px solid #a6b7af;
+  color: #293e34;
+  background: #fff;
+  font-size: 15px;
+  padding: 8px 18px 8px 0;
+}
+.sky-position-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(260px, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+.sky-observing-pane {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+  align-content: start;
+}
+.horizon-chart {
+  background: #172225;
+  padding: 20px 18px 12px;
+}
+.horizon-chart svg {
+  display: block;
+  width: 100%;
+  aspect-ratio: 800 / 350;
+}
+.horizon-chart p {
+  color: #aabdb7;
+  margin: 10px 0 0;
+  font-size: 11px;
+  text-align: center;
+}
+.sky-explainer {
+  margin-top: 10px;
+  color: #c9d5d1;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.sky-explainer summary {
+  cursor: pointer;
+  color: #e2e9e6;
+  font-weight: 600;
+}
+.sky-explainer p {
+  margin: 6px 0 0;
+  text-align: left;
+}
+.horizon-obstruction {
+  display: grid;
+  gap: 3px;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-left: 2px solid #c8a55c;
+  background: #202c2e;
+  color: #d6dfdc;
+  font-size: 12px;
+  line-height: 1.45;
+}
+.horizon-obstruction strong { color: #f0d99e; font-size: 12px; }
+.sky-target-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 20px;
+}
+.view-mode-toggle {
+  display: inline-flex;
+  margin: 0 0 16px;
+  border: 1px solid #b8c6bf;
+  border-radius: 999px;
+  overflow: hidden;
+}
+.view-mode-toggle button {
+  border: 0;
+  padding: 7px 11px;
+  background: #fff;
+  color: #56615c;
+  font-size: 12px;
+}
+.view-mode-toggle button[aria-pressed="true"] {
+  background: #253c31;
+  color: #fff;
+}
+.sky-target-picker button {
+  font-size: 13px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 5px 0;
+  background: #fff;
+  color: #707977;
+}
+.sky-target-picker button[aria-pressed="true"] {
+  color: #253c31;
+  border-color: #9d3046;
+}
+.sky-target-detail h3 {
+  font-size: 28px;
+  margin: 0;
+  font-weight: 550;
+}
+.target-altitude {
+  font-size: 16px;
+  color: #3d6b58;
+}
+.sky-target-detail p {
+  font-size: 15px;
+  line-height: 1.75;
+  color: #56615c;
+}
+.sky-target-detail .sky-target-state {
+  font-size: 13px;
+  color: #7d6744;
+}
+.object-recommendations {
+  margin: 16px 0 2px;
+  padding: 12px 0 0;
+  border-top: 1px solid #d5ded8;
+}
+.sky-target-detail .object-recommendations p {
+  margin: 4px 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.object-recommendations strong { color: #293e34; }
+.object-recommendations a { color: #3d6b58; white-space: nowrap; }
+.technical-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  margin: 18px 0 2px;
+  padding: 14px 0 0;
+  border-top: 1px solid #d5ded8;
+}
+.technical-details div { min-width: 0; }
+.technical-details dt {
+  color: #69746e;
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+.technical-details dd {
+  margin: 3px 0 0;
+  color: #293e34;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+.aurora-outlook {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 14px 16px;
+  border: 1px solid #c5d4cc;
+  border-left: 3px solid #3d6b58;
+  background: #f4f8f6;
+}
+.aurora-outlook > span {
+  color: #69746e;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.aurora-outlook > strong {
+  color: #3d6b58;
+  font-size: 16px;
+  font-weight: 600;
+}
+.aurora-outlook > p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+  color: #56615c;
+  text-align: left;
+}
+.transient-events {
+  margin-top: 42px;
+  max-width: 760px;
+}
+.transient-events h2 { margin: 8px 0 14px; font-size: 25px; }
+.transient-events article {
+  padding: 11px 0;
+  border-top: 1px solid #d5ded8;
+}
+.transient-events strong { color: #293e34; font-size: 14px; }
+.transient-events p { margin: 4px 0 0; color: #56615c; font-size: 13px; line-height: 1.55; }
+.transient-events small { display: block; margin-top: 4px; color: #69746e; font-size: 12px; }
+.transient-events .transient-empty { color: #69746e; font-size: 13px; }
+.observing-lists { margin-top: 42px; max-width: 760px; }
+.observing-lists h2 { margin: 8px 0 14px; font-size: 25px; }
+.observing-list-create { display: flex; gap: 8px; margin-bottom: 14px; }
+.observing-list-create input,
+.observing-list-title input {
+  min-width: 0;
+  border: 1px solid #b8c6bf;
+  border-radius: 4px;
+  padding: 8px 10px;
+  background: #fff;
+  color: #293e34;
+  font: inherit;
+}
+.observing-list-create input { flex: 1; }
+.observing-list-empty { color: #69746e; font-size: 13px; }
+.observing-list-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+.observing-list-grid article { padding: 13px; border: 1px solid #d5ded8; border-radius: 6px; }
+.observing-list-title { display: flex; gap: 6px; align-items: center; }
+.observing-list-title input { flex: 1; border: 0; padding: 2px; font-weight: 600; }
+.observing-list-grid .text-button { margin-top: 10px; font-size: 13px; }
+.observing-list-grid .text-button:disabled { color: #7b8781; cursor: default; text-decoration: none; }
+.observing-list-grid ul { list-style: none; margin: 10px 0 0; padding: 0; }
+.observing-list-grid li { display: flex; justify-content: space-between; gap: 8px; padding: 5px 0; border-top: 1px solid #edf0ee; font-size: 13px; color: #56615c; }
+.observing-list-grid li button { border: 0; background: transparent; color: #7d6744; padding: 0; }
+.observing-list-grid article > p { margin: 10px 0 0; color: #69746e; font-size: 13px; }
+.tonight-next {
+  background: #f0f4f1;
+  padding: 54px max(40px, calc((100% - 1200px) / 2));
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 70px;
+  align-items: center;
+}
+.tonight-next p {
+  max-width: 380px;
+  font-size: 17px;
+  line-height: 1.8;
+  color: #5e6c65;
+}
+.tonight-next figure {
+  margin: 0;
+}
+.tonight-next img {
+  width: 100%;
+  display: block;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+.tonight-next figcaption {
+  font-size: 11px;
+  color: #6f7773;
+  padding-top: 7px;
+}
+.reading-links {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 36px;
+}
+.reading-links > a {
+  border-top: 1px solid #d5ded8;
+  padding: 24px 0;
+  display: block;
+}
+.reading-links > a > span {
+  display: block;
+  margin-top: 22px;
+  font-size: 11px;
+  color: #69746e;
+}
+.reading-links h3 {
+  font-size: 22px;
+  font-weight: 550;
+  margin: 12px 0;
+}
+.reading-links p {
+  font-size: 15px;
+  color: #626f67;
+  line-height: 1.6;
+}
+.reading-links > a > svg:last-child {
+  margin-top: 14px;
+  color: #873c4d;
+  transition: transform 160ms ease;
+}
+.reading-links > a:hover > svg:last-child {
+  transform: translateX(7px);
+}
+.places-toolbar {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px 22px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  color: #637069;
+  font-size: 14px;
+}
+.places-toolbar > div,
+.places-toolbar a {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+.astro-site .explore-layout {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: grid;
+  grid-template-columns: 330px minmax(0, 1fr);
+  gap: 38px;
+  border: 0;
+}
+.astro-site .locations-pane {
+  border: 0;
+  padding: 0;
+  background: #fff;
+}
+.astro-site .locations-pane > .section-heading,
+.astro-site .rank-label {
+  display: none;
+}
+.astro-site .location-rows {
+  max-height: 650px;
+  overflow-y: auto;
+}
+.astro-site .location-row {
+  border: 0;
+  border-bottom: 1px solid #e1e6e3;
+  border-radius: 0;
+  background: #fff;
+  padding: 16px 0;
+  margin: 0;
+}
+.astro-site .location-row.selected {
+  background: #f1f6f2;
+  box-shadow: inset 3px 0 #53795f;
+}
+.astro-site .location-row-footer {
+  padding-top: 7px;
+}
+.astro-site .location-rank {
+  color: #919e97;
+  font-size: 12px;
+}
+.astro-site .match-score {
+  background: transparent;
+  border-radius: 0;
+  color: #3a5b47;
+}
+.astro-site .location-select {
+  padding: 5px 12px;
+}
+.astro-site .explorer-map {
+  height: 350px;
+  border: 0;
+  border-radius: 0;
+}
+.place-preview {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 18px 10px;
+  padding: 28px 0 0;
+}
+.place-preview h2 {
+  font-size: 28px;
+  font-weight: 550;
+  margin: 5px 0 0;
+}
+.place-preview > p,
+.place-facts,
+.place-actions,
+.place-extra,
+.place-feedback {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.place-preview > p {
+  color: #67736c;
+  font-size: 16px;
+  line-height: 1.8;
+}
+.place-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  color: #456251;
+  font-size: 13px;
+}
+.place-facts span,
+.place-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.place-actions {
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 9px 0;
+}
+.place-extra {
+  border-top: 1px solid #dfe7e1;
+  padding-top: 16px;
+}
+.place-extra summary {
+  cursor: pointer;
+  font-size: 14px;
+}
+.place-explainer {
+  color: #69796e;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.place-explainer p {
+  margin: 7px 0 0;
+}
+.place-feedback {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #69796e;
+}
+.place-feedback a {
+  margin-left: auto;
+  text-decoration: underline;
+}
+.astro-site .observation-planner {
+  max-width: 1000px;
+  padding: 5px 40px 35px;
+  margin: 0 auto;
+  border: 0;
+}
+.astro-site .observation-planner .section-heading h2 {
+  font-size: 23px;
+}
+.astro-site .observation-result {
+  margin-top: 28px;
+  padding: 28px 0;
+  gap: 60px;
+}
+.astro-site .observation-controls {
+  gap: 20px;
+}
+.astro-site .observation-controls fieldset {
+  margin: 10px 0;
+}
+.astro-site .observation-log > summary {
+  display: none;
+}
+.astro-site .observation-log {
+  border-top: 0;
+  margin: 0;
+  padding: 0;
+}
+.astro-site .observation-records {
+  max-height: none;
+}
+.astro-site .observation-record {
+  padding: 24px 0;
+}
+.astro-site .observation-probability {
+  font-size: 32px;
+}
+.astro-site .preference-method {
+  max-width: 1120px;
+  margin: 20px auto;
+  padding: 25px 40px;
+  border-top: 1px solid #dce3de;
+}
+.preference-method > summary {
+  cursor: pointer;
+  font-size: 17px;
+}
+.astro-site .comparison-section {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+.calendar-page {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 40px;
+}
+.calendar-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+.month-navigation {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.month-navigation h2 {
+  min-width: 205px;
+  text-align: center;
+  font-size: 24px;
+  margin: 0;
+  font-weight: 550;
+}
+.calendar-toolbar > label {
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.calendar-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(270px, 1fr);
+  gap: 44px;
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+.calendar-weekdays span {
+  font-size: 12px;
+  text-align: center;
+  padding: 12px 0;
+  color: #79837e;
+}
+.calendar-day,
+.calendar-blank {
+  min-height: 96px;
+  border: 0;
+  border-top: 1px solid #e3e8e4;
+  padding: 12px 9px;
+  background: #fff;
+  text-align: left;
+}
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.calendar-day > span {
+  font-size: 15px;
+}
+.calendar-day small {
+  color: #466c55;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+}
+.calendar-day.has-event {
+  background: #f0f5ef;
+}
+.calendar-day[aria-pressed="true"] {
+  outline: 2px solid #4d765b;
+  outline-offset: -2px;
+}
+.calendar-day:hover {
+  background: #e9efeb;
+}
+.calendar-agenda > .section-heading {
+  border-bottom: 1px solid #dce4dc;
+  padding-bottom: 12px;
+}
+.calendar-agenda article {
+  display: grid;
+  grid-template-columns: 50px 1fr;
+  gap: 20px;
+  padding: 24px 0;
+  border-bottom: 1px solid #e0e7e1;
+}
+.calendar-agenda time strong {
+  display: block;
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 500;
+  color: #9d4053;
+}
+.calendar-agenda time span {
+  font-size: 9px;
+  color: #718279;
+}
+.calendar-agenda h3 {
+  margin: 0 0 4px;
+  font-size: 19px;
+  font-weight: 550;
+}
+.calendar-agenda article > div > span {
+  color: #79847d;
+  font-size: 13px;
+}
+.calendar-agenda p {
+  color: #68736c;
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 10px 0 0;
+}
+.calendar-source {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 22px;
+  padding: 28px 0;
+  margin-top: 34px;
+  border-top: 1px solid #dce3dd;
+  color: #6a786e;
+  font-size: 15px;
+}
+.calendar-loading {
+  padding: 30px 40px;
+}
+@media (max-width: 1000px) {
+  .astro-header {
+    gap: 20px;
+    padding: 16px 24px;
+    flex-wrap: wrap;
+  }
+  .astro-header nav {
+    order: 3;
+    flex-basis: 100%;
+    justify-content: flex-start;
+    gap: 26px;
+    overflow-x: auto;
+  }
+  .astro-header > .icon-button {
+    margin-left: auto;
+  }
+  .sky-position-layout {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .sky-target-detail {
+    max-width: 680px;
+  }
+  .astro-site .explore-layout {
+    grid-template-columns: 280px minmax(0, 1fr);
+    gap: 24px;
+    padding: 0 24px;
+  }
+  .calendar-layout {
+    gap: 26px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .calendar-agenda {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 35px;
+  }
+  .calendar-agenda > .section-heading {
+    grid-column: 1 / -1;
+  }
+  .tonight-next {
+    gap: 35px;
+  }
+}
+@media (max-width: 640px) {
+  .astro-header {
+    padding: 13px 20px 5px;
+    gap: 6px;
+  }
+  .astro-brand {
+    font-size: 23px;
+  }
+  .astro-header nav {
+    gap: 24px;
+  }
+  .astro-header nav a {
+    font-size: 14px;
+  }
+  .astro-context {
+    padding: 10px 20px;
+    font-size: 12px;
+    gap: 7px;
+  }
+  .astro-context button {
+    font-size: 12px;
+  }
+  .astro-context > span {
+    gap: 5px;
+  }
+  .astro-page-heading {
+    padding: 34px 22px 28px;
+  }
+  .astro-page-heading h1 {
+    font-size: 32px;
+  }
+  .astro-page-heading p {
+    font-size: 15px;
+  }
+  .sky-feature {
+    min-height: 420px;
+    max-height: 480px;
+    height: calc(100svh - 230px);
+  }
+  .sky-feature-copy {
+    padding: 30px 22px;
+  }
+  .sky-feature h1 {
+    font-size: 42px;
+  }
+  .feature-intro {
+    font-size: 16px;
+    margin-bottom: 24px;
+  }
+  .saturn-photograph {
+    object-position: 57% center;
+    opacity: 0.55;
+  }
+  .feature-caption {
+    right: 18px;
+    bottom: 12px;
+    font-size: 9px;
+  }
+  .sky-scroll {
+    left: 22px;
+    bottom: 42px;
+    font-size: 12px;
+  }
+  .sky-position-section,
+  .sky-reading {
+    padding: 36px 22px;
+  }
+  .section-intro {
+    align-items: start;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+  .section-intro h2,
+  .tonight-next h2 {
+    font-size: 28px;
+  }
+  .horizon-chart {
+    padding: 14px 8px;
+  }
+  .tonight-next {
+    padding: 36px 22px;
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+  .reading-links {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .reading-links > a {
+    padding: 22px 0;
+  }
+  .places-toolbar {
+    align-items: start;
+    padding: 0 22px 20px;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .places-toolbar > div {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .astro-site .explore-layout {
+    grid-template-columns: 1fr;
+    padding: 0 22px;
+    gap: 28px;
+  }
+  .astro-site .location-rows {
+    max-height: 300px;
+  }
+  .astro-site .explorer-map {
+    height: 290px;
+  }
+  .place-preview h2 {
+    font-size: 25px;
+  }
+  .place-actions {
+    gap: 15px;
+  }
+  .astro-site .observation-planner {
+    padding: 0 22px 25px;
+  }
+  .astro-site .observation-result {
+    gap: 25px;
+  }
+  .astro-site .observation-probability {
+    font-size: 27px;
+  }
+  .astro-site .preference-method,
+  .astro-site .comparison-section {
+    padding: 20px 22px;
+  }
+  .calendar-page {
+    padding: 0 18px;
+  }
+  .calendar-toolbar {
+    align-items: start;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .month-navigation {
+    width: 100%;
+    justify-content: space-between;
+    gap: 5px;
+  }
+  .calendar-day,
+  .calendar-blank {
+    min-height: 66px;
+    padding: 9px 5px;
+  }
+  .calendar-day small > span {
+    display: none;
+  }
+  .calendar-agenda {
+    grid-template-columns: 1fr;
+  }
+  .calendar-source {
+    flex-direction: column;
+    align-items: start;
+    gap: 4px;
+  }
+  .astro-site .desk-footer {
+    margin-top: 38px;
+    padding: 28px 22px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .reading-links > a > svg:last-child {
+    transition: none;
+  }
+}
+
+.postcode-lookup {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.postcode-lookup > label {
+  color: var(--muted, #52615d);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.postcode-lookup > div {
+  display: flex;
+  gap: 8px;
+  min-width: 0;
+}
+
+.postcode-lookup input {
+  min-width: 0;
+  width: 0;
+  flex: 1 1 0;
+  padding: 8px 10px;
+}
+
+.postcode-lookup button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  flex: 0 0 auto;
+  padding: 8px 9px;
+  border: 1px solid var(--line, #d5dfd9);
+  border-radius: 6px;
+  background: var(--surface, #fff);
+  color: var(--ink, #172021);
+  font-size: 13px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.postcode-lookup button:hover:not(:disabled) {
+  border-color: var(--green, #1f674f);
+  background: var(--surface-subtle, #f3f6f3);
+  color: var(--green, #1f674f);
+}
+
+.postcode-lookup > span {
+  color: var(--accent-strong, #7d1c35);
+  font-size: 12px;
+}
+.postcode-lookup > small {
+  color: var(--muted, #52615d);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+/* --------------------------------------------------------------------------
+   Visual polish — merged into this standalone replacement stylesheet
+   -------------------------------------------------------------------------- */
+
+/*
+ * AstroScout visual polish
+ * Load after the supplied stylesheet. This is intentionally an override layer:
+ * it upgrades the existing UI without requiring markup changes.
+ */
+
+.astro-site {
+  --accent: #9f2946;
+  --accent-strong: #7d1c35;
+  --green: #1f674f;
+  --cyan: #1f6175;
+  --ink: #172021;
+  --muted: #52615d;
+  --surface: #ffffff;
+  --surface-subtle: #f3f6f3;
+  --line: #d5dfd9;
+  --focus: #236e9b;
+  --radius: 10px;
+  --shadow: 0 12px 32px rgb(18 30 26 / 9%);
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* Keep the theme legible: dark surfaces are blue-black, text is never greyed out. */
+.astro-site[data-theme="dark"],
+.dark .astro-site,
+.astro-site.dark {
+  --ink: #f1f6f3;
+  --muted: #bdc9c3;
+  --surface: #101817;
+  --surface-subtle: #182220;
+  --line: #354540;
+  --accent: #ef8b9e;
+  --accent-strong: #ffc0cc;
+  --green: #82c5a3;
+  --cyan: #8dc9dc;
+  --focus: #8dceff;
+  color-scheme: dark;
+  color: var(--ink);
+  background: var(--surface);
+}
+
+.astro-site :where(a, button, select, input, summary):focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.astro-site :where(button, a) {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease, transform 160ms ease;
+}
+
+/* Do not use a low-contrast opacity fade as the only hover affordance. */
+.astro-site :where(button, a):hover {
+  opacity: 1;
+}
+
+.astro-site :where(button, [role="button"]) {
+  min-height: 40px;
+}
+
+.astro-site :where(button, select, input) {
+  border-radius: 6px;
+}
+
+/* Plain overline, not a floating SaaS-style badge. */
+.feature-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #e6efeb;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.feature-eyebrow::before {
+  width: 20px;
+  height: 1px;
+  content: "";
+  background: currentColor;
+}
+
+.sky-feature::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+  background: linear-gradient(90deg, rgb(3 9 9 / 74%) 0%, rgb(3 9 9 / 37%) 48%, transparent 76%);
+}
+
+.feature-cta {
+  min-height: 46px;
+  gap: 12px;
+  border-radius: 5px;
+  border-color: #f3f7f5;
+  background: rgb(15 26 24 / 88%);
+  font-weight: 650;
+}
+
+.feature-cta:hover {
+  background: #ffffff;
+  color: #101817;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 25%);
+  transform: translateY(-1px);
+}
+
+/* Use a comfortable two-column editorial layout—not a row of three icon cards. */
+.reading-links {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 42px;
+}
+
+.reading-links > a {
+  min-height: 220px;
+  padding: 28px 0 30px;
+}
+
+.reading-links > a:hover {
+  color: inherit;
+}
+
+.reading-links > a:hover h3 {
+  color: var(--accent-strong);
+}
+
+/* Decorative Lucide arrows are restrained; icons inside actionable controls remain usable. */
+.reading-links > a > svg:last-child {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+
+.astro-site :where(button, a) > svg:only-child {
+  width: 18px;
+  height: 18px;
+}
+
+.astro-site :where(button, a) > svg + :not(svg),
+.astro-site :where(button, a) > :not(svg) + svg {
+  margin-inline: 2px;
+}
+
+/* Give inherited shadcn-like controls a consistent, quiet treatment. */
+.astro-site :where(.button, .btn, [data-slot="button"], .icon-button) {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.astro-site :where(.button, .btn, [data-slot="button"], .icon-button):hover {
+  border-color: var(--green);
+  background: var(--surface-subtle);
+  color: var(--green);
+}
+
+/* Primary actions keep white text on a reliably legible green surface. */
+.astro-site .button.button--primary,
+.astro-site .button-link.button-link--primary {
+  border-color: #1f674f;
+  background: #1f674f;
+  color: #ffffff;
+}
+
+.astro-site .button.button--primary:hover:not(:disabled),
+.astro-site .button-link.button-link--primary:hover {
+  border-color: #164c3b;
+  background: #164c3b;
+  color: #ffffff;
+}
+
+.astro-site .button.button--primary:disabled {
+  border-color: #8eb4a4;
+  background: #8eb4a4;
+  color: #ffffff;
+}
+
+.astro-header > .icon-button:hover {
+  border-color: #d5ad76;
+  background: rgb(255 255 255 / 11%);
+  color: #ffffff;
+}
+
+.astro-site :where(input, select, textarea, [data-slot="select-trigger"]) {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.astro-site :where(input, select, textarea, [data-slot="select-trigger"]):hover {
+  border-color: var(--green);
+}
+
+/* One spacing rhythm across sections, layouts, and interactive records. */
+.astro-page-heading,
+.sky-position-section,
+.sky-reading {
+  padding-block: clamp(42px, 6vw, 72px);
+}
+
+.section-intro {
+  margin-bottom: clamp(22px, 3vw, 34px);
+}
+
+.sky-position-layout {
+  gap: clamp(28px, 4vw, 52px);
+}
+
+.tonight-next {
+  gap: clamp(34px, 5vw, 70px);
+  padding-block: clamp(42px, 6vw, 72px);
+}
+
+.astro-site .location-row,
+.astro-site .observation-record,
+.calendar-agenda article {
+  padding-block: 20px;
+}
+
+/* Dark-mode surface corrections for areas whose supplied CSS hard-coded white. */
+.astro-site[data-theme="dark"] :is(.astro-context, .astro-settings, .locations-pane,
+  .location-row, .sky-target-picker button, .calendar-day, .calendar-blank),
+.dark .astro-site :is(.astro-context, .astro-settings, .locations-pane, .location-row,
+  .sky-target-picker button, .calendar-day, .calendar-blank),
+.astro-site.dark :is(.astro-context, .astro-settings, .locations-pane, .location-row,
+  .sky-target-picker button, .calendar-day, .calendar-blank) {
+  background: var(--surface-subtle);
+  color: var(--ink);
+  border-color: var(--line);
+}
+
+.astro-site[data-theme="dark"] :is(.astro-page-heading > p, .sky-hour-label,
+  .sky-target-detail p, .tonight-next p, .reading-links p, .place-preview > p,
+  .calendar-agenda p, .calendar-source),
+.dark .astro-site :is(.astro-page-heading > p, .sky-hour-label, .sky-target-detail p,
+  .tonight-next p, .reading-links p, .place-preview > p, .calendar-agenda p,
+  .calendar-source),
+.astro-site.dark :is(.astro-page-heading > p, .sky-hour-label, .sky-target-detail p,
+  .tonight-next p, .reading-links p, .place-preview > p, .calendar-agenda p,
+  .calendar-source) {
+  color: var(--muted);
+}
+
+.astro-site[data-theme="dark"] .tonight-next,
+.dark .astro-site .tonight-next,
+.astro-site.dark .tonight-next {
+  background: var(--surface-subtle);
+}
+
+.astro-site[data-theme="dark"] .aurora-outlook,
+.dark .astro-site .aurora-outlook,
+.astro-site.dark .aurora-outlook {
+  background: var(--surface-subtle);
+  border-color: var(--line);
+}
+
+@media (max-width: 760px) {
+  .reading-links {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-links > a {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .astro-site :where(button, a) {
+    transition: none;
+  }
+
+  .feature-cta:hover {
+    transform: none;
+  }
+}
