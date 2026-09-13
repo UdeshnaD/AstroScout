@@ -6,7 +6,6 @@ export const eventTargets = [
   { id: "mars", name: "Mars", objectType: "Planet", group: "Solar System", horizons: { command: "499", validationId: "(499)" } },
   { id: "jupiter", name: "Jupiter", objectType: "Planet", group: "Solar System", horizons: { command: "599", validationId: "(599)" } },
   { id: "saturn", name: "Saturn", objectType: "Planet", group: "Solar System", horizons: { command: "699", validationId: "(699)" } },
-<<<<<<< Updated upstream
   { id: "uranus", name: "Uranus", objectType: "Planet", group: "Solar System", horizons: { command: "799", validationId: "(799)" } },
   { id: "neptune", name: "Neptune", objectType: "Planet", group: "Solar System", horizons: { command: "899", validationId: "(899)" } },
   { id: "pluto", name: "Pluto", objectType: "Dwarf planet", group: "Solar System", horizons: { command: "999", validationId: "(999)" } },
@@ -21,21 +20,8 @@ export const eventTargets = [
   { id: "hyades", name: "Hyades Star Cluster", objectType: "Open cluster", constellation: "Taurus", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 67.4471, declination: 16.9481 } },
   { id: "hercules-cluster", name: "Hercules Globular Cluster (M13)", objectType: "Globular cluster", constellation: "Hercules", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 250.4235, declination: 36.4613 } },
   { id: "eta-aquariids", name: "Eta Aquariids", objectType: "Meteor shower radiant", constellation: "Aquarius", group: "Moving sky", horizons: null, fixedEquatorial: { rightAscension: 338, declination: -1 }, coordinateNote: "Approximate radiant near the annual peak. This direction does not mean the shower is active on the selected date." },
-=======
-  { id: "milky-way-core", name: "Milky Way Core", objectType: "Galactic region", constellation: "Sagittarius", group: "Deep sky", horizons: null },
-  { id: "andromeda", name: "Andromeda Galaxy (M31)", objectType: "Galaxy", constellation: "Andromeda", group: "Deep sky", horizons: null },
-  { id: "large-magellanic-cloud", name: "Large Magellanic Cloud (LMC)", objectType: "Dwarf galaxy", constellation: "Dorado", group: "Deep sky", horizons: null },
-  { id: "small-magellanic-cloud", name: "Small Magellanic Cloud (SMC)", objectType: "Dwarf galaxy", constellation: "Tucana", group: "Deep sky", horizons: null },
-  { id: "orion-nebula", name: "Orion Nebula (M42)", objectType: "Emission nebula", constellation: "Orion", group: "Deep sky", horizons: null },
-  { id: "eta-carinae", name: "Eta Carinae Nebula (NGC 3372)", objectType: "Emission nebula", constellation: "Carina", group: "Deep sky", horizons: null },
-  { id: "pleiades", name: "Pleiades Star Cluster (M45)", objectType: "Open cluster", constellation: "Taurus", group: "Deep sky", horizons: null },
-  { id: "omega-centauri", name: "Omega Centauri Cluster (NGC 5139)", objectType: "Globular cluster", constellation: "Centaurus", group: "Deep sky", horizons: null },
-  { id: "hyades", name: "Hyades Star Cluster", objectType: "Open cluster", constellation: "Taurus", group: "Deep sky", horizons: null },
-  { id: "hercules-cluster", name: "Hercules Globular Cluster (M13)", objectType: "Globular cluster", constellation: "Hercules", group: "Deep sky", horizons: null },
-  { id: "eta-aquariids", name: "Eta Aquariids", objectType: "Meteor shower radiant", constellation: "Aquarius", group: "Moving sky", horizons: null },
   { id: "encke", name: "2P/Encke", objectType: "Comet", group: "Moving sky", horizons: { command: "DES=2P;CAP", validationId: "2P/Encke" } },
   { id: "ceres", name: "1 Ceres", objectType: "Asteroid", group: "Moving sky", horizons: { command: "1;", validationId: "1 Ceres" } },
->>>>>>> Stashed changes
   { id: "vesta", name: "4 Vesta", objectType: "Asteroid", group: "Moving sky", horizons: { command: "4;", validationId: "4 Vesta" } },
   { id: "iss", name: "International Space Station (ISS)", objectType: "Spacecraft", group: "Moving sky", horizons: { command: "-125544", validationId: "-125544" } },
 ] as const;
