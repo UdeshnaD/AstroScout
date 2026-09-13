@@ -43,7 +43,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
+  const apiKey = (process.env.GEOAPIFY_API_KEY || process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY)?.trim();
   if (!apiKey) {
     return NextResponse.json(
       { error: "Nearby place discovery requires GEOAPIFY_API_KEY." },

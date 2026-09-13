@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Provide valid route coordinates." }, { status: 400 });
   }
 
-  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
+  const apiKey = (process.env.GEOAPIFY_API_KEY || process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY)?.trim();
   if (!apiKey) {
     return NextResponse.json(
       { error: "Travel-time estimates require GEOAPIFY_API_KEY." },

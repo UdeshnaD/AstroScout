@@ -60,7 +60,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ...cached, cached: true });
 
   try {
-    const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
+    const geoapifyKey = (process.env.GEOAPIFY_API_KEY || process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY)?.trim();
     let locations: LocationSearchResult[];
     let provider: CachedSearch["provider"];
     let fullPlaceSearch: boolean;

@@ -61,6 +61,7 @@ export function NearbyPlacesMap({
           keyboard: true,
           title: place.name,
         }).addTo(instance);
+        marker.bindPopup(`<strong>${place.name}</strong><br/>${place.kind}`);
         marker.on("click", () => onSelectRef.current(place));
       });
 

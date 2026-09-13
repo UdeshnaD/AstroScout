@@ -18,9 +18,14 @@ import {
   Telescope,
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
+import { AstroCalendar } from "./AstroCalendar";
 import { JplNightPanel } from "./JplNightPanel";
 import { SkyPositionPanel } from "./SkyPositionPanel";
+import { PassingThrough } from "./PassingThrough";
+import { ReadinessGuide } from "./ReadinessGuide";
+import { PreferenceSliders } from "./PreferenceSliders";
 import { NearbyPlacesExplorer } from "@/components/dashboard/NearbyPlacesExplorer";
+import { CuratedSpotsMap } from "@/components/dashboard/CuratedSpotsMap";
 import { ObservationJournal } from "@/components/dashboard/ObservationJournal";
 import { OfflineReady } from "@/components/dashboard/OfflineReady";
 import { PhoneJoin } from "@/components/dashboard/PhoneJoin";
@@ -157,6 +162,11 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
     title: "Real sky data, explained clearly.",
     intro:
       "See where every answer comes from and how AstroScout chooses a good time to look up.",
+  },
+  "/observe": {
+    eyebrow: "Can I see it?",
+    title: "Target readiness.",
+    intro: "Choose a target and equipment to get a clear, transparent planning score for this exact location and time.",
   },
   "/join": {
     eyebrow: "Join Astronomy Night",
@@ -497,6 +507,7 @@ export function EventDesk({
             ["/", "Tonight"],
             ["/places", "Explore places"],
             ["/calendar", "Calendar"],
+            ["/observe", "Observe"],
             ["/journal", "Journal"],
             ["/method", "How it works"],
           ].map(([href, label]) => (
@@ -625,6 +636,7 @@ export function EventDesk({
               weatherLoading={weatherLoading}
               onSelect={(selected) => chooseLocation(selected, false)}
             />
+            <CuratedSpotsMap />
           </>
         )}
 
@@ -639,8 +651,7 @@ export function EventDesk({
 
         {pathname === "/calendar" && (
           <div className="event-calendar-page">
-            <CalendarView
-              utc={utc}
+            <AstroCalendar
               onSelect={(time) => {
                 setUtc(time);
                 setEpochInput(time.slice(0, -1));
@@ -654,7 +665,7 @@ export function EventDesk({
         )}
 
         {pathname === "/method" && (
-          <div className="event-method-grid">
+          <><div className="event-method-grid">
             <section>
               <Database size={24} />
               <h2>Where the information comes from</h2>
@@ -682,7 +693,11 @@ export function EventDesk({
                 AstroScout cannot see local trees or buildings, measure light pollution at your exact spot, confirm that a place is open and safe, or promise a clear view. Always check access and conditions before leaving.
               </p>
             </section>
-          </div>
+          </div><PreferenceSliders /></>
+        )}
+
+        {pathname === "/observe" && (
+          <ReadinessGuide target={target} position={body} sunAltitude={positions?.objects.sun?.data?.altitude} weather={weather?.data} onTarget={setTarget} />
         )}
 
         {pathname === "/" && (
@@ -906,6 +921,8 @@ export function EventDesk({
                 }}
               />
             )}
+            {!positionLoading && positions && <PassingThrough snapshot={positions} timezone={timezone} />}
+            <section className="night-links"><div><p className="event-kicker">MAKE A NIGHT OF IT</p><h2>Take the plan outside.</h2><a href="https://science.nasa.gov/skywatching/" target="_blank" rel="noreferrer">NASA skywatching guides <ExternalLink size={14}/></a></div><div><p className="event-kicker">A LITTLE FIELD KNOWLEDGE</p><h2>Learn the sky as you go.</h2><a href={stellariumWeb} target="_blank" rel="noreferrer">Open Stellarium Web <ExternalLink size={14}/></a></div></section>
           </>
         )}
       </main>

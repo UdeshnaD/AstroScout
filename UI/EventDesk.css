@@ -1619,6 +1619,55 @@
   font-size: 11px;
 }
 
+.passing-through, .readiness-guide, .preference-sliders, .night-links, .astro-calendar {
+  margin-top: 34px;
+  padding: 26px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--paper);
+  animation: section-enter .32s ease-out both;
+}
+.curated-spots-map { display: grid; grid-template-columns: minmax(220px, .55fr) minmax(0, 1fr); gap: 20px; margin-top: 28px; padding: 22px; border: 1px solid var(--line); border-radius: 8px; background: var(--paper); }
+.curated-spots-map h2 { margin: 5px 0; font-family: var(--font-editorial), Georgia, serif; font-weight: 500; }
+.curated-spots-map p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+.curated-spots-map .places-map { min-height: 330px; }
+.passing-through h2, .readiness-guide h2, .preference-sliders h2, .night-links h2 { margin: 5px 0 16px; font-family: var(--font-editorial), Georgia, serif; font-weight: 500; }
+.passing-through__grid, .night-links { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.passing-through article, .night-links > div { padding: 15px; border: 1px solid #e1e7e3; border-radius: 6px; background: var(--wash); }
+.passing-through p, .readiness-guide p, .preference-sliders p, .night-links p { color: var(--muted); font-size: 13px; line-height: 1.55; }
+.passing-through__iss { display: grid; gap: 5px; margin-top: 14px; padding: 14px; border-radius: 6px; background: #0d2f24; color: #e9f4ed; font-size: 13px; }
+.readiness-guide > div { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0; }
+.readiness-guide__target { display: grid; gap: 5px; max-width: 320px; color: var(--muted); font-size: 12px; }
+.readiness-guide__target select { min-height: 38px; padding: 7px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); }
+.readiness-guide button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); }
+.readiness-guide button[aria-pressed="true"] { border-color: var(--forest); background: #eaf2ed; }
+.readiness-guide > strong { font: 500 clamp(42px, 7vw, 64px) / 1 var(--font-editorial), Georgia, serif; color: var(--forest); }
+.preference-sliders { max-width: 680px; }
+.preference-sliders label { display: grid; gap: 6px; margin: 14px 0; color: var(--ink); font-size: 13px; }
+.preference-sliders label span { display: flex; justify-content: space-between; }
+.preference-sliders input { accent-color: var(--forest); }
+.preference-sliders ol { display: grid; gap: 7px; margin: 20px 0 0; padding: 0; list-style: none; }
+.preference-sliders li { display: flex; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--line); font-size: 13px; }
+.preference-sliders li strong { color: var(--forest); }
+.night-links { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.night-links a, .astro-calendar a { display: inline-flex; align-items: center; gap: 5px; color: var(--forest); font-weight: 650; font-size: 13px; }
+.astro-calendar__nav { display: flex; align-items: center; gap: 10px; }
+.astro-calendar__nav button { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid var(--line); border-radius: 4px; background: #fff; }
+.astro-calendar__layout { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(240px, .7fr); gap: 22px; }
+.astro-calendar__grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; }
+.astro-calendar__grid > b { padding: 7px; color: var(--muted); font-size: 11px; text-align: center; }
+.astro-calendar__grid > button { min-height: 68px; display: grid; align-content: start; gap: 4px; padding: 7px; border: 1px solid #e1e7e3; border-radius: 4px; background: #fff; color: var(--ink); text-align: left; }
+.astro-calendar__grid > button.has-event { border-color: #90ad9e; background: #eff6f1; }
+.astro-calendar__grid > button[aria-pressed="true"] { outline: 2px solid var(--gold); }
+.astro-calendar__grid small { display: flex; align-items: center; gap: 3px; overflow: hidden; color: var(--forest); font-size: 9px; text-overflow: ellipsis; white-space: nowrap; }
+.astro-calendar aside { display: grid; align-content: start; gap: 10px; }
+.astro-calendar aside article { padding: 12px; border-left: 3px solid var(--gold); background: var(--wash); }
+.astro-calendar aside h3, .astro-calendar aside p { margin: 4px 0; font-size: 13px; }
+.astro-calendar aside time { color: var(--forest); font-size: 12px; font-weight: 700; }
+@keyframes section-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.sky-overview-card, .event-target-grid > button { transition: transform .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.event-target-grid > button:hover { transform: translateY(-2px); }
+
 .spin {
   animation: spin 1s linear infinite;
 }
@@ -1636,6 +1685,8 @@
   .phone-join__code { width: min(100%, 420px); justify-self: center; }
   .journal-layout { grid-template-columns: 1fr; }
   .event-settings form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .astro-calendar__layout { grid-template-columns: 1fr; }
+  .curated-spots-map { grid-template-columns: 1fr; }
   .event-settings form button { justify-self: start; }
   .jpl-sample-readout { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -1654,6 +1705,8 @@
     gap: 8px 18px;
     padding: 12px 18px;
   }
+  .passing-through__grid, .night-links { grid-template-columns: 1fr; }
+  .passing-through, .readiness-guide, .preference-sliders, .night-links, .astro-calendar { padding: 18px; }
   .event-header nav {
     order: 2;
     width: 100%;
