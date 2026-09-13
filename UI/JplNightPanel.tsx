@@ -73,7 +73,7 @@ export function JplNightPanel({
   return (
     <section
       className="jpl-night-panel"
-      aria-label="JPL overnight observing analysis"
+      aria-label="Overnight observing analysis"
     >
       <div className="jpl-state">
         <span>At your chosen time: {night.status}</span>
@@ -85,8 +85,8 @@ export function JplNightPanel({
       </div>
       {exact && (
         <p className="jpl-narrative">
-          NASA/JPL Horizons has calculated {exact.name}&apos;s apparent position
-          from {locationName} for {date(exact.utc, timezone)} ({timezone}).{" "}
+          AstroScout calculated {exact.name}&apos;s apparent position from {locationName}
+          for {date(exact.utc, timezone)} ({timezone}) using {source.source}.{" "}
           {exact.name} is {Math.abs(exact.altitude).toFixed(2)}°{" "}
           {exact.altitude > 0 ? "above" : "below"} the {exact.compass} horizon.
         </p>
@@ -158,7 +158,7 @@ export function JplNightPanel({
               viewBox="0 0 800 220"
               preserveAspectRatio="none"
               role="img"
-              aria-label={`${exact?.name ?? target} and Sun altitude from NASA/JPL samples`}
+              aria-label={`${exact?.name ?? target} and Sun altitude from calculated five-minute samples`}
               onPointerMove={(event) => {
                 const box = event.currentTarget.getBoundingClientRect();
                 setIndex(
@@ -275,7 +275,7 @@ export function JplNightPanel({
         {moonlightExplanation(moon)}
       </p>
       <p className="event-footnote">
-        NASA/JPL Horizons calculation for: {snapshot.utc}
+        Position calculation for: {snapshot.utc}
         <br />
         <br />Data received for target: {source?.receivedAt ?? "not available"} / Sun:{" "}
         {snapshot.objects.sun?.receivedAt ?? "not available"} / Moon:{" "}

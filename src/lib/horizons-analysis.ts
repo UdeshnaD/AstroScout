@@ -103,14 +103,14 @@ export type AuroraAssessment = {
 const clamp = (value: number) => Math.max(0, Math.min(100, value));
 
 /**
- * A planning interpretation of one exact JPL sample. This intentionally does
+ * A planning interpretation of one exact sky-position sample. This intentionally does
  * not participate in bestWindow: its thresholded, five-minute result remains
  * the authoritative observing recommendation.
  */
 export function readinessAt(point: NightPoint | undefined): ReadinessAssessment {
   const unavailable = {
     score: null,
-    reason: "A matching JPL position and Open-Meteo forecast are required for this planning guide.",
+    reason: "A matching sky position and Open-Meteo forecast are required for this planning guide.",
   };
   if (!point || !point.weather) {
     return {
@@ -156,7 +156,7 @@ export function readinessAt(point: NightPoint | undefined): ReadinessAssessment 
     ),
     factors,
     reason:
-      "Planning guide from this exact JPL sample and its matched Open-Meteo forecast; it is not a sighting probability or a replacement for the preferred observing window.",
+      "Planning guide from this exact sky-position sample and its matched Open-Meteo forecast. It is not a sighting probability or a replacement for the preferred observing window.",
   };
 }
 

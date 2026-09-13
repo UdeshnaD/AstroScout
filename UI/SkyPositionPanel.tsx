@@ -206,7 +206,7 @@ export function SkyPositionPanel({
             <ChevronRight size={18} />
           </button>
         </div>
-        <p className="sky-overview-source">Positions are calculated every five minutes using NASA/JPL data.</p>
+        <p className="sky-overview-source">Positions are calculated every five minutes. Solar System objects use NASA/JPL data. Deep-sky objects use catalogue coordinates and local sidereal time.</p>
         <div className="sky-obstruction" role="note">
           <strong>Horizon obstruction</strong>
           <span>Trees, hills and buildings near you may still hide an object shown above the horizon.</span>

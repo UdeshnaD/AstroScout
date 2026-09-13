@@ -97,6 +97,107 @@ const optionalNumber = (value: unknown): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
+const degrees = (radiansValue: number) => (radiansValue * 180) / Math.PI;
+const normaliseDegrees = (value: number) => ((value % 360) + 360) % 360;
+
+function angularSeparation(
+  first: { rightAscension: number | null; declination: number | null } | undefined,
+  second: { rightAscension: number | null; declination: number | null } | undefined,
+) {
+  if (
+    first?.rightAscension == null ||
+    first.declination == null ||
+    second?.rightAscension == null ||
+    second.declination == null
+  ) return null;
+  const cosine =
+    Math.sin(radians(first.declination)) * Math.sin(radians(second.declination)) +
+    Math.cos(radians(first.declination)) * Math.cos(radians(second.declination)) *
+      Math.cos(radians(first.rightAscension - second.rightAscension));
+  return degrees(Math.acos(Math.max(-1, Math.min(1, cosine))));
+}
+
+export function fixedEquatorialSeries(
+  target: EventTarget,
+  location: EventLocation,
+  epochs: string[],
+): JplPosition[] {
+  const definition = eventTargets.find((item) => item.id === target);
+  if (!definition || !("fixedEquatorial" in definition))
+    throw new Error("This target has no fixed catalogue coordinates.");
+  const rightAscension = definition.fixedEquatorial.rightAscension;
+  const declination = definition.fixedEquatorial.declination;
+  const latitude = radians(location.latitude);
+  const declinationRadians = radians(declination);
+  const samples = epochs.map((utc) => {
+    const julianDay = Date.parse(utc) / 86400000 + 2440587.5;
+    const centuries = (julianDay - 2451545) / 36525;
+    const greenwichSidereal = normaliseDegrees(
+      280.46061837 +
+        360.98564736629 * (julianDay - 2451545) +
+        0.000387933 * centuries * centuries -
+        (centuries * centuries * centuries) / 38710000,
+    );
+    const hourAngle = radians(
+      normaliseDegrees(greenwichSidereal + location.longitude - rightAscension),
+    );
+    const altitude = degrees(
+      Math.asin(
+        Math.sin(latitude) * Math.sin(declinationRadians) +
+          Math.cos(latitude) * Math.cos(declinationRadians) * Math.cos(hourAngle),
+      ),
+    );
+    const azimuth = normaliseDegrees(
+      degrees(
+        Math.atan2(
+          Math.sin(hourAngle),
+          Math.cos(hourAngle) * Math.sin(latitude) -
+            Math.tan(declinationRadians) * Math.cos(latitude),
+        ),
+      ) + 180,
+    );
+    return {
+      target,
+      name: definition.name,
+      utc,
+      julianDay,
+      altitude,
+      azimuth,
+      compass: [
+        "N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
+        "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",
+      ][Math.round(azimuth / 22.5) % 16],
+      rightAscension,
+      declination,
+      magnitude: null,
+      illumination: null,
+      objectType: definition.objectType,
+      constellation: definition.constellation,
+      sunSeparation: null,
+      moonSeparation: null,
+      eventMarker: null,
+      riseTime: null,
+      setTime: null,
+      apiVersion: "AstroScout sidereal calculator v1",
+      requestUrl: "",
+    } satisfies JplPosition;
+  });
+  return samples.map((sample, index) => {
+    const previous = samples[index - 1];
+    const next = samples[index + 1];
+    const eventMarker =
+      previous && previous.altitude < 0 && sample.altitude >= 0
+        ? "r"
+        : previous && previous.altitude >= 0 && sample.altitude < 0
+          ? "s"
+          : previous && next && sample.altitude > previous.altitude && sample.altitude >= next.altitude
+            ? "t"
+            : null;
+    return { ...sample, eventMarker };
+  });
+}
+
 export function parseHorizons(
   payload: unknown,
   target: EventTarget,
@@ -244,15 +345,22 @@ export function getHorizons(
       );
       for (const target of eventTargets) {
         const requestedAt = new Date().toISOString();
-        if (!target.horizons) {
-          series[target.id] = [];
+        if (!target.horizons && "fixedEquatorial" in target) {
+          const samples = fixedEquatorialSeries(target.id, location, epochs);
+          const suns = series.sun;
+          const moons = series.moon;
+          series[target.id] = samples.map((sample, index) => ({
+            ...sample,
+            sunSeparation: angularSeparation(sample, suns?.[index]),
+            moonSeparation: angularSeparation(sample, moons?.[index]),
+          }));
           objects[target.id] = {
-            status: "unavailable",
-            source: "Catalogue entry",
+            status: "available",
+            source: "Catalogue coordinates and local sidereal-time calculation",
             requestedAt,
             receivedAt: requestedAt,
-            data: null,
-            error: "This catalogue target has guidance and metadata, but no JPL Horizons observer-table target.",
+            data: series[target.id][288],
+            error: null,
           };
           continue;
         }

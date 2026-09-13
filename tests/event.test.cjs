@@ -49,13 +49,15 @@ test("Horizons requests use the observer's exact coordinates and UTC", () => {
   assert.equal(url.searchParams.get("QUANTITIES"), "'2,4,9,10,23,25,29'");
 });
 
-test("target catalogue keeps planets and adds deep-sky and moving-sky entries", () => {
+test("target catalogue includes the observable planets and deep-sky entries", () => {
   for (const id of [
-    "moon", "venus", "mars", "jupiter", "saturn", "milky-way-core",
+    "moon", "mercury", "venus", "mars", "jupiter", "saturn", "uranus",
+    "neptune", "pluto", "milky-way-core",
     "andromeda", "large-magellanic-cloud", "small-magellanic-cloud",
     "orion-nebula", "eta-carinae", "pleiades", "omega-centauri", "hyades",
     "hercules-cluster", "eta-aquariids", "vesta", "iss",
   ]) assert.ok(types.eventTargets.some((target) => target.id === id));
+  assert.equal(types.eventTargets.find((target) => target.id === "mercury").horizons.command, "199");
   assert.throws(() => providers.horizonsUrl("andromeda", types.mqLocation, utc), /no JPL Horizons observer-table target/);
   assert.equal(types.eventTargets.find((target) => target.id === "andromeda").constellation, "Andromeda");
 });
@@ -76,6 +78,19 @@ test("JPL metadata fields retain source-provided constellation and angular separ
   assert.equal(parsed.constellation, "Gem");
   assert.equal(parsed.sunSeparation, 59.4919);
   assert.equal(parsed.moonSeparation, 86.8);
+});
+
+test("catalogue coordinates produce a real local altitude and direction", () => {
+  const [andromeda] = providers.fixedEquatorialSeries(
+    "andromeda",
+    types.mqLocation,
+    [utc],
+  );
+  assert.equal(andromeda.rightAscension, 10.6847);
+  assert.equal(andromeda.declination, 41.2692);
+  assert.ok(andromeda.altitude >= -90 && andromeda.altitude <= 90);
+  assert.ok(andromeda.azimuth >= 0 && andromeda.azimuth < 360);
+  assert.match(andromeda.apiVersion, /sidereal calculator/);
 });
 
 test("invalid observer details and ambiguous epochs are rejected", () => {

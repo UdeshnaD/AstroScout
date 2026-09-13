@@ -87,13 +87,17 @@ function scanEventTime(
   const event = series?.find((sample) => sample.eventMarker === marker);
   return event
     ? `About ${localTime(event.utc, timezone)}`
-    : "Not in this 48-hour JPL scan";
+    : "Not in this 48-hour scan";
 }
 
 function catalogueConstellation(
   target: (typeof eventTargets)[number] | undefined,
 ) {
   return target && "constellation" in target ? target.constellation : undefined;
+}
+
+function coordinateNote(target: (typeof eventTargets)[number] | undefined) {
+  return target && "coordinateNote" in target ? target.coordinateNote : undefined;
 }
 
 function unavailable<T>(source: string, error: string): SourceResult<T> {
@@ -487,7 +491,7 @@ export function EventDesk({
           <Telescope size={25} />
           AstroScout<span>.</span>
         </Link>
-        <span className="event-edition">AI &amp; Data Science Society / Astronomy Night</span>
+        <span className="event-edition">Macquarie University / Astronomy Night</span>
         <nav aria-label="Main navigation">
           {[
             ["/", "Tonight"],
@@ -655,7 +659,8 @@ export function EventDesk({
               <Database size={24} />
               <h2>Where the information comes from</h2>
               <ul>
-                <li><strong>NASA/JPL Horizons</strong> tells us where the Moon and planets appear in your sky.</li>
+                <li><strong>NASA/JPL Horizons</strong> calculates where Solar System objects appear in your sky.</li>
+                <li><strong>Catalogue coordinates</strong> locate distant galaxies, nebulae and star clusters using local sidereal time.</li>
                 <li><strong>Open-Meteo</strong> provides the cloud, rain, visibility, wind and temperature forecast.</li>
                 <li><strong>Geoapify</strong> finds real places near your search and estimates the road journey.</li>
               </ul>
@@ -765,9 +770,7 @@ export function EventDesk({
                           ? "Loading…"
                           : targetPosition
                           ? `${targetPosition.altitude.toFixed(1)}° altitude`
-                            : item.horizons
-                              ? "Unavailable"
-                              : `${item.objectType} · catalogue guidance`}
+                            : "Position unavailable"}
                       </span>
                     </button>
                   );
@@ -782,7 +785,7 @@ export function EventDesk({
                     <p className="event-kicker">02 / POSITION</p>
                     <h2>{eventTargets.find((item) => item.id === target)?.name}</h2>
                   </div>
-                  <span>{position?.status === "available" ? "Live calculation" : selectedDefinition?.horizons ? "Unavailable" : "Catalogue guidance"}</span>
+                  <span>{position?.status === "available" ? "Calculated position" : selectedDefinition?.horizons ? "Unavailable" : "Catalogue guidance"}</span>
                 </div>
                 {positionLoading ? (
                   <p className="event-loading"><Loader2 className="spin" size={18} /> Checking the sky from your location…</p>
@@ -794,6 +797,9 @@ export function EventDesk({
                         : `${body.name} is ${Math.abs(body.altitude).toFixed(1)}° below the ${body.compass} horizon.`}
                     </p>
                     <p className="event-horizon-note">Trees, hills and buildings near you may still block the view.</p>
+                    {coordinateNote(selectedDefinition) && (
+                      <p className="event-horizon-note">{coordinateNote(selectedDefinition)}</p>
+                    )}
                     <div className="event-metrics">
                       <div><span>Altitude</span><strong>{body.altitude.toFixed(1)}°</strong></div>
                       <div><span>Direction</span><strong>{body.compass}</strong><small>{body.azimuth.toFixed(1)}° azimuth</small></div>
@@ -828,7 +834,11 @@ export function EventDesk({
                           <div><dt>Requested UTC</dt><dd>{body.utc}</dd></div>
                           <div><dt>API version</dt><dd>{body.apiVersion}</dd></div>
                         </dl>
-                        <a href={body.requestUrl} target="_blank" rel="noreferrer">Open the exact JPL request <ExternalLink size={14} /></a>
+                        {body.requestUrl ? (
+                          <a href={body.requestUrl} target="_blank" rel="noreferrer">Open the exact JPL request <ExternalLink size={14} /></a>
+                        ) : (
+                          <p>Position source: catalogue right ascension and declination, converted for this location and time.</p>
+                        )}
                       </div>
                     )}
                   </>
@@ -882,7 +892,7 @@ export function EventDesk({
               </section>
             </div>
 
-            {!positionLoading && positions && selectedDefinition?.horizons && (
+            {!positionLoading && positions && positions.objects[target]?.data && target !== "sun" && (
               <JplNightPanel
                 snapshot={positions}
                 target={target}
@@ -902,7 +912,7 @@ export function EventDesk({
 
       <footer className="event-footer">
         <span>AstroScout / Macquarie University Astronomy Night</span>
-        <span>Sky positions from NASA/JPL · Weather from Open-Meteo</span>
+        <span>Solar System positions from NASA/JPL · Deep-sky positions from catalogue coordinates · Weather from Open-Meteo</span>
       </footer>
     </div>
   );
