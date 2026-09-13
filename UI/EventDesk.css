@@ -271,12 +271,12 @@
 }
 .sky-horizon-line { stroke: #88a69a; }
 .sky-object-marker { cursor: pointer; outline: none; }
-.sky-marker-hit { fill: transparent; }
+.sky-marker-hit { fill: transparent; transition: cx .5s ease-out, cy .5s ease-out, transform .5s ease-out; }
 .sky-marker-dot {
   fill: #dce7e2;
   stroke: #142023;
   stroke-width: 2px;
-  transition: r 160ms ease, fill 160ms ease;
+  transition: cx .5s ease-out, cy .5s ease-out, r 160ms ease, fill 160ms ease, transform .5s ease-out;
 }
 .sky-object-marker:hover .sky-marker-dot,
 .sky-object-marker[aria-pressed="true"] .sky-marker-dot,
@@ -1807,6 +1807,8 @@
 
 @media (prefers-reduced-motion: reduce) {
   .spin { animation: none; }
+  .sky-marker-hit,
+  .sky-marker-dot { transition: none; }
 }
 
 @media print {

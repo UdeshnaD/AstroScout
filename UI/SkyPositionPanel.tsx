@@ -7,7 +7,7 @@ import { assessAurora, forecastAt } from "@/lib/horizons-analysis";
 import type { EventTarget, EventWeather, HorizonsSnapshot, JplPosition } from "@/lib/event-types";
 
 const visibleTargets = eventTargets.filter((item) => item.id !== "sun");
-const playbackStep = 12; // Twelve five-minute JPL samples = one hour.
+const MANUAL_STEP = 12; // Arrow buttons advance 12 samples (1 hour) per click
 
 function localClock(utc: string, timezone: string) {
   return new Intl.DateTimeFormat("en-AU", {
@@ -53,29 +53,44 @@ export function SkyPositionPanel({
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
 
+  // Sync initial index when snapshot updates (KEEP THIS)
   useEffect(() => {
     const exact = samples.findIndex((point) => point.utc === snapshot.utc);
     setIndex(exact >= 0 ? exact : Math.floor(samples.length / 2));
     setPlaying(false);
   }, [samples, snapshot.utc]);
 
+  // Continuous fluid motion animation loop
   useEffect(() => {
     if (!playing || !samples.length) return;
-    const timer = window.setInterval(() => {
-      setIndex((current) => {
-        const next = current + playbackStep;
-        if (next >= samples.length) {
-          setPlaying(false);
-          return samples.length - 1;
-        }
-        return next;
-      });
-    }, 900);
-    return () => window.clearInterval(timer);
+
+    let animationFrameId: number;
+    let lastTime = performance.now();
+    const speed = 1.0; // Adjust speed: 1.5 = faster continuous drift
+
+    const step = (now: number) => {
+      const delta = now - lastTime;
+      if (delta >= 60 / speed) {
+        setIndex((current) => {
+          if (current >= samples.length - 1) {
+            setPlaying(false);
+            return samples.length - 1;
+          }
+          return current + 0.3; // Small fractional increment for seamless motion
+        });
+        lastTime = now;
+      }
+      animationFrameId = requestAnimationFrame(step);
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(animationFrameId);
   }, [playing, samples.length]);
 
   if (!samples.length) return null;
-  const safeIndex = Math.min(index, samples.length - 1);
+
+  // Safeguard array index lookup for fractional index values
+  const safeIndex = Math.min(Math.floor(index), samples.length - 1);
   const utc = samples[safeIndex].utc;
   const at = (id: EventTarget): JplPosition | undefined =>
     snapshot.series[id]?.[safeIndex];
@@ -152,6 +167,7 @@ export function SkyPositionPanel({
                 <g
                   key={item.id}
                   className="sky-object-marker"
+                  style={{ transition: "all 0.08s linear" }}
                   role="button"
                   tabIndex={0}
                   aria-label={`${item.name}, ${position.altitude.toFixed(1)} degrees above the ${position.compass} horizon`}
@@ -198,11 +214,11 @@ export function SkyPositionPanel({
               setIndex(Number(event.target.value));
             }}
           />
-          <button type="button" aria-label="One hour earlier" disabled={safeIndex === 0} onClick={() => move(-playbackStep)}>
+          <button type="button" aria-label="One hour earlier" disabled={safeIndex === 0} onClick={() => move(-MANUAL_STEP)}>
             <ChevronLeft size={18} />
           </button>
           <output>{localClock(utc, timezone)}</output>
-          <button type="button" aria-label="One hour later" disabled={safeIndex === samples.length - 1} onClick={() => move(playbackStep)}>
+          <button type="button" aria-label="One hour later" disabled={safeIndex === samples.length - 1} onClick={() => move(MANUAL_STEP)}>
             <ChevronRight size={18} />
           </button>
         </div>

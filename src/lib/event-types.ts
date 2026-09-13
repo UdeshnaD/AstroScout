@@ -1,6 +1,6 @@
 export const eventTargets = [
   { id: "sun", name: "Sun", objectType: "Star", group: "Solar System", horizons: { command: "10", validationId: "(10)" } },
-  { id: "moon", name: "Moon", objectType: "Natural satellite", group: "Solar System", horizons: { command: "301", validationId: "(301)" } },
+  { id: "moon", name: "Moon", objectType: "Satellite", group: "Solar System", horizons: { command: "301", validationId: "(301)" } },
   { id: "mercury", name: "Mercury", objectType: "Planet", group: "Solar System", horizons: { command: "199", validationId: "(199)" } },
   { id: "venus", name: "Venus", objectType: "Planet", group: "Solar System", horizons: { command: "299", validationId: "(299)" } },
   { id: "mars", name: "Mars", objectType: "Planet", group: "Solar System", horizons: { command: "499", validationId: "(499)" } },
@@ -11,7 +11,7 @@ export const eventTargets = [
   { id: "pluto", name: "Pluto", objectType: "Dwarf planet", group: "Solar System", horizons: { command: "999", validationId: "(999)" } },
   { id: "milky-way-core", name: "Milky Way Core", objectType: "Galactic region", constellation: "Sagittarius", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 266.4168, declination: -29.0078 } },
   { id: "andromeda", name: "Andromeda Galaxy (M31)", objectType: "Galaxy", constellation: "Andromeda", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 10.6847, declination: 41.2692 } },
-  { id: "large-magellanic-cloud", name: "Large Magellanic Cloud (LMC)", objectType: "Dwarf galaxy", constellation: "Dorado", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 80.8938, declination: -69.7561 } },
+  { id: "large-magellanic-cloud", name: "Large Magellanic Cloud (LMC)", objectType: "Dwarf galaxy", constellation: "Dorado", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 80.8942, declination: -69.7561 } },
   { id: "small-magellanic-cloud", name: "Small Magellanic Cloud (SMC)", objectType: "Dwarf galaxy", constellation: "Tucana", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 13.1583, declination: -72.8003 } },
   { id: "orion-nebula", name: "Orion Nebula (M42)", objectType: "Emission nebula", constellation: "Orion", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 83.82, declination: -5.3875 } },
   { id: "eta-carinae", name: "Eta Carinae Nebula (NGC 3372)", objectType: "Emission nebula", constellation: "Carina", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 161.265, declination: -59.6844 } },
@@ -19,7 +19,11 @@ export const eventTargets = [
   { id: "omega-centauri", name: "Omega Centauri Cluster (NGC 5139)", objectType: "Globular cluster", constellation: "Centaurus", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 201.6971, declination: -47.4795 } },
   { id: "hyades", name: "Hyades Star Cluster", objectType: "Open cluster", constellation: "Taurus", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 67.4471, declination: 16.9481 } },
   { id: "hercules-cluster", name: "Hercules Globular Cluster (M13)", objectType: "Globular cluster", constellation: "Hercules", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 250.4235, declination: 36.4613 } },
+<<<<<<< HEAD
   { id: "eta-aquariids", name: "Eta Aquariids", objectType: "Meteor shower radiant", constellation: "Aquarius", group: "Moving sky", horizons: null, fixedEquatorial: { rightAscension: 338, declination: -1 }, coordinateNote: "Approximate radiant near the annual peak. This direction does not mean the shower is active on the selected date." },
+=======
+  { id: "eta-aquariids", name: "Eta Aquariids", objectType: "Meteor shower radiant", constellation: "Aquarius", group: "Moving sky", horizons: null, fixedEquatorial: { rightAscension: 338, declination: -1 }, coordinateNote: "Approximate radiant near the annual peak." },
+>>>>>>> c6d972d (feat(routing): add dedicated /observe route and separate home page)
   { id: "encke", name: "2P/Encke", objectType: "Comet", group: "Moving sky", horizons: { command: "DES=2P;CAP", validationId: "2P/Encke" } },
   { id: "ceres", name: "1 Ceres", objectType: "Asteroid", group: "Moving sky", horizons: { command: "1;", validationId: "1 Ceres" } },
   { id: "vesta", name: "4 Vesta", objectType: "Asteroid", group: "Moving sky", horizons: { command: "4;", validationId: "4 Vesta" } },

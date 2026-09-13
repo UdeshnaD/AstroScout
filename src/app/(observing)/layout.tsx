@@ -1,14 +1,9 @@
-import { UnifiedApp } from "@ui/UnifiedApp";
+import { ObservingRouteShell } from "@ui/ObservingRouteShell";
 
 export default function ObservingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <>
-      <UnifiedApp />
-      {children}
-    </>
-  );
+  return <ObservingRouteShell>{children}</ObservingRouteShell>;
 }
