@@ -19,27 +19,26 @@ export const eventTargets = [
   { id: "omega-centauri", name: "Omega Centauri Cluster (NGC 5139)", objectType: "Globular cluster", constellation: "Centaurus", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 201.6971, declination: -47.4795 } },
   { id: "hyades", name: "Hyades Star Cluster", objectType: "Open cluster", constellation: "Taurus", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 67.4471, declination: 16.9481 } },
   { id: "hercules-cluster", name: "Hercules Globular Cluster (M13)", objectType: "Globular cluster", constellation: "Hercules", group: "Deep sky", horizons: null, fixedEquatorial: { rightAscension: 250.4235, declination: 36.4613 } },
-<<<<<<< HEAD
   { id: "eta-aquariids", name: "Eta Aquariids", objectType: "Meteor shower radiant", constellation: "Aquarius", group: "Moving sky", horizons: null, fixedEquatorial: { rightAscension: 338, declination: -1 }, coordinateNote: "Approximate radiant near the annual peak. This direction does not mean the shower is active on the selected date." },
-=======
-  { id: "eta-aquariids", name: "Eta Aquariids", objectType: "Meteor shower radiant", constellation: "Aquarius", group: "Moving sky", horizons: null, fixedEquatorial: { rightAscension: 338, declination: -1 }, coordinateNote: "Approximate radiant near the annual peak." },
->>>>>>> c6d972d (feat(routing): add dedicated /observe route and separate home page)
   { id: "encke", name: "2P/Encke", objectType: "Comet", group: "Moving sky", horizons: { command: "DES=2P;CAP", validationId: "2P/Encke" } },
   { id: "ceres", name: "1 Ceres", objectType: "Asteroid", group: "Moving sky", horizons: { command: "1;", validationId: "1 Ceres" } },
   { id: "vesta", name: "4 Vesta", objectType: "Asteroid", group: "Moving sky", horizons: { command: "4;", validationId: "4 Vesta" } },
-  { id: "iss", name: "International Space Station (ISS)", objectType: "Spacecraft", group: "Moving sky", horizons: { command: "-125544", validationId: "-125544" } },
-] as const;
+{ id: "iss", name: "International Space Station (ISS)", objectType: "Spacecraft", group: "Moving sky", horizons: { command: "-125544", validationId: "-125544" } }] as const;
+
 export type EventTarget = (typeof eventTargets)[number]["id"];
+
 export type EventLocation = {
   latitude: number;
   longitude: number;
   elevation: number;
 };
+
 export const mqLocation: EventLocation = {
   latitude: -33.7738,
   longitude: 151.1126,
   elevation: 0,
 };
+
 export type SourceResult<T> = {
   status: "available" | "unavailable";
   source: string;
@@ -48,6 +47,7 @@ export type SourceResult<T> = {
   data: T | null;
   error: string | null;
 };
+
 export type JplPosition = {
   target: EventTarget;
   name: string;
@@ -70,6 +70,7 @@ export type JplPosition = {
   apiVersion: string;
   requestUrl: string;
 };
+
 export type HorizonsSnapshot = {
   location: EventLocation;
   utc: string;
@@ -79,6 +80,7 @@ export type HorizonsSnapshot = {
   scanEndUtc: string;
   stepMinutes: number;
 };
+
 export type WeatherPoint = {
   time: string;
   cloudCover: number | null;
@@ -89,6 +91,7 @@ export type WeatherPoint = {
   humidity: number | null;
   weatherCode: number | null;
 };
+
 export type EventWeather = {
   location: EventLocation;
   gridLatitude: number;
