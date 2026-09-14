@@ -35,6 +35,7 @@ button:disabled {
 
 a {
   color: inherit;
+  text-decoration: none;
 }
 
 :focus-visible {

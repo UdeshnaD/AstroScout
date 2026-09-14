@@ -1,3 +1,4 @@
+
 "use client";
 import type { HorizonsSnapshot } from "@/lib/event-types";
 
@@ -16,5 +17,5 @@ export function PassingThrough({ snapshot, timezone }: { snapshot: HorizonsSnaps
     }
     return groups;
   }, []).slice(0, 3);
-  return <section className="passing-through"><p className="event-kicker">MOVING SKY</p><h2>What&apos;s passing through.</h2><div className="passing-through__grid"><article><strong>☄ Eta Aquariids</strong><p>Peak around 5–6 May. The radiant is in Aquarius; the best rates arrive after midnight before dawn.</p></article>{(["encke", "ceres", "vesta"] as const).map((id) => { const item = snapshot.objects[id]?.data; const name = { encke: "2P/Encke", ceres: "1 Ceres", vesta: "4 Vesta" }[id]; return <article key={id}><strong>{id === "encke" ? "☄" : "🪨"} {name}</strong><p>{item ? `${item.altitude.toFixed(1)}° above the ${item.compass} horizon now.` : "Current NASA/JPL position unavailable."}</p></article>; })}</div><div className="passing-through__iss"><strong>🛰 Dark-sky ISS passes</strong>{passes.length ? passes.map((pass) => <span key={pass.start}>{clock(pass.start, timezone)} · rises {pass.direction} · peaks {Math.round(pass.peak)}°</span>) : <span>No dark-sky ISS pass in this 48-hour JPL scan.</span>}</div></section>;
+  return <section className="passing-through"><p className="event-kicker">MOVING SKY</p><h2>What&apos;s passing through.</h2><div className="passing-through__grid"><article><strong>Eta Aquariids</strong><p>Peak around 5–6 May. The radiant is in Aquarius; the best rates arrive after midnight before dawn.</p></article>{(["encke", "ceres", "vesta"] as const).map((id) => { const item = snapshot.objects[id]?.data; const name = { encke: "2P/Encke", ceres: "1 Ceres", vesta: "4 Vesta" }[id]; return <article key={id}><strong>{name}</strong><p>{item ? `${item.altitude.toFixed(1)}° above the ${item.compass} horizon now.` : "Current NASA/JPL position unavailable."}</p></article>; })}</div><div className="passing-through__iss"><strong>Dark-sky ISS passes</strong>{passes.length ? passes.map((pass) => <span key={pass.start}>{clock(pass.start, timezone)} · rises {pass.direction} · peaks {Math.round(pass.peak)}°</span>) : <span>No dark-sky ISS pass in this 48-hour JPL scan.</span>}</div></section>;
 }

@@ -16,6 +16,7 @@ import {
   QrCode,
   RefreshCw,
   Telescope,
+  Orbit
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
 import { AstroCalendar } from "./AstroCalendar";
@@ -567,7 +568,7 @@ export function EventDesk({
                 document.getElementById("where-to-look")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Explore Saturn <Telescope size={18} />
+              Explore Saturn <Orbit size={18} />
             </button>
           </div>
           <a href="https://science.nasa.gov/saturn/" target="_blank" rel="noreferrer" className="saturn-hero__credit">

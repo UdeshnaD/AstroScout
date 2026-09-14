@@ -61,6 +61,7 @@ export function SkyPositionPanel({
   }, [samples, snapshot.utc]);
 
   // Continuous fluid motion animation loop
+// Continuous fluid motion animation loop
   useEffect(() => {
     if (!playing || !samples.length) return;
 
@@ -72,11 +73,8 @@ export function SkyPositionPanel({
       const delta = now - lastTime;
       if (delta >= 60 / speed) {
         setIndex((current) => {
-          if (current >= samples.length - 1) {
-            setPlaying(false);
-            return samples.length - 1;
-          }
-          return current + 0.3; // Small fractional increment for seamless motion
+          // Wrap back to 0 seamlessly when reaching the end of the array
+          return (current + 0.3) % samples.length;
         });
         lastTime = now;
       }
