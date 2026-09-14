@@ -110,7 +110,7 @@ const clamp = (value: number) => Math.max(0, Math.min(100, value));
 export function readinessAt(point: NightPoint | undefined): ReadinessAssessment {
   const unavailable = {
     score: null,
-    reason: "A matching sky position and Open-Meteo forecast are required for this planning guide.",
+    reason: "A matching sky position and Open-Meteo forecast are required for this planning guide. It only works if the time is night.",
   };
   if (!point || !point.weather) {
     return {
