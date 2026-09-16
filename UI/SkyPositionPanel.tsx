@@ -3,7 +3,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { eventTargets } from "@/lib/event-types";
-import { assessAurora, forecastAt } from "@/lib/horizons-analysis";
+import { analyseNight, assessAurora, forecastAt } from "@/lib/horizons-analysis";
+import { JplNightPanel } from "./JplNightPanel";
 import type { EventTarget, EventWeather, HorizonsSnapshot, JplPosition } from "@/lib/event-types";
 
 const visibleTargets = eventTargets.filter((item) => item.id !== "sun");
@@ -35,6 +36,7 @@ export function SkyPositionPanel({
   weather,
   onTarget,
   onEpoch,
+  previewUtc,
 }: {
   snapshot: HorizonsSnapshot;
   target: EventTarget;
@@ -43,16 +45,31 @@ export function SkyPositionPanel({
   weather?: EventWeather | null;
   onTarget: (target: EventTarget) => void;
   onEpoch: (utc: string) => void;
+  previewUtc?: string;
 }) {
   const samples = useMemo(() => {
+    const night = analyseNight(snapshot, target, weather);
+    if (night.points.length) return night.points;
     const available = eventTargets
       .map((item) => snapshot.series[item.id])
       .find((series) => series?.length);
     return available ?? [];
-  }, [snapshot]);
+  }, [snapshot, target, weather]);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [rotation, setRotation] = useState(0);
+  const [view, setView] = useState<"sky" | "night">("sky");
+  useEffect(() => {
+    const navigate = (event: MouseEvent) => {
+      const link = (event.target as Element).closest("a");
+      if (link?.getAttribute("href") === "#best-viewing-time") {
+        setView("night");
+        requestAnimationFrame(() => document.getElementById("where-to-look")?.scrollIntoView({ behavior: "smooth" }));
+      } else if (link?.getAttribute("href") === "#where-to-look") setView("sky");
+    };
+    document.addEventListener("click", navigate);
+    return () => document.removeEventListener("click", navigate);
+  }, []);
   const drag = useRef<{ x: number; rotation: number } | null>(null);
 
   // Sync initial index when snapshot updates (KEEP THIS)
@@ -60,7 +77,13 @@ export function SkyPositionPanel({
     const exact = samples.findIndex((point) => point.utc === snapshot.utc);
     setIndex(exact >= 0 ? exact : Math.floor(samples.length / 2));
     setPlaying(false);
-  }, [samples, snapshot.utc]);
+  }, [snapshot.utc]);
+
+  useEffect(() => {
+    if (!previewUtc || !samples.length) return;
+    const match = samples.findIndex((sample) => sample.utc === previewUtc);
+    if (match >= 0) { setIndex(match); setPlaying(false); }
+  }, [previewUtc, samples]);
 
   // Continuous fluid motion animation loop
 // Continuous fluid motion animation loop
@@ -93,7 +116,7 @@ export function SkyPositionPanel({
   const safeIndex = Math.min(Math.floor(index), samples.length - 1);
   const utc = samples[safeIndex].utc;
   const at = (id: EventTarget): JplPosition | undefined =>
-    snapshot.series[id]?.[safeIndex];
+    snapshot.series[id]?.find((sample) => sample.utc === utc);
   const positions = visibleTargets
     .map((item) => ({ item, position: at(item.id) }))
     .filter(
@@ -114,14 +137,46 @@ export function SkyPositionPanel({
   };
   const heading = ((Math.round(rotation) % 360) + 360) % 360;
 
+  const timeControls = (
+        <div className="sky-overview-controls">
+          <button
+            type="button"
+            aria-label={playing ? "Pause sky movement" : "Play sky movement"}
+            aria-pressed={playing}
+            onClick={() => setPlaying((value) => !value)}
+          >
+            {playing ? <Pause size={18} /> : <Play size={18} />}
+          </button>
+          <input
+            type="range"
+            min={0}
+            max={samples.length - 1}
+            step={1}
+            value={safeIndex}
+            aria-label="Sky time"
+            aria-valuetext={localDateTime(utc, timezone)}
+            onChange={(event) => {
+              setPlaying(false);
+              setIndex(Number(event.target.value));
+            }}
+          />
+          <button type="button" aria-label="One hour earlier" disabled={safeIndex === 0} onClick={() => move(-MANUAL_STEP)}>
+            <ChevronLeft size={18} />
+          </button>
+          <output>{localClock(utc, timezone)}</output>
+          <button type="button" aria-label="One hour later" disabled={safeIndex === samples.length - 1} onClick={() => move(MANUAL_STEP)}>
+            <ChevronRight size={18} />
+          </button>
+        </div>
+  );
   return (
     <section className="sky-overview" id="where-to-look" aria-labelledby="sky-overview-heading">
       <div className="sky-overview-heading">
         <div>
           <p className="event-kicker">THE VIEW FROM {locationName.toUpperCase()}</p>
-          <h2 id="sky-overview-heading">Where to look.</h2>
+          <h2 id="sky-overview-heading">Explore tonight.</h2>
           <p className="sky-overview-intro">
-            Drag the sky to rotate through 360°. Move the time slider to watch each tracked object change position.
+            {view === "sky" ? "Drag to rotate the sky. Each dot is a tracked object above your horizon." : "Follow your selected object through the night and check the forecast at the same time."}
           </p>
         </div>
         <div className="sky-overview-time">
@@ -131,6 +186,11 @@ export function SkyPositionPanel({
       </div>
 
       <div className="sky-overview-card">
+        <div className="sky-view-tabs" role="tablist" aria-label="Sky display">
+          <button id="sky-view-tab" role="tab" aria-selected={view === "sky"} aria-controls="sky-view-panel" onClick={() => setView("sky")}>Sky view</button>
+          <button id="night-view-tab" role="tab" aria-selected={view === "night"} aria-controls="night-view-panel" onClick={() => setView("night")}>Through the night</button>
+        </div>
+        <div id="sky-view-panel" role="tabpanel" aria-labelledby="sky-view-tab" hidden={view !== "sky"}>
         <svg
           viewBox="0 0 800 390"
           role="img"
@@ -210,37 +270,12 @@ export function SkyPositionPanel({
             })}
           <text x="400" y="378" textAnchor="middle" className="sky-rotation-label">DRAG TO ROTATE · HEADING {heading}°</text>
         </svg>
-
-        <div className="sky-overview-controls">
-          <button
-            type="button"
-            aria-label={playing ? "Pause sky movement" : "Play sky movement"}
-            aria-pressed={playing}
-            onClick={() => setPlaying((value) => !value)}
-          >
-            {playing ? <Pause size={18} /> : <Play size={18} />}
-          </button>
-          <input
-            type="range"
-            min={0}
-            max={samples.length - 1}
-            step={1}
-            value={safeIndex}
-            aria-label="Sky time"
-            aria-valuetext={localDateTime(utc, timezone)}
-            onChange={(event) => {
-              setPlaying(false);
-              setIndex(Number(event.target.value));
-            }}
-          />
-          <button type="button" aria-label="One hour earlier" disabled={safeIndex === 0} onClick={() => move(-MANUAL_STEP)}>
-            <ChevronLeft size={18} />
-          </button>
-          <output>{localClock(utc, timezone)}</output>
-          <button type="button" aria-label="One hour later" disabled={safeIndex === samples.length - 1} onClick={() => move(MANUAL_STEP)}>
-            <ChevronRight size={18} />
-          </button>
         </div>
+        <div id="night-view-panel" role="tabpanel" aria-labelledby="night-view-tab" hidden={view !== "night"}>
+          <JplNightPanel snapshot={snapshot} target={target} weather={weather} timezone={timezone} onEpoch={onEpoch} previewUtc={utc} timeControls={timeControls} onPreviewTime={(time) => { setPlaying(false); const match = samples.findIndex((sample) => sample.utc === time); if (match >= 0) setIndex(match); }} />
+        </div>
+
+        {view === "sky" && timeControls}
         <p className="sky-overview-source">Positions are calculated every five minutes. Solar System objects use NASA/JPL data. Deep-sky objects use catalogue coordinates and local sidereal time.</p>
         <div className="sky-obstruction" role="note">
           <strong>Horizon obstruction</strong>

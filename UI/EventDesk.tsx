@@ -23,7 +23,6 @@ import {
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
 import { AstroCalendar } from "./AstroCalendar";
-import { JplNightPanel } from "./JplNightPanel";
 import { SkyPositionPanel } from "./SkyPositionPanel";
 import { PassingThrough } from "./PassingThrough";
 import { ReadinessGuide } from "./ReadinessGuide";
@@ -994,19 +993,6 @@ export function EventDesk({
               </section>
             </div>
 
-            {!positionLoading && positions && positions.objects[target]?.data && target !== "sun" && (
-              <JplNightPanel
-                snapshot={positions}
-                target={target}
-                weather={weather?.data}
-                timezone={timezone}
-                onEpoch={(time) => {
-                  setUtc(time);
-                  setEpochInput(time.slice(0, -1));
-                  setNotice(`Showing the sky at ${localTime(time, timezone)}.`);
-                }}
-              />
-            )}
             {!positionLoading && positions && <PassingThrough snapshot={positions} timezone={timezone} />}
           </>
         )}
