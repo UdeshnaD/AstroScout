@@ -14,7 +14,6 @@ import {
   LocateFixed,
   MapPin,
   Menu,
-  QrCode,
   RefreshCw,
   Telescope,
   Orbit,
@@ -185,15 +184,15 @@ const planetVisuals: Partial<Record<EventTarget, {
   creditUrl: string;
   position?: string;
 }>> = {
-  moon: { src: "https://images-assets.nasa.gov/image/PIA00405/PIA00405~medium.jpg", credit: "Moon / NASA JPL", creditUrl: "https://science.nasa.gov/moon/", position: "50% 48%" },
-  mercury: { src: "https://images-assets.nasa.gov/image/PIA16853/PIA16853~medium.jpg", credit: "Mercury / NASA JHUAPL CIW", creditUrl: "https://science.nasa.gov/mercury/" },
-  venus: { src: "https://images-assets.nasa.gov/image/PIA00271/PIA00271~medium.jpg", credit: "Venus / NASA JPL", creditUrl: "https://science.nasa.gov/venus/" },
-  mars: { src: "https://images-assets.nasa.gov/image/PIA00407/PIA00407~medium.jpg", credit: "Mars / NASA JPL", creditUrl: "https://science.nasa.gov/mars/" },
-  jupiter: { src: "https://images-assets.nasa.gov/image/PIA02873/PIA02873~medium.jpg", credit: "Jupiter / NASA JPL", creditUrl: "https://science.nasa.gov/jupiter/" },
-  saturn: { src: "https://images-assets.nasa.gov/image/PIA21345/PIA21345~medium.jpg", credit: "Saturn / NASA JPL-Caltech SSI", creditUrl: "https://science.nasa.gov/saturn/", position: "62% 50%" },
-  uranus: { src: "https://images-assets.nasa.gov/image/PIA18182/PIA18182~medium.jpg", credit: "Uranus / NASA JPL", creditUrl: "https://science.nasa.gov/uranus/" },
-  neptune: { src: "https://images-assets.nasa.gov/image/PIA01492/PIA01492~medium.jpg", credit: "Neptune / NASA JPL", creditUrl: "https://science.nasa.gov/neptune/" },
-  pluto: { src: "https://images-assets.nasa.gov/image/PIA19952/PIA19952~medium.jpg", credit: "Pluto / NASA JHUAPL SwRI", creditUrl: "https://science.nasa.gov/dwarf-planets/pluto/" },
+  moon: { src: "/planets/moon.jpg", credit: "Moon / NASA JPL", creditUrl: "https://science.nasa.gov/moon/", position: "50% 48%" },
+  mercury: { src: "/planets/mercury.jpg", credit: "Mercury / NASA JHUAPL CIW", creditUrl: "https://science.nasa.gov/photojournal/mercury-in-true-and-enhanced-color/" },
+  venus: { src: "/planets/venus.jpg", credit: "Venus / NASA JPL", creditUrl: "https://science.nasa.gov/venus/" },
+  mars: { src: "/planets/mars.jpg", credit: "Mars / NASA JPL", creditUrl: "https://science.nasa.gov/mars/" },
+  jupiter: { src: "/planets/jupiter.png", credit: "Jupiter / NASA ESA CSA STScI (Webb, enhanced colour)", creditUrl: "https://science.nasa.gov/asset/webb/jupiter-nircam-image/" },
+  saturn: { src: "/planets/saturn.jpg", credit: "Saturn / NASA JPL-Caltech SSI", creditUrl: "https://science.nasa.gov/saturn/", position: "62% 50%" },
+  uranus: { src: "/planets/uranus.jpg", credit: "Uranus / NASA JPL", creditUrl: "https://science.nasa.gov/uranus/" },
+  neptune: { src: "/planets/neptune.jpg", credit: "Neptune / NASA JPL", creditUrl: "https://science.nasa.gov/neptune/" },
+  pluto: { src: "/planets/pluto.jpg", credit: "Pluto / NASA JHUAPL SwRI", creditUrl: "https://science.nasa.gov/dwarf-planets/pluto/" },
 };
 
 const targetGroups = ["Solar System", "Deep sky", "Moving sky"] as const;
@@ -231,6 +230,7 @@ export function EventDesk({
   const [epochInput, setEpochInput] = useState("");
   const [target, setTarget] = useState<EventTarget>("saturn");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState("where-to-look");
   const [viewMode, setViewMode] = useState<"observer" | "astronomer">(
     "observer",
   );
@@ -261,6 +261,22 @@ export function EventDesk({
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    if (pathname !== "/") return;
+    const sections = ["where-to-look", "target-heading", "best-viewing-time", "passing-through"]
+      .map((id) => document.getElementById(id))
+      .filter((section): section is HTMLElement => Boolean(section));
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((entry) => entry.isIntersecting).sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+        if (visible?.target.id) setActiveSection(visible.target.id);
+      },
+      { rootMargin: "-18% 0px -62%", threshold: [0.05, 0.25, 0.5] },
+    );
+    sections.forEach((section) => observer.observe(section));
+    return () => observer.disconnect();
+  }, [pathname, positionLoading]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -541,19 +557,25 @@ export function EventDesk({
         </Link>
         <span className="event-edition">Macquarie University / Astronomy Night</span>
         <nav aria-label="Main navigation">
-          {[
-            ["/", "Tonight"],
-            ["/places", "Find a spot"],
-            ["/calendar", "Plan date"],
-            ["/journal", "Logbook"],
-          ].map(([href, label]) => (
-            <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>
-              {label}
-            </Link>
-          ))}
-          <Link href="/join" className="event-join-link" aria-current={pathname === "/join" ? "page" : undefined}>
-            <QrCode size={15} /> Phone QR
-          </Link>
+          {pathname === "/" ? [
+            ["where-to-look", "Sky"],
+            ["target-heading", "Object"],
+            ["best-viewing-time", "Best time"],
+            ["passing-through", "Moving objects"],
+          ].map(([id, label]) => (
+            <a
+              key={id}
+              href={`#${id}`}
+              aria-current={activeSection === id ? "location" : undefined}
+              onClick={(event) => {
+                event.preventDefault();
+                setActiveSection(id);
+                document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });
+              }}
+            >{label}</a>
+          )) : (
+            <Link href="/">Tonight</Link>
+          )}
         </nav>
       </header>
 
@@ -569,15 +591,7 @@ export function EventDesk({
               <span>AstroScout</span>
               <button type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)}><X size={22} /></button>
             </div>
-            <p>Tonight</p>
-            <nav aria-label="Tonight page sections">
-              <a href="/#where-to-look" onClick={() => setMenuOpen(false)}><span>01</span> Where to look</a>
-              <a href="/#target-heading" onClick={() => setMenuOpen(false)}><span>02</span> Choose an object</a>
-              <a href="/#position-details" onClick={() => setMenuOpen(false)}><span>03</span> Position and weather</a>
-              <a href="/#best-viewing-time" onClick={() => setMenuOpen(false)}><span>04</span> Best viewing time</a>
-              <a href="/#passing-through" onClick={() => setMenuOpen(false)}><span>05</span> Passing through</a>
-            </nav>
-            <p>More tools</p>
+            <p>Tools</p>
             <nav aria-label="Other pages">
               {[["/places", "Find a spot"], ["/observe", "Check readiness"], ["/calendar", "Space calendar"], ["/journal", "Logbook"], ["/method", "Data sources"], ["/join", "Phone QR"]].map(([href, label]) => (
                 <Link key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</Link>
@@ -605,13 +619,16 @@ export function EventDesk({
 
       {pathname === "/" && (
         <section className="saturn-hero" aria-labelledby="saturn-hero-heading">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={planetVisuals.saturn!.src}
-            alt="Saturn photographed by NASA's Cassini mission"
-            fetchPriority="high"
-            style={{ objectPosition: planetVisuals.saturn!.position ?? "center" }}
-          />
+          {selectedVisual && <>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              key={target}
+              src={selectedVisual.src}
+              alt={`${selectedDefinition?.name ?? "Selected object"} photographed by a NASA mission`}
+              fetchPriority="high"
+              style={{ objectPosition: selectedVisual.position ?? "center" }}
+            />
+          </>}
           <div className="saturn-hero__inner">
             <p>LOOK UP / {locationName.toUpperCase()}</p>
             <h1 id="saturn-hero-heading">Tonight&apos;s sky.</h1>
@@ -625,9 +642,9 @@ export function EventDesk({
               View tonight&apos;s sky <Orbit size={18} />
             </button>
           </div>
-          <a href={planetVisuals.saturn!.creditUrl} target="_blank" rel="noreferrer" className="saturn-hero__credit">
-            {planetVisuals.saturn!.credit}
-          </a>
+          {selectedVisual && <a href={selectedVisual.creditUrl} target="_blank" rel="noreferrer" className="saturn-hero__credit">
+            {selectedVisual.credit}
+          </a>}
         </section>
       )}
 
@@ -757,16 +774,11 @@ export function EventDesk({
 
         {pathname === "/" && (
           <>
-            <section className="event-session-card">
-              <div>
-                <span>Observer</span>
-                <strong>{locationName}</strong>
+            <section className="event-session-card" aria-label="Selected observing time">
+              <div className="event-session-summary">
+                <span>Viewing</span>
+                <strong>{utc ? localTime(utc, timezone) : "Loading observing time"}</strong>
                 <small>{timezone}</small>
-              </div>
-              <div>
-                <span>Requested time</span>
-                <strong>{utc ? localTime(utc, timezone) : "Loading"}</strong>
-                <small>{utc || "Preparing the time"}</small>
               </div>
               <div className="event-session-actions">
                 <button className="event-primary" onClick={refresh} disabled={positionLoading}>
@@ -867,13 +879,6 @@ export function EventDesk({
                   <p className="event-loading"><Loader2 className="spin" size={18} /> Checking the sky from your location…</p>
                 ) : body ? (
                   <>
-                    {selectedVisual && (
-                      <figure className="event-object-image">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={selectedVisual.src} alt={`${body.name} photographed by a NASA mission`} style={{ objectPosition: selectedVisual.position ?? "center" }} />
-                        <figcaption><a href={selectedVisual.creditUrl} target="_blank" rel="noreferrer">{selectedVisual.credit}</a></figcaption>
-                      </figure>
-                    )}
                     <p className="event-position-summary">
                       {body.altitude >= 0
                         ? `${body.name} is ${body.altitude.toFixed(1)}° above the ${body.compass} horizon.`
@@ -980,7 +985,6 @@ export function EventDesk({
                 snapshot={positions}
                 target={target}
                 weather={weather?.data}
-                locationName={locationName}
                 timezone={timezone}
                 onEpoch={(time) => {
                   setUtc(time);
@@ -990,7 +994,6 @@ export function EventDesk({
               />
             )}
             {!positionLoading && positions && <PassingThrough snapshot={positions} timezone={timezone} />}
-            <section className="night-links"><div><p className="event-kicker">MAKE A NIGHT OF IT</p><h2>Take the plan outside.</h2><a href="https://science.nasa.gov/skywatching/" target="_blank" rel="noreferrer">NASA skywatching guides <ExternalLink size={14}/></a></div><div><p className="event-kicker">A LITTLE FIELD KNOWLEDGE</p><h2>Learn the sky as you go.</h2><a href={stellariumWeb} target="_blank" rel="noreferrer">Open Stellarium Web <ExternalLink size={14}/></a></div></section>
           </>
         )}
       </main>

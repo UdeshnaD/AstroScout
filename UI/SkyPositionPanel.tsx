@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 import { eventTargets } from "@/lib/event-types";
 import { assessAurora, forecastAt } from "@/lib/horizons-analysis";
@@ -52,6 +52,8 @@ export function SkyPositionPanel({
   }, [snapshot]);
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const drag = useRef<{ x: number; rotation: number } | null>(null);
 
   // Sync initial index when snapshot updates (KEEP THIS)
   useEffect(() => {
@@ -110,6 +112,7 @@ export function SkyPositionPanel({
       Math.max(0, Math.min(samples.length - 1, current + amount)),
     );
   };
+  const heading = ((Math.round(rotation) % 360) + 360) % 360;
 
   return (
     <section className="sky-overview" id="where-to-look" aria-labelledby="sky-overview-heading">
@@ -118,7 +121,7 @@ export function SkyPositionPanel({
           <p className="event-kicker">THE VIEW FROM {locationName.toUpperCase()}</p>
           <h2 id="sky-overview-heading">Where to look.</h2>
           <p className="sky-overview-intro">
-            Each white dot is a target AstroScout is tracking. Move the slider to see where the Moon, planets, ISS, asteroids and selected deep-sky objects sit in the sky at different times.
+            Drag the sky to rotate through 360°. Move the time slider to watch each tracked object change position.
           </p>
         </div>
         <div className="sky-overview-time">
@@ -129,45 +132,60 @@ export function SkyPositionPanel({
 
       <div className="sky-overview-card">
         <svg
-          viewBox="0 0 800 350"
+          viewBox="0 0 800 390"
           role="img"
-          aria-label={`Calculated positions of the Moon and planets above the horizon at ${localDateTime(utc, timezone)}`}
+          aria-label={`Interactive 360 degree sky view at ${localDateTime(utc, timezone)}`}
+          onPointerDown={(event) => {
+            if ((event.target as Element).closest(".sky-object-marker")) return;
+            drag.current = { x: event.clientX, rotation };
+            event.currentTarget.setPointerCapture(event.pointerId);
+          }}
+          onPointerMove={(event) => {
+            if (!drag.current) return;
+            setRotation(drag.current.rotation + (event.clientX - drag.current.x) * .55);
+          }}
+          onPointerUp={(event) => {
+            drag.current = null;
+            event.currentTarget.releasePointerCapture(event.pointerId);
+          }}
+          onPointerCancel={() => { drag.current = null; }}
         >
-          {[0, 30, 60, 90].map((altitude) => (
+          <defs>
+            <radialGradient id="sky-dome" cx="50%" cy="45%">
+              <stop offset="0" stopColor="#263b43" />
+              <stop offset="1" stopColor="#0b1519" />
+            </radialGradient>
+          </defs>
+          <circle cx="400" cy="184" r="158" fill="url(#sky-dome)" className="sky-dome" />
+          {[0, 30, 60].map((altitude) => (
             <g key={altitude}>
-              <line
-                x1="45"
-                x2="770"
-                y1={300 - altitude * 2.8}
-                y2={300 - altitude * 2.8}
+              <circle
+                cx="400"
+                cy="184"
+                r={(90 - altitude) / 90 * 158}
                 className={altitude === 0 ? "sky-horizon-line" : "sky-altitude-line"}
               />
-              <text x="7" y={305 - altitude * 2.8}>{altitude}°</text>
+              <text x="405" y={188 - ((90 - altitude) / 90 * 158)}>{altitude}°</text>
             </g>
           ))}
-          {(["N", "E", "S", "W", "N"] as const).map((direction, directionIndex) => (
-            <text
-              key={`${direction}-${directionIndex}`}
-              x={45 + directionIndex * 181.25}
-              y="333"
-              textAnchor="middle"
-            >
-              {direction}
-            </text>
-          ))}
+          <circle cx="400" cy="184" r="4" className="sky-zenith" />
+          <text x="410" y="179" className="sky-zenith-label">ZENITH</text>
+          {([{"label":"N","az":0},{"label":"E","az":90},{"label":"S","az":180},{"label":"W","az":270}]).map(({ label, az }) => {
+            const angle = (az - rotation) * Math.PI / 180;
+            return <text key={label} x={400 + Math.sin(angle) * 178} y={189 - Math.cos(angle) * 178} textAnchor="middle" className="sky-cardinal">{label}</text>;
+          })}
           {positions
             .filter(({ position }) => position.altitude > 0)
             .map(({ item, position }) => {
-              const x = 45 + (position.azimuth / 360) * 725;
-              const y = 300 - position.altitude * 2.8;
+              const angle = (position.azimuth - rotation) * Math.PI / 180;
+              const radius = (90 - Math.min(90, position.altitude)) / 90 * 150;
+              const x = 400 + Math.sin(angle) * radius;
+              const y = 184 - Math.cos(angle) * radius;
               const selected = target === item.id;
-              const edgeDistance = Math.min(position.azimuth, 360 - position.azimuth);
-              const edgeOpacity = Math.min(1, edgeDistance / 7);
               return (
                 <g
                   key={item.id}
                   className="sky-object-marker"
-                  style={{ opacity: edgeOpacity }}
                   role="button"
                   tabIndex={0}
                   aria-label={`${item.name}, ${position.altitude.toFixed(1)} degrees above the ${position.compass} horizon`}
@@ -183,13 +201,14 @@ export function SkyPositionPanel({
                   <circle className="sky-marker-hit" cx={x} cy={y} r="22" />
                   <circle className="sky-marker-dot" cx={x} cy={y} r={selected ? 8 : 5} />
                   {selected && (
-                    <text x={Math.max(80, Math.min(720, x))} y={y - 22} textAnchor="middle" className="sky-marker-label">
+                    <text x={x} y={y - 18} textAnchor="middle" className="sky-marker-label">
                       {item.name}
                     </text>
                   )}
                 </g>
               );
             })}
+          <text x="400" y="378" textAnchor="middle" className="sky-rotation-label">DRAG TO ROTATE · HEADING {heading}°</text>
         </svg>
 
         <div className="sky-overview-controls">

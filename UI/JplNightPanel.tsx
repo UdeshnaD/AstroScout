@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useMemo, useState } from "react";
-import { Clock3, Moon, Sun, ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Clock3, Moon, Pause, Play, Sun } from "lucide-react";
 import {
   analyseNight,
   moonlightExplanation,
-  readinessAt,
   skyState,
 } from "@/lib/horizons-analysis";
 import type {
@@ -30,14 +29,12 @@ export function JplNightPanel({
   snapshot,
   target,
   weather,
-  locationName,
   timezone,
   onEpoch,
 }: {
   snapshot?: HorizonsSnapshot;
   target: EventTarget;
   weather?: EventWeather | null;
-  locationName: string;
   timezone: string;
   onEpoch: (utc: string) => void;
 }) {
@@ -46,6 +43,7 @@ export function JplNightPanel({
     [snapshot, target, weather],
   );
   const [index, setIndex] = useState(0);
+  const [playing, setPlaying] = useState(false);
   useEffect(() => {
     setIndex(
       Math.max(
@@ -53,15 +51,26 @@ export function JplNightPanel({
         night.points.findIndex((p) => p.utc === snapshot?.utc),
       ),
     );
+    setPlaying(false);
   }, [night, snapshot?.utc]);
+  useEffect(() => {
+    if (!playing || !night.points.length) return;
+    const timer = window.setInterval(() => {
+      setIndex((current) => {
+        if (current >= night.points.length - 1) {
+          setPlaying(false);
+          return current;
+        }
+        return current + 1;
+      });
+    }, 160);
+    return () => window.clearInterval(timer);
+  }, [playing, night.points.length]);
   if (!snapshot) return null;
   const exact = snapshot.objects[target]?.data,
     sun = snapshot.objects.sun?.data;
   const moon = snapshot.objects.moon?.data;
   const point = night.points[Math.min(index, night.points.length - 1)];
-  const readiness = readinessAt(
-    night.points.find((candidate) => candidate.utc === snapshot.utc),
-  );
   const x = (i: number) =>
     night.points.length < 2 ? 0 : (i * 800) / (night.points.length - 1);
   const y = (alt: number) => 15 + ((90 - alt) / 180) * 180;
@@ -69,7 +78,19 @@ export function JplNightPanel({
     night.points
       .map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p[body].altitude)}`)
       .join(" ");
-  const source = snapshot.objects[target];
+  const targetArea = night.points.length ? `${line("target")} L800,220 L0,220 Z` : "";
+  const bandColour = (sunAltitude: number) => {
+    if (sunAltitude <= -18) return "#07141d";
+    if (sunAltitude <= -12) return "#102432";
+    if (sunAltitude <= -6) return "#293745";
+    if (sunAltitude <= 0) return "#574c51";
+    return "#826c59";
+  };
+  const selectPoint = (clientX: number, element: SVGSVGElement) => {
+    const box = element.getBoundingClientRect();
+    setPlaying(false);
+    setIndex(Math.max(0, Math.min(night.points.length - 1, Math.round(((clientX - box.left) / box.width) * (night.points.length - 1)))));
+  };
   return (
     <section
       id="best-viewing-time"
@@ -84,14 +105,6 @@ export function JplNightPanel({
           {sun ? ` / Sun ${sun.altitude.toFixed(1)}°` : ""}
         </span>
       </div>
-      {exact && (
-        <p className="jpl-narrative">
-          AstroScout calculated {exact.name}&apos;s apparent position from {locationName}
-          for {date(exact.utc, timezone)} ({timezone}) using {source.source}.{" "}
-          {exact.name} is {Math.abs(exact.altitude).toFixed(2)}°{" "}
-          {exact.altitude > 0 ? "above" : "below"} the {exact.compass} horizon.
-        </p>
-      )}
       <div className="jpl-window">
         <Clock3 size={21} />
         <div>
@@ -120,13 +133,6 @@ export function JplNightPanel({
             )}
         </div>
       </div>
-      <div className="jpl-readiness" role="note">
-        <div>
-          <span>TONIGHT&apos;S READINESS</span>
-          <strong>{readiness.score === null ? "Unavailable" : `${readiness.score}%`}</strong>
-        </div>
-        <p>{readiness.reason}</p>
-      </div>
       {!night.best && night.geometryOnly && (
         <p className="event-footnote">
           The object is in a promising position from {date(night.geometryOnly.start, timezone)} to{" "}
@@ -146,7 +152,7 @@ export function JplNightPanel({
           <div className="jpl-chart-legend" aria-label="Chart legend">
             <span><i className="target" />{exact?.name ?? "Target"}</span>
             <span><i className="sun" />Sun</span>
-            <span><i className="darkness" />Astronomical darkness</span>
+            <span><i className="darkness" />Night and twilight</span>
             <span><i className="horizon" />Horizon</span>
           </div>
           <div className="jpl-plot">
@@ -160,50 +166,45 @@ export function JplNightPanel({
               preserveAspectRatio="none"
               role="img"
               aria-label={`${exact?.name ?? target} and Sun altitude from calculated five-minute samples`}
-              onPointerMove={(event) => {
-                const box = event.currentTarget.getBoundingClientRect();
-                setIndex(
-                  Math.max(
-                    0,
-                    Math.min(
-                      night.points.length - 1,
-                      Math.round(
-                        ((event.clientX - box.left) / box.width) *
-                          (night.points.length - 1),
-                      ),
-                    ),
-                  ),
-                );
+              onPointerDown={(event) => {
+                event.currentTarget.setPointerCapture(event.pointerId);
+                selectPoint(event.clientX, event.currentTarget);
               }}
+              onPointerMove={(event) => selectPoint(event.clientX, event.currentTarget)}
             >
-              {night.points.map((p, i) =>
-                i < night.points.length - 1 && p.sun.altitude <= -18 ? (
+              <defs>
+                <linearGradient id="target-area" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#f2d59b" stopOpacity=".42" />
+                  <stop offset="100%" stopColor="#f2d59b" stopOpacity="0" />
+                </linearGradient>
+                <filter id="point-glow" x="-100%" y="-100%" width="300%" height="300%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                </filter>
+              </defs>
+              {night.points.map((sample, sampleIndex) =>
+                sampleIndex < night.points.length - 1 ? (
                   <rect
-                    key={p.utc}
-                    x={x(i)}
+                    key={sample.utc}
+                    x={x(sampleIndex)}
                     y="0"
-                    width={x(i + 1) - x(i) + 0.5}
+                    width={x(sampleIndex + 1) - x(sampleIndex) + 0.5}
                     height="220"
-                    fill="#173e30"
+                    fill={bandColour(sample.sun.altitude)}
                   />
                 ) : null,
               )}
-              <line
-                x1="0"
-                y1={y(0)}
-                x2="800"
-                y2={y(0)}
-                stroke="#a0b7a9"
-                strokeDasharray="5 5"
-              />
+              {[60, 30, 0, -30, -60].map((altitude) => (
+                <line key={altitude} x1="0" y1={y(altitude)} x2="800" y2={y(altitude)} className={altitude === 0 ? "jpl-horizon-line" : "jpl-grid-line"} />
+              ))}
               <line
                 x1="0"
                 y1={y(20)}
                 x2="800"
                 y2={y(20)}
-                stroke="#75a793"
-                strokeDasharray="2 7"
+                className="jpl-twenty-line"
               />
+              <path d={targetArea} fill="url(#target-area)" />
               <path
                 d={line("target")}
                 fill="none"
@@ -226,7 +227,13 @@ export function JplNightPanel({
                 stroke="#ffffff"
                 strokeOpacity=".7"
               />
+              <circle cx={x(index)} cy={y(point.target.altitude)} r="5" fill="#f7dfa9" stroke="#fff" strokeWidth="1.5" filter="url(#point-glow)" vectorEffect="non-scaling-stroke" />
+              <circle cx={x(index)} cy={y(point.sun.altitude)} r="3.5" fill="#cbb5d7" stroke="#fff" strokeWidth="1" vectorEffect="non-scaling-stroke" />
             </svg>
+            <div className="jpl-chart-tooltip" style={{ left: `${Math.max(8, Math.min(92, (index / Math.max(1, night.points.length - 1)) * 100))}%` }}>
+              <strong>{clock(point.utc, timezone)}</strong>
+              <span>{exact?.name ?? "Target"} {point.target.altitude.toFixed(1)}°</span>
+            </div>
           </div>
           <div className="jpl-chart-times">
             <span>{clock(night.points[0].utc, timezone)}</span>
@@ -235,19 +242,25 @@ export function JplNightPanel({
             </span>
             <span>{clock(night.points[night.points.length - 1].utc, timezone)}</span>
           </div>
-          <label className="jpl-scrubber">
-            Choose a time on the graph
-            <input
-              type="range"
-              min="0"
-              max={night.points.length - 1}
-              step="1"
-              value={Math.min(index, night.points.length - 1)}
-              aria-label="Night timeline sample"
-              aria-valuetext={`${date(point.utc, timezone)}, target ${point.target.altitude.toFixed(2)} degrees, Sun ${point.sun.altitude.toFixed(2)} degrees`}
-              onChange={(e) => setIndex(Number(e.target.value))}
-            />
-          </label>
+          <div className="jpl-timeline-controls">
+            <button type="button" aria-label={playing ? "Pause night animation" : "Play night animation"} aria-pressed={playing} onClick={() => {
+              if (!playing && index >= night.points.length - 1) setIndex(0);
+              setPlaying((value) => !value);
+            }}>{playing ? <Pause size={17} /> : <Play size={17} />}</button>
+            <label className="jpl-scrubber">
+              <span>Move through the night</span>
+              <input
+                type="range"
+                min="0"
+                max={night.points.length - 1}
+                step="1"
+                value={Math.min(index, night.points.length - 1)}
+                aria-label="Night timeline sample"
+                aria-valuetext={`${date(point.utc, timezone)}, target ${point.target.altitude.toFixed(2)} degrees, Sun ${point.sun.altitude.toFixed(2)} degrees`}
+                onChange={(event) => { setPlaying(false); setIndex(Number(event.target.value)); }}
+              />
+            </label>
+          </div>
           <div className="jpl-sample-readout">
             <strong>{date(point.utc, timezone)} / {timezone}</strong>
             <span>UTC time: {point.utc}</span>
@@ -274,13 +287,6 @@ export function JplNightPanel({
       <p className="jpl-moonlight">
         <Moon size={17} />
         {moonlightExplanation(moon)}
-      </p>
-      <p className="event-footnote">
-        Position calculation for: {snapshot.utc}
-        <br />
-        <br />Data received for target: {source?.receivedAt ?? "not available"} / Sun:{" "}
-        {snapshot.objects.sun?.receivedAt ?? "not available"} / Moon:{" "}
-        {snapshot.objects.moon?.receivedAt ?? "not available"}
       </p>
       {night.incomplete && (
         <p className="event-warning">
