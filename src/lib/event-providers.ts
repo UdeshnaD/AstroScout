@@ -530,34 +530,34 @@ export async function getEventWeather(
   location: EventLocation,
 ): Promise<SourceResult<EventWeather>> {
   const requestedAt = new Date().toISOString();
-  try {
-    const url = openMeteoUrl(location);
-    const response = await fetch(url, {
-      cache: "no-store",
-      signal: AbortSignal.timeout(12000),
-    });
-    if (!response.ok) throw new Error(`Open-Meteo HTTP ${response.status}.`);
-    const data = parseEventWeather(
-      await response.json(),
-      location,
-      url.toString(),
-    );
-    return {
-      status: "available",
-      source: "Open-Meteo API",
-      requestedAt,
-      receivedAt: new Date().toISOString(),
-      data,
-      error: null,
-    };
-  } catch (error) {
-    return {
-      status: "unavailable",
-      source: "Open-Meteo API",
-      requestedAt,
-      receivedAt: new Date().toISOString(),
-      data: null,
-      error: error instanceof Error ? error.message : "Weather request failed.",
-    };
+  const url = openMeteoUrl(location);
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const response = await fetch(url, {
+        cache: "no-store",
+        signal: AbortSignal.timeout(12000),
+      });
+      if (!response.ok) throw new Error(`Open-Meteo HTTP ${response.status}.`);
+      const data = parseEventWeather(await response.json(), location, url.toString());
+      return {
+        status: "available",
+        source: "Open-Meteo API",
+        requestedAt,
+        receivedAt: new Date().toISOString(),
+        data,
+        error: null,
+      };
+    } catch (error) {
+      lastError = error;
+    }
   }
+  return {
+    status: "unavailable",
+    source: "Open-Meteo API",
+    requestedAt,
+    receivedAt: new Date().toISOString(),
+    data: null,
+    error: lastError instanceof Error ? lastError.message : "Weather request failed.",
+  };
 }

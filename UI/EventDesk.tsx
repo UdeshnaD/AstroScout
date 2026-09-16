@@ -13,10 +13,12 @@ import {
   Loader2,
   LocateFixed,
   MapPin,
+  Menu,
   QrCode,
   RefreshCw,
   Telescope,
-  Orbit
+  Orbit,
+  X,
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
 import { AstroCalendar } from "./AstroCalendar";
@@ -177,6 +179,25 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
   },
 };
 
+const planetVisuals: Partial<Record<EventTarget, {
+  src: string;
+  credit: string;
+  creditUrl: string;
+  position?: string;
+}>> = {
+  moon: { src: "https://images-assets.nasa.gov/image/PIA00405/PIA00405~medium.jpg", credit: "Moon / NASA JPL", creditUrl: "https://science.nasa.gov/moon/", position: "50% 48%" },
+  mercury: { src: "https://images-assets.nasa.gov/image/PIA16853/PIA16853~medium.jpg", credit: "Mercury / NASA JHUAPL CIW", creditUrl: "https://science.nasa.gov/mercury/" },
+  venus: { src: "https://images-assets.nasa.gov/image/PIA00271/PIA00271~medium.jpg", credit: "Venus / NASA JPL", creditUrl: "https://science.nasa.gov/venus/" },
+  mars: { src: "https://images-assets.nasa.gov/image/PIA00407/PIA00407~medium.jpg", credit: "Mars / NASA JPL", creditUrl: "https://science.nasa.gov/mars/" },
+  jupiter: { src: "https://images-assets.nasa.gov/image/PIA02873/PIA02873~medium.jpg", credit: "Jupiter / NASA JPL", creditUrl: "https://science.nasa.gov/jupiter/" },
+  saturn: { src: "https://images-assets.nasa.gov/image/PIA21345/PIA21345~medium.jpg", credit: "Saturn / NASA JPL-Caltech SSI", creditUrl: "https://science.nasa.gov/saturn/", position: "62% 50%" },
+  uranus: { src: "https://images-assets.nasa.gov/image/PIA18182/PIA18182~medium.jpg", credit: "Uranus / NASA JPL", creditUrl: "https://science.nasa.gov/uranus/" },
+  neptune: { src: "https://images-assets.nasa.gov/image/PIA01492/PIA01492~medium.jpg", credit: "Neptune / NASA JPL", creditUrl: "https://science.nasa.gov/neptune/" },
+  pluto: { src: "https://images-assets.nasa.gov/image/PIA19952/PIA19952~medium.jpg", credit: "Pluto / NASA JHUAPL SwRI", creditUrl: "https://science.nasa.gov/dwarf-planets/pluto/" },
+};
+
+const targetGroups = ["Solar System", "Deep sky", "Moving sky"] as const;
+
 export function EventDesk({
   initialLocation = mqLocation,
   initialUtc,
@@ -209,6 +230,7 @@ export function EventDesk({
   const [utc, setUtc] = useState("");
   const [epochInput, setEpochInput] = useState("");
   const [target, setTarget] = useState<EventTarget>("saturn");
+  const [menuOpen, setMenuOpen] = useState(false);
   const [viewMode, setViewMode] = useState<"observer" | "astronomer">(
     "observer",
   );
@@ -235,6 +257,10 @@ export function EventDesk({
       // The mode remains available for this visit when storage is restricted.
     }
   }, [viewMode]);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -479,6 +505,7 @@ export function EventDesk({
   const position = positions?.objects[target];
   const body = position?.data;
   const selectedDefinition = eventTargets.find((item) => item.id === target);
+  const selectedVisual = planetVisuals[target];
   const guidance = objectGuidance(target);
   const rise = scanEventTime(positions?.series[target], "r", timezone);
   const transit = scanEventTime(positions?.series[target], "t", timezone);
@@ -498,6 +525,16 @@ export function EventDesk({
   return (
     <div className="event-desk">
       <header className="event-header">
+        <button
+          className="event-menu-trigger"
+          type="button"
+          aria-label="Open navigation"
+          aria-expanded={menuOpen}
+          aria-controls="event-navigation-drawer"
+          onClick={() => setMenuOpen(true)}
+        >
+          <Menu size={22} />
+        </button>
         <Link href="/" className="event-brand" aria-label="AstroScout home">
           <Telescope size={25} />
           AstroScout<span>.</span>
@@ -506,11 +543,9 @@ export function EventDesk({
         <nav aria-label="Main navigation">
           {[
             ["/", "Tonight"],
-            ["/places", "Explore places"],
-            ["/calendar", "Calendar"],
-            ["/observe", "Observe"],
-            ["/journal", "Journal"],
-            ["/method", "How it works"],
+            ["/places", "Find a spot"],
+            ["/calendar", "Plan date"],
+            ["/journal", "Logbook"],
           ].map(([href, label]) => (
             <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}>
               {label}
@@ -521,6 +556,36 @@ export function EventDesk({
           </Link>
         </nav>
       </header>
+
+      {menuOpen && (
+        <div className="event-drawer-backdrop" role="presentation" onClick={() => setMenuOpen(false)}>
+          <aside
+            id="event-navigation-drawer"
+            className="event-drawer"
+            aria-label="AstroScout navigation"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="event-drawer__top">
+              <span>AstroScout</span>
+              <button type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)}><X size={22} /></button>
+            </div>
+            <p>Tonight</p>
+            <nav aria-label="Tonight page sections">
+              <a href="/#where-to-look" onClick={() => setMenuOpen(false)}><span>01</span> Where to look</a>
+              <a href="/#target-heading" onClick={() => setMenuOpen(false)}><span>02</span> Choose an object</a>
+              <a href="/#position-details" onClick={() => setMenuOpen(false)}><span>03</span> Position and weather</a>
+              <a href="/#best-viewing-time" onClick={() => setMenuOpen(false)}><span>04</span> Best viewing time</a>
+              <a href="/#passing-through" onClick={() => setMenuOpen(false)}><span>05</span> Passing through</a>
+            </nav>
+            <p>More tools</p>
+            <nav aria-label="Other pages">
+              {[["/places", "Find a spot"], ["/observe", "Check readiness"], ["/calendar", "Space calendar"], ["/journal", "Logbook"], ["/method", "Data sources"], ["/join", "Phone QR"]].map(([href, label]) => (
+                <Link key={href} href={href} onClick={() => setMenuOpen(false)}>{label}</Link>
+              ))}
+            </nav>
+          </aside>
+        </div>
+      )}
 
       <div className="event-location-strip">
         <div>
@@ -542,37 +607,26 @@ export function EventDesk({
         <section className="saturn-hero" aria-labelledby="saturn-hero-heading">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="https://science.nasa.gov/wp-content/uploads/2023/05/saturn-farewell-pia21345-sse-banner-1920x640-1.jpg?w=1536"
-            alt="Saturn and its rings photographed by NASA's Cassini spacecraft"
+            src={planetVisuals.saturn!.src}
+            alt="Saturn photographed by NASA's Cassini mission"
             fetchPriority="high"
+            style={{ objectPosition: planetVisuals.saturn!.position ?? "center" }}
           />
           <div className="saturn-hero__inner">
             <p>LOOK UP / {locationName.toUpperCase()}</p>
             <h1 id="saturn-hero-heading">Tonight&apos;s sky.</h1>
             <span>The Moon and planets, above your exact location.</span>
-            <div className="saturn-hero__focus">
-              <small>IN FOCUS</small>
-              <strong>Saturn</strong>
-              <span>
-                {positionLoading
-                  ? "Calculating the current view…"
-                  : positions?.objects.saturn?.data
-                    ? `${positions.objects.saturn.data.altitude.toFixed(1)}° altitude · ${positions.objects.saturn.data.compass}`
-                    : "Position currently unavailable"}
-              </span>
-            </div>
             <button
               type="button"
               onClick={() => {
-                setTarget("saturn");
                 document.getElementById("where-to-look")?.scrollIntoView({ behavior: "smooth" });
               }}
             >
-              Explore Saturn <Orbit size={18} />
+              View tonight&apos;s sky <Orbit size={18} />
             </button>
           </div>
-          <a href="https://science.nasa.gov/saturn/" target="_blank" rel="noreferrer" className="saturn-hero__credit">
-            Cassini image / NASA, JPL-Caltech, SSI
+          <a href={planetVisuals.saturn!.creditUrl} target="_blank" rel="noreferrer" className="saturn-hero__credit">
+            {planetVisuals.saturn!.credit}
           </a>
         </section>
       )}
@@ -775,26 +829,32 @@ export function EventDesk({
                   <button type="button" aria-pressed={viewMode === "astronomer"} onClick={() => setViewMode("astronomer")}>Astronomer</button>
                 </div>
               </div>
-              <div className="event-target-grid">
-                {eventTargets.filter((item) => item.id !== "sun").map((item) => {
-                  const targetPosition = positions?.objects[item.id]?.data;
-                  return (
-                    <button key={item.id} aria-pressed={target === item.id} onClick={() => setTarget(item.id)}>
-                      <strong>{item.name}</strong>
-                      <span>
-                        {positionLoading
-                          ? "Loading…"
-                          : targetPosition
-                          ? `${targetPosition.altitude.toFixed(1)}° altitude`
-                            : "Position unavailable"}
-                      </span>
-                    </button>
-                  );
-                })}
+              <div className="event-target-picker">
+                <label htmlFor="event-target-select">Object</label>
+                <select
+                  id="event-target-select"
+                  value={target}
+                  onChange={(event) => {
+                    const nextTarget = event.target.value as EventTarget;
+                    setTarget(nextTarget);
+                  }}
+                >
+                  {targetGroups.map((group) => (
+                    <optgroup key={group} label={group}>
+                      {eventTargets.filter((item) => item.id !== "sun" && item.group === group).map((item) => (
+                        <option key={item.id} value={item.id}>{item.name}</option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+                <div aria-live="polite">
+                  <strong>{selectedDefinition?.name}</strong>
+                  <span>{positionLoading ? "Calculating position…" : body ? `${body.altitude.toFixed(1)}° altitude · ${body.compass}` : "Position unavailable"}</span>
+                </div>
               </div>
             </section>
 
-            <div className="event-live-grid">
+            <div className="event-live-grid" id="position-details">
               <section className="event-position-card" aria-busy={positionLoading}>
                 <div className="event-section-heading">
                   <div>
@@ -807,6 +867,13 @@ export function EventDesk({
                   <p className="event-loading"><Loader2 className="spin" size={18} /> Checking the sky from your location…</p>
                 ) : body ? (
                   <>
+                    {selectedVisual && (
+                      <figure className="event-object-image">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={selectedVisual.src} alt={`${body.name} photographed by a NASA mission`} style={{ objectPosition: selectedVisual.position ?? "center" }} />
+                        <figcaption><a href={selectedVisual.creditUrl} target="_blank" rel="noreferrer">{selectedVisual.credit}</a></figcaption>
+                      </figure>
+                    )}
                     <p className="event-position-summary">
                       {body.altitude >= 0
                         ? `${body.name} is ${body.altitude.toFixed(1)}° above the ${body.compass} horizon.`

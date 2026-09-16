@@ -72,6 +72,7 @@ export function JplNightPanel({
   const source = snapshot.objects[target];
   return (
     <section
+      id="best-viewing-time"
       className="jpl-night-panel"
       aria-label="Overnight observing analysis"
     >

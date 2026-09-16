@@ -118,7 +118,7 @@ export function SkyPositionPanel({
           <p className="event-kicker">THE VIEW FROM {locationName.toUpperCase()}</p>
           <h2 id="sky-overview-heading">Where to look.</h2>
           <p className="sky-overview-intro">
-            This is a snapshot of the whole sky. Move left or right for compass direction and look higher on the chart for objects higher above the horizon.
+            Each white dot is a target AstroScout is tracking. Move the slider to see where the Moon, planets, ISS, asteroids and selected deep-sky objects sit in the sky at different times.
           </p>
         </div>
         <div className="sky-overview-time">
@@ -161,11 +161,13 @@ export function SkyPositionPanel({
               const x = 45 + (position.azimuth / 360) * 725;
               const y = 300 - position.altitude * 2.8;
               const selected = target === item.id;
+              const edgeDistance = Math.min(position.azimuth, 360 - position.azimuth);
+              const edgeOpacity = Math.min(1, edgeDistance / 7);
               return (
                 <g
                   key={item.id}
                   className="sky-object-marker"
-                  style={{ transition: "all 0.08s linear" }}
+                  style={{ opacity: edgeOpacity }}
                   role="button"
                   tabIndex={0}
                   aria-label={`${item.name}, ${position.altitude.toFixed(1)} degrees above the ${position.compass} horizon`}
