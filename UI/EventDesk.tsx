@@ -17,6 +17,8 @@ import {
   RefreshCw,
   Telescope,
   Orbit,
+  Pause,
+  Play,
   X,
 } from "lucide-react";
 import { CalendarView } from "./CalendarView";
@@ -230,6 +232,7 @@ export function EventDesk({
   const [epochInput, setEpochInput] = useState("");
   const [target, setTarget] = useState<EventTarget>("saturn");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [heroMotion, setHeroMotion] = useState(true);
   const [activeSection, setActiveSection] = useState("where-to-look");
   const [viewMode, setViewMode] = useState<"observer" | "astronomer">(
     "observer",
@@ -555,7 +558,6 @@ export function EventDesk({
           <Telescope size={25} />
           AstroScout<span>.</span>
         </Link>
-        <span className="event-edition">Macquarie University / Astronomy Night</span>
         <nav aria-label="Main navigation">
           {pathname === "/" ? [
             ["where-to-look", "Sky"],
@@ -601,24 +603,24 @@ export function EventDesk({
         </div>
       )}
 
-      <div className="event-location-strip">
-        <div>
-          <MapPin size={17} />
-          <strong>{locationName}</strong>
-          <span>
-            {location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} · {location.elevation.toFixed(0)} m
-          </span>
-        </div>
-        <time dateTime={now || undefined}>
-          {now ? localTime(now, timezone) : "Loading clock"}
-          <small>{timezone}</small>
-        </time>
-      </div>
-
       <OfflineReady />
 
       {pathname === "/" && (
-        <section className="saturn-hero" aria-labelledby="saturn-hero-heading">
+        <section
+          className="saturn-hero"
+          aria-labelledby="saturn-hero-heading"
+          data-motion={heroMotion}
+          onPointerMove={(event) => {
+            if (!heroMotion) return;
+            const bounds = event.currentTarget.getBoundingClientRect();
+            event.currentTarget.style.setProperty('--hero-x', `${((event.clientX - bounds.left) / bounds.width - .5) * 24}px`);
+            event.currentTarget.style.setProperty('--hero-y', `${((event.clientY - bounds.top) / bounds.height - .5) * 16}px`);
+          }}
+          onPointerLeave={(event) => {
+            event.currentTarget.style.setProperty('--hero-x', '0px');
+            event.currentTarget.style.setProperty('--hero-y', '0px');
+          }}
+        >
           {selectedVisual && <>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -626,13 +628,12 @@ export function EventDesk({
               src={selectedVisual.src}
               alt={`${selectedDefinition?.name ?? "Selected object"} photographed by a NASA mission`}
               fetchPriority="high"
-              style={{ objectPosition: selectedVisual.position ?? "center" }}
             />
           </>}
           <div className="saturn-hero__inner">
-            <p>LOOK UP / {locationName.toUpperCase()}</p>
-            <h1 id="saturn-hero-heading">Tonight&apos;s sky.</h1>
-            <span>The Moon and planets, above your exact location.</span>
+            <p>TONIGHT / {locationName.toUpperCase()}</p>
+            <h1 id="saturn-hero-heading">{selectedDefinition?.name ?? "Tonight’s sky"}</h1>
+            <span>Explore its position in your sky, find a viewing time and check the conditions before you head outside.</span>
             <button
               type="button"
               onClick={() => {
@@ -645,8 +646,21 @@ export function EventDesk({
           {selectedVisual && <a href={selectedVisual.creditUrl} target="_blank" rel="noreferrer" className="saturn-hero__credit">
             {selectedVisual.credit}
           </a>}
+          {selectedVisual && <button className="hero-motion-control" type="button" aria-label={heroMotion ? "Pause cover animation" : "Play cover animation"} aria-pressed={!heroMotion} onClick={() => setHeroMotion((value) => !value)}>{heroMotion ? <Pause size={20} /> : <Play size={20} />}</button>}
         </section>
       )}
+
+      <div className="event-location-strip">
+        <div>
+          <MapPin size={17} />
+          <strong>{locationName}</strong>
+          <span>{location.latitude.toFixed(4)}, {location.longitude.toFixed(4)} · {location.elevation.toFixed(0)} m</span>
+        </div>
+        <time dateTime={now || undefined}>
+          {now ? localTime(now, timezone) : "Loading clock"}
+          <small>{timezone}</small>
+        </time>
+      </div>
 
       <main id="event-content" className="event-main">
         {pathname !== "/" && (

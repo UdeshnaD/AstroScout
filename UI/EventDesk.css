@@ -1,12 +1,12 @@
 :root {
-  --ink: #17221d;
-  --muted: #5b6a63;
-  --line: #b8c3bc;
-  --paper: #edf0ea;
-  --wash: #dce4dd;
-  --forest: #14513e;
-  --forest-dark: #092b22;
-  --gold: #c99548;
+  --ink: #202020;
+  --muted: #5d5c59;
+  --line: #c8c5be;
+  --paper: #efede8;
+  --wash: #e1ded7;
+  --forest: #292929;
+  --forest-dark: #111111;
+  --gold: #d7a65e;
   --danger: #9d2e3e;
 }
 html { scroll-behavior: smooth; }
@@ -14,9 +14,9 @@ html { scroll-behavior: smooth; }
 .event-desk {
   min-height: 100vh;
   color: var(--ink);
-  background:
-    radial-gradient(circle at 15% 20%, rgb(198 214 204 / 48%), transparent 32rem),
-    linear-gradient(180deg, #dce3de 0%, #d4ddd7 100%);
+  background: #dedbd5;
+  font-size: 16px;
+  line-height: 1.65;
 }
 
 .event-header {
@@ -29,7 +29,7 @@ html { scroll-behavior: smooth; }
   min-height: 66px;
   padding: 9px max(28px, calc((100% - 1180px) / 2));
   color: #f7fbf8;
-  background: rgb(9 18 15 / 96%);
+  background: #050505;
   backdrop-filter: blur(14px);
 }
 .event-menu-trigger {
@@ -152,8 +152,8 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   gap: 20px;
   min-height: 68px;
   padding: 12px max(28px, calc((100% - 1180px) / 2));
-  border-bottom: 1px solid #aebdb4;
-  background: #cbd6cf;
+  border-bottom: 1px solid var(--line);
+  background: #d2cfc8;
 }
 .event-location-strip > div,
 .event-location-strip time {
@@ -989,7 +989,7 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .event-session-card strong {
   font-size: 16px;
 }
-.event-session-summary { grid-template-columns: auto auto auto; align-items: baseline; gap: 10px !important; }
+.event-session-summary { grid-template-columns: 1fr; gap: 4px !important; }
 .event-session-card a {
   color: var(--forest);
   font-size: 13px;
@@ -1999,4 +1999,82 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   .phone-join__code {
     justify-self: center;
   }
+}
+
+/* Editorial hierarchy shared across the observing tools. */
+.event-desk :is(h1, h2, h3) { font-family: var(--font-interface), sans-serif; font-weight: 750; letter-spacing: -.035em; }
+.event-desk :is(.event-heading h1, .sky-overview-heading h2) { font-size: clamp(40px, 5vw, 64px); line-height: 1.1; }
+.event-desk :is(.event-section-heading h2, .journal-card h2, .journal-history h2, .astro-calendar h2) { font-size: clamp(30px, 3.5vw, 44px); line-height: 1.15; }
+.event-desk :is(.event-heading p, .sky-overview-intro, .event-object-guidance p, .passing-through p, .event-method-grid p, .event-method-grid li) { font-size: 16px; line-height: 1.7; }
+.event-desk :is(.event-section-heading, .journal-card__heading) { margin-bottom: 28px; }
+.event-desk :is(.event-position-card, .event-weather-card, .journal-card, .journal-history, .astro-calendar) { border-radius: 2px; box-shadow: none; }
+.event-desk :is(.event-secondary, .event-target-picker select) { background: var(--paper); }
+.event-session-summary > span { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+.event-session-summary > strong { font-size: clamp(20px, 2.5vw, 26px); line-height: 1.3; }
+.event-session-summary > small { font-size: 14px; }
+.journal-tools { padding: 24px 0; border: 0; border-bottom: 1px solid var(--line); border-radius: 0; background: transparent; }
+.journal-stats { display: flex; gap: clamp(24px, 5vw, 64px); margin: 16px 0; }
+.journal-stats strong { display: grid; font-size: 36px; line-height: 1.1; color: var(--forest); }
+.journal-stats span { margin-top: 8px; font-size: 13px; font-weight: 500; color: var(--muted); }
+.event-desk :is(.journal-tools p:last-child, .journal-card__heading p, .journal-form label, .observing-list-target, .journal-history article span) { font-size: 15px; }
+.journal-form textarea { min-height: 180px; }
+.journal-conditions { grid-column: 1 / -1; border-block: 1px solid var(--line); padding: 12px 0; }
+.journal-conditions summary { cursor: pointer; font-size: 15px; font-weight: 650; }
+.journal-conditions > div { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; padding-top: 16px; }
+.journal-prompts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.journal-prompts button { padding: 8px 12px; border: 1px solid var(--line); border-radius: 20px; background: transparent; color: var(--forest); font-size: 13px; }
+.journal-prompts button:hover { background: var(--wash); border-color: var(--forest); }
+.journal-search { width: min(100%, 480px); padding: 12px 16px; margin-bottom: 24px; border: 1px solid var(--line); background: var(--paper); color: var(--ink); font: inherit; }
+.journal-history article strong { font-size: 22px; }
+.journal-history article small { color: var(--muted); font-size: 13px; }
+.journal-history article p { color: var(--ink); font-size: 16px; }
+.journal-empty { padding: 28px 0; }
+.journal-empty h3 { font-size: 24px; margin: 0 0 8px; }
+.journal-empty p { font-size: 16px; margin: 0; }
+.event-desk .astro-calendar__grid > button { min-height: 96px; padding: 12px; border-radius: 2px; background: var(--paper); }
+.event-desk .astro-calendar__grid > button > span { font-size: 20px; font-weight: 650; }
+.event-desk .astro-calendar__grid > button.has-event { background: #e0d6c7; border-color: #b4a58c; }
+.event-desk .astro-calendar__grid > button:hover { border-color: var(--forest); background: #d5cbbb; }
+.event-desk .astro-calendar__grid > button[aria-current="date"] > span { color: var(--forest); text-decoration: underline; text-underline-offset: 5px; }
+.event-desk .astro-calendar__grid small { font-size: 11px; }
+.event-desk .astro-calendar aside article { padding: 24px; background: #202020; color: #f5f3ef; border-left-color: var(--gold); }
+.event-desk .astro-calendar aside article h3 { font-size: 24px; line-height: 1.25; margin: 12px 0; }
+.event-desk .astro-calendar aside article p { font-size: 15px; color: #d4d1ca; margin: 12px 0 20px; }
+.event-desk .astro-calendar aside article time { color: #e2c693; font-size: 14px; }
+.calendar-agenda-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.calendar-agenda-heading h3 { font-size: 22px; margin: 0; }
+.calendar-agenda-heading button { border: 0; background: transparent; color: var(--forest); font-size: 14px; cursor: pointer; }
+.calendar-empty { padding: 24px; border: 1px solid var(--line); font-size: 16px; }
+.event-header { min-height: 88px; gap: 32px; }
+.event-header nav a { font-size: 18px; font-weight: 750; min-height: 54px; }
+.event-brand { font-size: 30px; }
+.event-drawer { background: #111; }
+.saturn-hero { min-height: calc(100svh - 88px); display: flex; align-items: center; background: #020202; }
+.saturn-hero > img { inset: auto -5% auto auto; width: 78%; height: 110%; object-fit: contain; opacity: 1; animation: cover-drift 18s ease-in-out infinite alternate; }
+.saturn-hero::after { background: linear-gradient(90deg, #020202 0%, rgb(2 2 2 / 86%) 25%, rgb(2 2 2 / 32%) 55%, transparent 80%); }
+.saturn-hero__inner { width: min(1600px, calc(100% - 80px)); padding: 80px 0 120px; }
+.event-desk .saturn-hero h1 { max-width: 11ch; font-size: clamp(76px, 8.5vw, 138px); font-weight: 800; line-height: .98; letter-spacing: -.045em; margin: 20px 0 32px; }
+.saturn-hero__inner > p { color: #d4d0c9; font-size: 14px; letter-spacing: .16em; }
+.saturn-hero__inner > span { display: block; max-width: 540px; font: 400 clamp(20px, 1.8vw, 26px)/1.55 var(--font-interface), sans-serif; color: #e1ded8; }
+.saturn-hero__inner > button { background: #c93e32; border-color: #c93e32; font-size: 19px; padding: 16px 22px; margin-top: 32px; }
+.saturn-hero__inner > button:hover { background: #a93027; }
+.saturn-hero__credit { left: 40px; right: 110px; bottom: 26px; font-size: 11px; }
+.hero-motion-control { position: absolute; right: 40px; bottom: 22px; display: grid; place-items: center; width: 48px; height: 48px; border: 1px solid #999; border-radius: 50%; background: rgb(0 0 0 / 60%); color: #fff; }
+.saturn-hero[data-motion="false"] > img { animation-play-state: paused; }
+@keyframes cover-drift { from { transform: translate(var(--hero-x, 0px), var(--hero-y, 0px)) scale(1); } to { transform: translate(var(--hero-x, 0px), var(--hero-y, 0px)) scale(1.055); } }
+@media (prefers-reduced-motion: reduce) { .saturn-hero > img { animation: none; transform: none; } }
+@media (max-width: 650px) {
+  .event-header { gap: 16px; min-height: 76px; }
+  .event-header nav a { font-size: 16px; }
+  .saturn-hero { min-height: calc(100svh - 76px); }
+  .saturn-hero > img { width: 120%; height: 85%; right: -30%; opacity: .75; }
+  .saturn-hero__inner { width: calc(100% - 40px); padding: 64px 0 110px; }
+  .event-desk .saturn-hero h1 { font-size: clamp(58px, 16vw, 88px); }
+  .saturn-hero__inner > span { font-size: 19px; }
+  .saturn-hero__credit { left: 20px; right: 85px; font-size: 9px; }
+  .hero-motion-control { right: 20px; }
+  .event-desk .astro-calendar__grid > button { min-height: 68px; padding: 6px; }
+  .event-desk .astro-calendar__grid small { font-size: 9px; }
+  .journal-stats { gap: 20px; }
+  .journal-stats strong { font-size: 28px; }
 }

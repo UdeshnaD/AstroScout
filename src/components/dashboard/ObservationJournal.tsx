@@ -77,6 +77,7 @@ export function ObservationJournal({
   const [ready, setReady] = useState(false);
   const [storageWritable, setStorageWritable] = useState(true);
   const [message, setMessage] = useState("");
+  const [search, setSearch] = useState("");
   const upload = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -268,8 +269,8 @@ export function ObservationJournal({
       {message && <p className="event-notice" role="status">{message}</p>}
       <section className="journal-tools" aria-labelledby="journal-tools-heading">
         <div>
-          <p className="event-kicker">SAVED ON THIS DEVICE</p>
-          <h2 id="journal-tools-heading">Your observation journal</h2>
+          <p className="event-kicker" id="journal-tools-heading">YOUR FIELD NOTES</p>
+          <div className="journal-stats"><strong>{entries.length}<span>observations</span></strong><strong>{new Set(entries.map((entry) => entry.target)).size}<span>objects recorded</span></strong><strong>{lists.length}<span>observing lists</span></strong></div>
           <p>
             Entries remain in this browser. Export a backup before clearing browser data or changing phones.
           </p>
@@ -290,8 +291,8 @@ export function ObservationJournal({
           <div className="journal-card__heading">
             <FileText size={20} />
             <div>
-              <h2 id="journal-entry-heading">Add an observation</h2>
-              <p>Record what you actually saw and the conditions at the time.</p>
+              <h2 id="journal-entry-heading">What did you see?</h2>
+              <p>A few words are enough. Record the details you want to remember.</p>
             </div>
           </div>
           <form className="journal-form" onSubmit={saveEntry}>
@@ -299,10 +300,13 @@ export function ObservationJournal({
             <label>Location<input required maxLength={180} value={draft.location} onChange={(event) => setDraft({ ...draft, location: event.target.value })} /></label>
             <label>Object<input required maxLength={100} value={draft.target} onChange={(event) => setDraft({ ...draft, target: event.target.value })} /></label>
             <label>Equipment<select value={draft.equipment} onChange={(event) => setDraft({ ...draft, equipment: event.target.value })}>{equipmentOptions.map((value) => <option key={value}>{value}</option>)}</select></label>
+            <details className="journal-conditions"><summary>Sky conditions (optional)</summary><div>
             <label>Conditions<select value={draft.conditions} onChange={(event) => setDraft({ ...draft, conditions: event.target.value as ObservingCondition })}>{observingConditions.map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Visibility<select value={draft.visibility} onChange={(event) => setDraft({ ...draft, visibility: event.target.value as JournalRating })}>{journalRatings.map((value) => <option key={value}>{value}</option>)}</select></label>
             <label>Transparency<select value={draft.transparency} onChange={(event) => setDraft({ ...draft, transparency: event.target.value as JournalRating })}>{journalRatings.map((value) => <option key={value}>{value}</option>)}</select></label>
-            <label className="journal-form__notes">Notes<textarea required maxLength={5000} value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="What could you see? What made the view easier or harder?" /></label>
+            </div></details>
+            <label className="journal-form__notes">Your notes<textarea required maxLength={5000} value={draft.notes} onChange={(event) => setDraft({ ...draft, notes: event.target.value })} placeholder="What stood out? Could you see any colour, rings or moons?" /></label>
+            <div className="journal-prompts" aria-label="Writing prompts">{["What stood out", "Equipment used", "Things to try next time"].map((prompt) => <button key={prompt} type="button" onClick={() => setDraft((current) => ({ ...current, notes: `${current.notes}${current.notes ? '\n' : ''}${prompt}: ` }))}>{prompt} +</button>)}</div>
             <button type="submit" className="event-primary">Save observation</button>
           </form>
         </section>
@@ -316,7 +320,7 @@ export function ObservationJournal({
             </div>
           </div>
           <form className="observing-list-create" onSubmit={createList}>
-            <input aria-label="New list name" maxLength={60} value={newListName} onChange={(event) => setNewListName(event.target.value)} placeholder="List name" />
+            <input aria-label="New list name" maxLength={60} value={newListName} onChange={(event) => setNewListName(event.target.value)} placeholder="e.g. My first planets" />
             <button type="submit" className="event-secondary"><Plus size={16} /> Create</button>
           </form>
           <label className="observing-list-target">Object to add<select value={listTarget} onChange={(event) => setListTarget(event.target.value as EventTarget)}>{eventTargets.filter((target) => target.id !== "sun").map((target) => <option key={target.id} value={target.id}>{target.name}</option>)}</select></label>
@@ -343,8 +347,9 @@ export function ObservationJournal({
           <div><p className="event-kicker">HISTORY</p><h2 id="journal-history-heading">Past observations</h2></div>
           <span>{entries.length} saved</span>
         </div>
-        {!entries.length && <p className="journal-empty">Your saved observations will appear here.</p>}
-        {entries.map((entry) => (
+        {!!entries.length && <input className="journal-search" type="search" aria-label="Search observations" placeholder="Find an object, place or note" value={search} onChange={(event) => setSearch(event.target.value)} />}
+        {!entries.length && <div className="journal-empty"><h3>Your first night starts here.</h3><p>Save an observation above and build a record you can return to.</p></div>}
+        {entries.filter((entry) => `${entry.target} ${entry.location} ${entry.notes}`.toLowerCase().includes(search.toLowerCase())).map((entry) => (
           <article key={entry.id}>
             <div>
               <strong>{entry.target}</strong>
