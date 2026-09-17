@@ -41,7 +41,7 @@ export function PhoneJoin() {
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1800);
     } catch {
-      window.prompt("Copy this AstroScout link:", joinUrl);
+      window.prompt("Copy this Space Interpreter link:", joinUrl);
     }
   }
 
@@ -50,7 +50,7 @@ export function PhoneJoin() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: "AstroScout",
+          title: "Space Interpreter",
           text: "Open the Astronomy Night observing guide",
           url: joinUrl,
         });
@@ -68,7 +68,7 @@ export function PhoneJoin() {
         <p className="event-kicker">ASTRONOMY NIGHT CHECK-IN</p>
         <h2 id="phone-join-heading">Scan once. Explore the sky on your phone.</h2>
         <p>
-          Point your phone camera at the code. It opens this AstroScout website directly. No account, download or personal details are required.
+          Point your phone camera at the code. It opens this Space Interpreter website directly. No account, download or personal details are required.
         </p>
         {localLink && (
           <p className="phone-join__local-note">
@@ -93,7 +93,7 @@ export function PhoneJoin() {
           </button>
         </div>
         <Link className="phone-join__open" href="/">
-          <Smartphone size={17} /> Already on your phone? Open AstroScout
+          <Smartphone size={17} /> Already on your phone? Open Space Interpreter
         </Link>
       </div>
 
@@ -107,9 +107,9 @@ export function PhoneJoin() {
               marginSize={3}
               bgColor="#ffffff"
               fgColor="#14211b"
-              title="QR code that opens AstroScout"
+              title="QR code that opens Space Interpreter"
             />
-            <strong>Open AstroScout</strong>
+            <strong>Open Space Interpreter</strong>
             <span>{new URL(joinUrl).host}{localLink ? " / same Wi-Fi only" : ""}</span>
           </>
         ) : (

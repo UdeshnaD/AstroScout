@@ -1,4 +1,4 @@
 export default function MethodPage() {
   return null;
 }
-export const metadata = { title: "The Science | AstroScout" };
+export const metadata = { title: "The Science | Space Interpreter" };

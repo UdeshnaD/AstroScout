@@ -42,7 +42,7 @@ export function PassingThrough({ snapshot, timezone }: { snapshot: HorizonsSnaps
   return <section className="passing-through" id="passing-through">
     <p className="event-kicker">MOVING OBJECTS</p>
     <h2>Comet, asteroid and ISS checks</h2>
-    <p className="passing-through__intro">A compact status check for the moving targets included in AstroScout&apos;s current 48-hour scan.</p>
+    <p className="passing-through__intro">A compact status check for the moving targets included in Space Interpreter&apos;s current 48-hour scan.</p>
     <ul className="passing-through__list">
       {movingObjects.map(({ id, position, name }) => <li key={id}><strong>{name}</strong><span>{positionText(position)}</span></li>)}
       <li><strong>International Space Station</strong><span>{passes.length ? passes.map((pass) => `${clock(pass.start, timezone)}, ${pass.direction}, peak ${Math.round(pass.peak)}°`).join(" · ") : "No dark-sky pass above 10° in this 48-hour scan"}</span></li>

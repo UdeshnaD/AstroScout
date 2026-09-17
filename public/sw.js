@@ -1,4 +1,4 @@
-const cacheName = "astroscout-shell-v1";
+const cacheName = "space-interpreter-shell-v1";
 const appShell = [
   "/",
   "/places",
@@ -7,7 +7,7 @@ const appShell = [
   "/method",
   "/join",
   "/manifest.webmanifest",
-  "/astroscout-icon.svg",
+  "/space-interpreter-icon.svg",
 ];
 
 self.addEventListener("install", (event) => {
@@ -22,7 +22,7 @@ self.addEventListener("activate", (event) => {
       .then((keys) =>
         Promise.all(
           keys
-            .filter((key) => key.startsWith("astroscout-") && key !== cacheName)
+            .filter((key) => (key.startsWith("space-interpreter-") || key.startsWith("astroscout-")) && key !== cacheName)
             .map((key) => caches.delete(key)),
         ),
       ),

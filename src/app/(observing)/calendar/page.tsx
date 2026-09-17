@@ -1,4 +1,4 @@
 export default function CalendarPage() {
   return null;
 }
-export const metadata = { title: "Sky Calendar | AstroScout" };
+export const metadata = { title: "Sky Calendar | Space Interpreter" };

@@ -107,7 +107,7 @@ html { scroll-behavior: smooth; }
   gap: 10px;
   font-size: 25px;
   font-weight: 720;
-  letter-spacing: -0.035em;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 .event-brand span {
@@ -2092,6 +2092,8 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 @media (prefers-reduced-motion: reduce) { .saturn-hero > img { animation: none; transform: none; } }
 @media (max-width: 650px) {
   .event-header { gap: 16px; min-height: 76px; }
+  .event-brand { font-size: 21px; gap: 6px; min-width: 0; max-width: calc(100% - 48px); white-space: normal; line-height: 1.2; }
+  .event-menu-trigger { flex-shrink: 0; }
   .event-header nav a { font-size: 16px; }
   .saturn-hero { min-height: calc(100svh - 76px); }
   .saturn-hero > img { width: 120%; height: 85%; right: -30%; opacity: .75; }

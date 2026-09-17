@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "AstroScout Astronomy Night",
-    short_name: "AstroScout",
+    name: "Space Interpreter Astronomy Night",
+    short_name: "Space Interpreter",
     description: "Use real JPL positions and local weather to explore tonight's sky.",
     id: "/",
     start_url: "/",
@@ -14,13 +14,13 @@ export default function manifest(): MetadataRoute.Manifest {
     orientation: "portrait-primary",
     icons: [
       {
-        src: "/astroscout-icon.svg",
+        src: "/space-interpreter-icon.svg",
         sizes: "any",
         type: "image/svg+xml",
         purpose: "any",
       },
       {
-        src: "/astroscout-icon.svg",
+        src: "/space-interpreter-icon.svg",
         sizes: "any",
         type: "image/svg+xml",
         purpose: "maskable",

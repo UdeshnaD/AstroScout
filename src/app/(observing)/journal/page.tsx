@@ -3,6 +3,6 @@ export default function JournalPage() {
 }
 
 export const metadata = {
-  title: "Observation journal | AstroScout",
+  title: "Observation journal | Space Interpreter",
   description: "Keep observing notes and personal target lists on this device.",
 };

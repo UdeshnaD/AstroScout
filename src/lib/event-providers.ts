@@ -179,7 +179,7 @@ export function fixedEquatorialSeries(
       eventMarker: null,
       riseTime: null,
       setTime: null,
-      apiVersion: "AstroScout sidereal calculator v1",
+      apiVersion: "Space Interpreter sidereal calculator v1",
       requestUrl: "",
     } satisfies JplPosition;
   });

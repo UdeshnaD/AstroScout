@@ -1,6 +1,6 @@
-# AstroScout
+# Space Interpreter
 
-AstroScout is a location-aware observing assistant for Macquarie University Astronomy Night. It answers a practical question: **what can I observe from this location and when is the best time tonight?**
+Space Interpreter is a location-aware observing assistant for Macquarie University Astronomy Night. It answers a practical question: **what can I observe from this location and when is the best time tonight?**
 
 The dashboard lets visitors choose the Moon, Venus, Mars, Jupiter, Saturn, among other celestial objects; search for an observing location; explore an altitude chart; and select another date. It uses real NASA/JPL Horizons observer ephemerides and Open-Meteo forecasts. It does not identify objects in visitor photographs, train a model, or claim to predict a successful sighting.
 
@@ -24,7 +24,7 @@ Open [http://localhost:3000](http://localhost:3000).
 For complete global landmark/address search, place a Geoapify key in `.env.local`:
 
 ```text
-GEOAPIFY_API_KEY=c191acf5c59d4a6d9ad1ca48ba2d703e
+GEOAPIFY_API_KEY=your_geoapify_api_key
 ```
 
 Restart the development server after adding or changing that value. The key is used only by the server-side search route and must not be committed.

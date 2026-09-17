@@ -4,14 +4,14 @@ import "./globals.css";
 import { interfaceFont, editorialFont } from "@ui/fonts";
 
 export const metadata: Metadata = {
-  title: "AstroScout | MQ Astronomy Night",
+  title: "Space Interpreter | MQ Astronomy Night",
   description:
     "Use real NASA/JPL positions and local weather to plan when and where to observe the Moon and visible planets.",
   manifest: "/manifest.webmanifest",
-  applicationName: "AstroScout",
+  applicationName: "Space Interpreter",
   appleWebApp: {
     capable: true,
-    title: "AstroScout",
+    title: "Space Interpreter",
     statusBarStyle: "black-translucent",
   },
   formatDetection: { telephone: false },

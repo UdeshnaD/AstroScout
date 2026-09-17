@@ -24,6 +24,7 @@ import {
   type ObservingList,
 } from "@/lib/journal";
 
+// Keep the legacy storage/schema identifiers so existing journals remain accessible.
 const journalStorageKey = "astroscout.observations.v1";
 const listStorageKey = "astroscout.observing-lists.v1";
 
@@ -220,7 +221,7 @@ export function ObservationJournal({
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = "astroscout-journal.json";
+    link.download = "space-interpreter-journal.json";
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -239,7 +240,7 @@ export function ObservationJournal({
         data.schema !== "astroscout.observations.v1" &&
         data.schema !== "astroscout.journal.v1"
       )
-        throw new Error("This is not a recognised AstroScout journal export.");
+        throw new Error("This is not a recognised Space Interpreter journal export.");
       const importedEntries = validJournalEntries(data.journalEntries);
       const importedLists = validObservingLists(data.observingLists);
       if (!importedEntries.length && !importedLists.length)

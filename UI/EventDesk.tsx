@@ -164,7 +164,7 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
     eyebrow: "How it works",
     title: "Real sky data, explained clearly.",
     intro:
-      "See where every answer comes from and how AstroScout chooses a good time to look up.",
+      "See where every answer comes from and how Space Interpreter chooses a good time to look up.",
   },
   "/observe": {
     eyebrow: "Can I see it?",
@@ -173,7 +173,7 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
   },
   "/join": {
     eyebrow: "Join Astronomy Night",
-    title: "Take AstroScout outside.",
+    title: "Take Space Interpreter outside.",
     intro:
       "Share this live site with visitors using a QR code generated from its current address.",
   },
@@ -553,9 +553,9 @@ export function EventDesk({
         >
           <Menu size={22} />
         </button>
-        <Link href="/" className="event-brand" aria-label="AstroScout home">
+        <Link href="/" className="event-brand" aria-label="Space Interpreter home">
           <Telescope size={25} />
-          AstroScout<span>.</span>
+          Space Interpreter<span>.</span>
         </Link>
         <nav aria-label="Main navigation">
           {pathname === "/" ? [
@@ -585,11 +585,11 @@ export function EventDesk({
           <aside
             id="event-navigation-drawer"
             className="event-drawer"
-            aria-label="AstroScout navigation"
+            aria-label="Space Interpreter navigation"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="event-drawer__top">
-              <span>AstroScout</span>
+              <span>Space Interpreter</span>
               <button type="button" aria-label="Close navigation" onClick={() => setMenuOpen(false)}><X size={22} /></button>
             </div>
             <p>Tools</p>
@@ -775,7 +775,7 @@ export function EventDesk({
               <Info size={24} />
               <h2>What you should still check</h2>
               <p>
-                AstroScout cannot see local trees or buildings, measure light pollution at your exact spot, confirm that a place is open and safe, or promise a clear view. Always check access and conditions before leaving.
+                Space Interpreter cannot see local trees or buildings, measure light pollution at your exact spot, confirm that a place is open and safe, or promise a clear view. Always check access and conditions before leaving.
               </p>
             </section>
           </div><PreferenceSliders /></>
@@ -948,7 +948,7 @@ export function EventDesk({
                     <p className="event-position-summary">
                       {selectedDefinition.name} is a catalogue target. Its static metadata and observing guidance are available here; this dashboard does not substitute a second astronomy engine for the authoritative JPL calculation.
                     </p>
-                    <p className="event-horizon-note">Trees, hills and buildings near you may still block the view. AstroScout does not model local terrain line of sight.</p>
+                    <p className="event-horizon-note">Trees, hills and buildings near you may still block the view. Space Interpreter does not model local terrain line of sight.</p>
                     <div className="event-metrics">
                       <div><span>Object type</span><strong>{selectedDefinition.objectType}</strong></div>
                       <div><span>Constellation</span><strong>{catalogueConstellation(selectedDefinition) ?? "Varies"}</strong></div>
@@ -999,7 +999,7 @@ export function EventDesk({
       </main>
 
       <footer className="event-footer">
-        <span>AstroScout / Macquarie University Astronomy Night</span>
+        <span>Space Interpreter / Macquarie University Astronomy Night</span>
         <span>Solar System positions from NASA/JPL · Deep-sky positions from catalogue coordinates · Weather from Open-Meteo</span>
       </footer>
     </div>
