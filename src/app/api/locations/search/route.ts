@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withPublicApi } from "@/lib/api-safety";
 import {
   parseGeoapifyResults,
   parseOpenMeteoResults,
@@ -45,7 +46,7 @@ async function searchOpenMeteo(query: string) {
   );
 }
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   const query = new URL(request.url).searchParams.get("q")?.trim() ?? "";
   if (query.length < 2 || query.length > 120) {
     return NextResponse.json(
@@ -60,7 +61,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ ...cached, cached: true });
 
   try {
-    const geoapifyKey = (process.env.GEOAPIFY_API_KEY || process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY)?.trim();
+    const geoapifyKey = process.env.GEOAPIFY_API_KEY?.trim();
     let locations: LocationSearchResult[];
     let provider: CachedSearch["provider"];
     let fullPlaceSearch: boolean;
@@ -111,3 +112,4 @@ export async function GET(request: Request) {
     );
   }
 }
+export const GET = withPublicApi(handleGet);

@@ -59,6 +59,14 @@ export function SkyPositionPanel({
   const [playing, setPlaying] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [view, setView] = useState<"sky" | "night">("sky");
+  const [compactSky, setCompactSky] = useState(false);
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 650px)");
+    const sync = () => setCompactSky(media.matches);
+    sync();
+    media.addEventListener("change", sync);
+    return () => media.removeEventListener("change", sync);
+  }, []);
   useEffect(() => {
     const navigate = (event: MouseEvent) => {
       const link = (event.target as Element).closest("a");
@@ -192,7 +200,7 @@ export function SkyPositionPanel({
         </div>
         <div id="sky-view-panel" role="tabpanel" aria-labelledby="sky-view-tab" hidden={view !== "sky"}>
         <svg
-          viewBox="0 0 800 390"
+          viewBox={compactSky ? "200 0 400 390" : "0 0 800 390"}
           role="img"
           aria-label={`Interactive 360 degree sky view at ${localDateTime(utc, timezone)}`}
           onPointerDown={(event) => {

@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
+import { withPublicApi } from "@/lib/api-safety";
 import { getEventWeather, readLocation } from "@/lib/event-providers";
 export const dynamic = "force-dynamic";
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   try {
     const result = await getEventWeather(
       readLocation(new URL(request.url).searchParams),
@@ -17,3 +18,4 @@ export async function GET(request: Request) {
     );
   }
 }
+export const GET = withPublicApi(handleGet);

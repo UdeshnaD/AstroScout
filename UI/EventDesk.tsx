@@ -124,6 +124,10 @@ async function readApiResponse<T extends { error?: string }>(
   response: Response,
   label: string,
 ): Promise<T> {
+  if (response.status === 429) {
+    const wait = Number(response.headers.get("Retry-After"));
+    throw new Error(`Too many requests. Please wait${Number.isFinite(wait) && wait > 0 ? ` ${Math.ceil(wait)} seconds` : " a moment"} before trying again.`);
+  }
   const contentType = response.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
     throw new Error(`${label} is temporarily unavailable. Please refresh the page.`);

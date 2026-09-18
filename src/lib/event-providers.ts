@@ -331,13 +331,14 @@ export function getHorizons(
   const key = JSON.stringify([location, utc]);
   const existing = snapshots.get(key);
   if (existing) return existing.promise;
-  if (waiting >= 3)
+  if (waiting >= 2)
     return Promise.reject(
       new Error("JPL request queue is busy. Please retry shortly."),
     );
   waiting++;
   const promise = queue
     .then(async () => {
+      const deadline = Date.now() + 45000;
       const objects = {} as HorizonsSnapshot["objects"];
       const series = {} as HorizonsSnapshot["series"];
       const epochs = Array.from({ length: 577 }, (_, i) =>
@@ -365,6 +366,9 @@ export function getHorizons(
           continue;
         }
         try {
+          const remainingMs = deadline - Date.now();
+          if (remainingMs <= 0)
+            throw new Error("NASA/JPL data unavailable: the request time budget was exceeded.");
           const url = horizonsUrl(target.id, location, utc);
           url.searchParams.delete("TLIST");
           url.searchParams.set(
@@ -378,7 +382,7 @@ export function getHorizons(
           url.searchParams.set("STEP_SIZE", "'5 m'");
           const response = await fetch(url, {
             cache: "no-store",
-            signal: AbortSignal.timeout(12000),
+            signal: AbortSignal.timeout(Math.min(12000, remainingMs)),
           });
           if (!response.ok) throw new Error(`JPL HTTP ${response.status}.`);
           const samples = parseHorizonsSeries(

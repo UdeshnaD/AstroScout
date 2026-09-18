@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { withPublicApi } from "@/lib/api-safety";
 import { parseNearbyPlaces, type NearbyPlace } from "@/lib/nearby-places";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +21,12 @@ const cacheLifetimeMs = 30 * 60 * 1000;
 
 function coordinate(value: string | null, limit: number) {
   const number = Number(value);
-  return value !== null && Number.isFinite(number) && Math.abs(number) <= limit
+  return value !== null && value.trim() !== "" && Number.isFinite(number) && Math.abs(number) <= limit
     ? number
     : null;
 }
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   const params = new URL(request.url).searchParams;
   const latitude = coordinate(params.get("lat"), 90);
   const longitude = coordinate(params.get("lon"), 180);
@@ -43,7 +44,7 @@ export async function GET(request: Request) {
     );
   }
 
-  const apiKey = (process.env.GEOAPIFY_API_KEY || process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY)?.trim();
+  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json(
       { error: "Nearby place discovery requires GEOAPIFY_API_KEY." },
@@ -94,9 +95,7 @@ export async function GET(request: Request) {
         error:
           error instanceof Error && error.name === "AbortError"
             ? "Geoapify place discovery timed out. Try again."
-            : error instanceof Error
-              ? error.message
-              : "Geoapify place discovery is temporarily unavailable.",
+            : "Geoapify place discovery is temporarily unavailable.",
       },
       { status: 502 },
     );
@@ -104,3 +103,4 @@ export async function GET(request: Request) {
     clearTimeout(timeout);
   }
 }
+export const GET = withPublicApi(handleGet);

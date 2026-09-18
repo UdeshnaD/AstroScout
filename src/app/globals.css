@@ -172,3 +172,8 @@ a {
     display: none;
   }
 }
+.app-recovery { width: calc(100% - 40px); max-width: 600px; margin: 80px auto; font-family: Arial, sans-serif; color: #192b25; }
+.app-recovery h1 { font-size: 32px; line-height: 1.2; letter-spacing: 0; overflow-wrap: anywhere; }
+.app-recovery p { line-height: 1.6; }
+.app-recovery button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 10px 16px; background: #194c38; color: #fff; border: 0; border-radius: 4px; cursor: pointer; }
+.app-recovery a { display: block; margin-top: 20px; color: #8c332d; }

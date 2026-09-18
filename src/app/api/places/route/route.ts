@@ -1,16 +1,17 @@
 import { NextResponse } from "next/server";
+import { withPublicApi } from "@/lib/api-safety";
 import { parseGeoapifyRoute } from "@/lib/nearby-places";
 
 export const dynamic = "force-dynamic";
 
 function coordinate(value: string | null, limit: number) {
   const number = Number(value);
-  return value !== null && Number.isFinite(number) && Math.abs(number) <= limit
+  return value !== null && value.trim() !== "" && Number.isFinite(number) && Math.abs(number) <= limit
     ? number
     : null;
 }
 
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   const params = new URL(request.url).searchParams;
   const fromLat = coordinate(params.get("fromLat"), 90);
   const fromLon = coordinate(params.get("fromLon"), 180);
@@ -20,7 +21,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Provide valid route coordinates." }, { status: 400 });
   }
 
-  const apiKey = (process.env.GEOAPIFY_API_KEY || process.env.NEXT_PUBLIC_GEOAPIFY_API_KEY)?.trim();
+  const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
   if (!apiKey) {
     return NextResponse.json(
       { error: "Travel-time estimates require GEOAPIFY_API_KEY." },
@@ -49,9 +50,7 @@ export async function GET(request: Request) {
         error:
           error instanceof Error && error.name === "AbortError"
             ? "The route estimate timed out."
-            : error instanceof Error
-              ? error.message
-              : "The route estimate is temporarily unavailable.",
+            : "The route estimate is temporarily unavailable.",
       },
       { status: 502 },
     );
@@ -59,3 +58,4 @@ export async function GET(request: Request) {
     clearTimeout(timeout);
   }
 }
+export const GET = withPublicApi(handleGet);

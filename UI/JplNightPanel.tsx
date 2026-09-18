@@ -50,13 +50,26 @@ export function JplNightPanel({ snapshot, target, weather, timezone, onEpoch, on
           {tracks.map((track) => <div className="night-plan-row" key={track.title}>
             <strong>{track.title}</strong>
             <div className="night-plan-periods">
-              {segments(track.describe).map((segment) => <button type="button" key={segment.start} style={{ flexGrow: segment.end - segment.start + 1 }} data-state={segment.label} title={`${segment.label}: ${clock(night.points[segment.start].utc, timezone)} to ${clock(night.points[segment.end].utc, timezone)}`} aria-label={`${track.title}, ${segment.label}, ${date(night.points[segment.start].utc, timezone)} to ${date(night.points[segment.end].utc, timezone)}. Preview midpoint.`} onClick={() => onPreviewTime?.(night.points[Math.floor((segment.start + segment.end) / 2)].utc)}><span>{segment.label}</span></button>)}
+              {segments(track.describe).map((segment, number) => <button type="button" key={segment.start} style={{ flexGrow: segment.end - segment.start + 1 }} data-state={segment.label} title={`${segment.label}: ${clock(night.points[segment.start].utc, timezone)} to ${clock(night.points[segment.end].utc, timezone)}`} aria-label={`${track.title}, ${segment.label}, ${date(night.points[segment.start].utc, timezone)} to ${date(night.points[segment.end].utc, timezone)}. Preview midpoint.`} onClick={() => onPreviewTime?.(night.points[Math.floor((segment.start + segment.end) / 2)].utc)}><span>{number + 1}</span></button>)}
             </div>
           </div>)}
-          <div className="night-plan-cursor" style={{ left: `calc(120px + (100% - 120px) * ${index / Math.max(1, night.points.length - 1)})` }} />
+          <div className="night-plan-cursor" style={{ left: `calc(var(--night-track-label, 120px) + (100% - var(--night-track-label, 120px)) * ${index / Math.max(1, night.points.length - 1)})` }} />
         </div>
       </div>
       {timeControls}
+      <div className="night-period-key" aria-label="Full timeline labels and time windows">
+        {tracks.map((track) => <section key={track.title} aria-label={`${track.title} periods`}>
+          <h4>{track.title}</h4>
+          <ol>
+            {segments(track.describe).map((segment, number) => <li key={segment.start}>
+              <button type="button" onClick={() => onPreviewTime?.(night.points[Math.floor((segment.start + segment.end) / 2)].utc)}>
+                <span className="night-period-key__number" data-state={segment.label} aria-hidden="true">{number + 1}</span>
+                <span className="night-period-key__label">{segment.label}<small>{date(night.points[segment.start].utc, timezone)} to {date(night.points[segment.end].utc, timezone)}</small></span>
+              </button>
+            </li>)}
+          </ol>
+        </section>)}
+      </div>
       <p className="event-footnote">Height, darkness and weather are separate checks. Above 20° does not guarantee visibility. Weather gaps remain unconfirmed.</p>
       <p className="night-plan-reading"><strong>{date(point.utc, timezone)}</strong> · {name}: {point.target.altitude.toFixed(1)}° · {point.target.compass}</p>
       <dl className="night-conditions">

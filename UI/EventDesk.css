@@ -337,7 +337,7 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   background: #142023;
   color: #ecf2ef;
 }
-.sky-overview-card svg {
+.sky-overview-card svg[role="img"] {
   display: block;
   width: 100%;
   max-height: 560px;
@@ -345,8 +345,8 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   cursor: grab;
   user-select: none;
 }
-.sky-overview-card svg:active { cursor: grabbing; }
-.sky-overview-card svg text {
+.sky-overview-card svg[role="img"]:active { cursor: grabbing; }
+.sky-overview-card svg[role="img"] text {
   fill: #aab8b5;
   font-size: 13px;
 }
@@ -1873,7 +1873,7 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   .sky-overview-heading { align-items: flex-start; flex-direction: column; gap: 10px; }
   .sky-overview-time { min-width: 140px; }
   .sky-overview-card { padding: 13px 9px; }
-  .sky-overview-card svg { min-height: 245px; }
+  .sky-overview-card svg[role="img"] { min-height: 245px; }
   .sky-overview-controls {
     grid-template-columns: auto minmax(80px, 1fr) auto auto;
     gap: 8px;
@@ -2129,4 +2129,92 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
  .night-plan-axis { margin-left: 120px; font-size: 11px; }
  .night-plan-axis > span:nth-child(2) { display: none; }
  .night-plan-row > strong { font-size: 13px; }
+}
+
+/* Keep mobile sizing after the desktop editorial overrides. */
+.event-desk :is(main, section, article, form, label, .event-heading > div, .event-section-heading > div) { min-width: 0; }
+.event-desk :is(h1, h2, h3, p, dd, .event-footer span) { overflow-wrap: anywhere; }
+.event-desk :is(h1, h2, h3) { letter-spacing: 0; }
+.night-plan { --night-track-label: 120px; }
+.night-plan-periods { min-width: 0; }
+.night-period-key { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin: 24px 0; }
+.night-period-key h4 { margin: 0 0 10px; font-size: 14px; color: #ecf2ef; }
+.night-period-key ol { list-style: none; padding: 0; margin: 0; }
+.night-period-key li + li { border-top: 1px solid #354044; }
+.night-period-key button { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 44px; padding: 10px 0; border: 0; background: transparent; color: #ecf2ef; text-align: left; cursor: pointer; }
+.night-period-key button:hover { background: #17262a; }
+.night-period-key__number { display: grid; place-items: center; flex-shrink: 0; width: 24px; height: 24px; background: #292b29; color: #ecf2ef; font-size: 13px; }
+.night-period-key__number:is([data-state="Above 20°"], [data-state="Dark sky"], [data-state="Meets guide"]) { background: #c5b48e; color: #171915; }
+.night-period-key__number:is([data-state="Twilight"], [data-state="Low · 0–20°"]) { background: #57564d; }
+.night-period-key__label { min-width: 0; font-size: 14px; line-height: 1.5; overflow-wrap: anywhere; }
+.night-period-key small { display: block; margin-top: 3px; color: #bcbab1; font-size: 12px; line-height: 1.5; }
+@media (max-width: 900px) {
+  .event-header { flex-wrap: wrap; gap: 12px 20px; }
+  .event-header nav { flex-basis: 100%; margin-left: 0; gap: 20px; }
+  .event-target-picker { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .places-explorer__toolbar { flex-wrap: wrap; }
+}
+@media (max-width: 650px) {
+  .event-header { padding: 12px max(16px, env(safe-area-inset-left)) 8px; gap: 8px 12px; min-height: 0; }
+  .event-menu-trigger { width: 44px; height: 44px; flex-shrink: 0; }
+  .event-brand { font-size: 21px; max-width: calc(100% - 56px); gap: 6px; }
+  .event-brand > svg { flex-shrink: 0; }
+  .event-header nav { min-width: 0; gap: 20px; }
+  .event-header nav a { min-height: 44px; font-size: 15px; flex-shrink: 0; }
+  .event-drawer { padding: 20px; }
+  .event-drawer__top span { font-size: 22px; line-height: 1.2; }
+  .event-drawer__top { gap: 12px; }
+  .event-drawer__top button { flex-shrink: 0; width: 44px; height: 44px; }
+  .saturn-hero { min-height: 560px; }
+  .saturn-hero__inner { width: calc(100% - 40px); padding: 48px 0 100px; }
+  .event-desk .saturn-hero h1 { font-size: 48px; max-width: 100%; letter-spacing: 0; line-height: 1.05; margin: 16px 0 24px; }
+  .saturn-hero__inner > span { font-size: 18px; line-height: 1.5; }
+  .saturn-hero__inner > button { max-width: 100%; width: auto; font-size: 16px; padding: 12px 16px; }
+  .saturn-hero__credit { line-height: 1.4; }
+  .event-main { width: calc(100% - 32px); padding: 28px 0 40px; }
+  .event-desk :is(.event-heading h1, .sky-overview-heading h2) { font-size: 32px; line-height: 1.15; }
+  .event-desk :is(.event-section-heading h2, .journal-card h2, .journal-history h2, .astro-calendar h2) { font-size: 26px; line-height: 1.2; }
+  .event-section-heading { flex-wrap: wrap; align-items: flex-start; gap: 12px; }
+  .event-desk :is(.event-section-heading, .journal-card__heading) { margin-bottom: 20px; }
+  .event-place-finder, .event-target-picker, .event-live-grid, .journal-layout, .phone-join, .event-method-grid, .astro-calendar__layout { grid-template-columns: minmax(0, 1fr); }
+  .event-place-finder { padding: 16px; }
+  .event-place-finder__controls { min-width: 0; }
+  .event-target-picker select { width: 100%; min-width: 0; }
+  .event-settings label { min-width: 0; }
+  .event-desk :is(input:not([type="range"]):not([type="checkbox"]), select, textarea) { font-size: 16px; max-width: 100%; }
+  .event-desk select { width: 100%; min-width: 0; }
+  .event-session-actions { flex-wrap: wrap; justify-content: flex-start; }
+  .sky-view-tabs { gap: 16px; }
+  .sky-view-tabs button { font-size: 15px; min-height: 44px; }
+  .sky-overview-card { padding: 16px 12px; }
+  .sky-overview-card svg[role="img"] { min-height: 0; height: auto; aspect-ratio: 400 / 390; }
+  .sky-overview-controls { grid-template-columns: 44px minmax(0, 1fr) 44px 44px; gap: 8px; }
+  .sky-overview-controls button { width: 44px; height: 44px; }
+  .sky-overview-controls button:last-child { display: grid; }
+  .sky-overview-controls input { min-width: 0; min-height: 44px; }
+  .sky-overview-controls output { grid-column: 1 / -1; grid-row: 2; min-width: 0; text-align: center; }
+  .sky-use-time { margin-right: 0; }
+  .night-plan { --night-track-label: 76px; }
+  .night-period-key { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .night-plan-axis { margin-left: var(--night-track-label); gap: 8px; }
+  .night-plan-axis > span { min-width: 0; }
+  .night-plan-axis > span:last-child { text-align: right; }
+  .night-plan-row > strong { width: var(--night-track-label); font-size: 12px; overflow-wrap: anywhere; }
+  .night-plan-periods button { min-height: 44px; }
+  .night-plan-reading { font-size: 16px; }
+  .night-conditions { gap: 20px 12px; }
+  .night-conditions dd { font-size: 16px; overflow-wrap: anywhere; }
+  .jpl-window { padding: 12px; gap: 8px; }
+  .places-explorer__filters { flex-wrap: wrap; width: 100%; }
+  .places-explorer__filters label { min-width: 0; flex: 1 1 120px; }
+  .places-explorer__list { min-width: 0; max-width: 100%; }
+  .places-explorer__actions { flex-wrap: wrap; }
+  .journal-stats { gap: 16px; flex-wrap: wrap; }
+  .journal-stats strong { font-size: 26px; }
+  .journal-tools__actions { flex-wrap: wrap; }
+  .event-desk .astro-calendar__grid > button { padding: 6px 3px; min-width: 0; min-height: 68px; }
+  .event-desk .astro-calendar__grid > button > span { font-size: 16px; }
+  .event-desk .astro-calendar__grid small { font-size: 9px; }
+  .astro-calendar__nav { flex-wrap: wrap; gap: 8px; }
+  .event-footer { gap: 12px; font-size: 12px; }
 }

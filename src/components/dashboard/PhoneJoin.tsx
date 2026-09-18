@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Check, Copy, Printer, Share2, Smartphone } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
+import { publicSiteOrigin } from "@/lib/public-site";
 
 export function PhoneJoin() {
   const [joinUrl, setJoinUrl] = useState("");
@@ -13,9 +14,9 @@ export function PhoneJoin() {
   useEffect(() => {
     async function prepareLink() {
       const configured = process.env.NEXT_PUBLIC_SITE_URL?.trim();
-      let origin = configured || window.location.origin;
+      let origin = publicSiteOrigin(configured, window.location.origin);
       const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
-      if (!configured && isLocal) {
+      if (origin === window.location.origin && isLocal) {
         try {
           const response = await fetch("/api/local-address", { cache: "no-store" });
           const data = (await response.json()) as { origin?: string };
@@ -28,6 +29,7 @@ export function PhoneJoin() {
         }
       }
       const url = new URL("/", origin);
+      setLocalLink(url.protocol !== "https:");
       url.searchParams.set("from", "astronomy-night-qr");
       setJoinUrl(url.toString());
     }
@@ -72,7 +74,7 @@ export function PhoneJoin() {
         </p>
         {localLink && (
           <p className="phone-join__local-note">
-            Local test link: keep this laptop running and connect your phone to the same Wi-Fi network. Phone location may require the deployed HTTPS version.
+            Local HTTP test link: your browser may show “Not secure”. Use the deployed HTTPS link for visitors and phone location access. This local link requires the same Wi-Fi and a running laptop.
           </p>
         )}
         <ol>

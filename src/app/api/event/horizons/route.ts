@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { withPublicApi } from "@/lib/api-safety";
 import { getHorizons, readLocation, readUtc } from "@/lib/event-providers";
 export const dynamic = "force-dynamic";
 export const maxDuration = 120;
-export async function GET(request: Request) {
+async function handleGet(request: Request) {
   let location, utc;
   try {
     const params = new URL(request.url).searchParams;
@@ -26,7 +27,8 @@ export async function GET(request: Request) {
   } catch (error) {
     return NextResponse.json(
       { error: (error as Error).message },
-      { status: 503 },
+      { status: 503, headers: { "Retry-After": "10", "Cache-Control": "no-store" } },
     );
   }
 }
+export const GET = withPublicApi(handleGet);
