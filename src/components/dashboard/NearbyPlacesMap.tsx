@@ -4,6 +4,21 @@ import { useEffect, useRef } from "react";
 import type { Map as LeafletMap } from "leaflet";
 import type { NearbyPlace } from "@/lib/nearby-places";
 
+const tiles =
+  "https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}";
+const attribution =
+  'Tiles &copy; <a href="https://www.esri.com/">Esri</a> and data providers';
+
+function popupContent(place: NearbyPlace) {
+  const content = document.createElement("div");
+  const name = document.createElement("strong");
+  const kind = document.createElement("div");
+  name.textContent = place.name;
+  kind.textContent = place.kind;
+  content.append(name, kind);
+  return content;
+}
+
 export function NearbyPlacesMap({
   origin,
   places,
@@ -31,11 +46,7 @@ export function NearbyPlacesMap({
         scrollWheelZoom: false,
       }).setView([origin.latitude, origin.longitude], 10);
       map.current = instance;
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        maxZoom: 19,
-        attribution:
-          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-      }).addTo(instance);
+      L.tileLayer(tiles, { maxZoom: 19, attribution }).addTo(instance);
 
       const bounds: Array<[number, number]> = [[origin.latitude, origin.longitude]];
       L.marker([origin.latitude, origin.longitude], {
@@ -61,13 +72,12 @@ export function NearbyPlacesMap({
           keyboard: true,
           title: place.name,
         }).addTo(instance);
-        marker.bindPopup(`<strong>${place.name}</strong><br/>${place.kind}`);
+        marker.bindPopup(popupContent(place));
         marker.on("click", () => onSelectRef.current(place));
       });
 
-      if (bounds.length > 1) {
+      if (bounds.length > 1)
         instance.fitBounds(bounds, { padding: [32, 32], maxZoom: 12 });
-      }
     }
     void renderMap();
     return () => {
@@ -82,7 +92,7 @@ export function NearbyPlacesMap({
       ref={element}
       className="places-map"
       role="region"
-      aria-label="Interactive map of nearby places returned by Geoapify"
+      aria-label="Interactive map of nearby observing places"
     />
   );
 }

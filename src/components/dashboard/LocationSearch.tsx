@@ -188,7 +188,7 @@ export function LocationSearch({ value, onChange }: LocationSearchProps) {
           )}
           .
           {!fullPlaceSearch &&
-            " City/postcode fallback active; add GEOAPIFY_API_KEY for addresses and landmarks."}
+            " City and postcode search is available; address and landmark search is temporarily unavailable."}
         </small>
       )}
     </div>

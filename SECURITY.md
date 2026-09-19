@@ -44,10 +44,13 @@ fairness thresholds require a realistic event load test; they are not guarantees
 
 ## Astronomy and browser protections
 
-Horizons retains exact location/time requests and only coalesces identical
-in-flight work. No completed astronomy response is reused as current data.
-Each scan has a 45-second upstream request budget and the local queue admits
-at most two jobs. Unavailable target values remain unavailable.
+Horizons retains exact location/time requests and coalesces identical in-flight
+work. Successful responses may be cached at the Vercel edge for five minutes;
+the cache key includes the full request URL, including location and UTC epoch.
+Automatic current-time requests use the current five-minute epoch so event
+visitors can share one time-stamped calculation. Error responses are not cached
+as successful data. Each scan has a 45-second upstream request budget and the
+local queue admits at most two jobs. Unavailable target values remain unavailable.
 
 Responses use anti-framing, MIME-sniffing protection, no-referrer policy and
 restricted camera/microphone permissions. Geolocation remains available to

@@ -17,6 +17,8 @@ import type { NearbyPlace, PlaceRoute } from "@/lib/nearby-places";
 
 type PlacesResponse = {
   places?: NearbyPlace[];
+  provider?: string;
+  fallback?: boolean;
   error?: string;
 };
 
@@ -56,6 +58,8 @@ export function NearbyPlacesExplorer({
   const [loading, setLoading] = useState(true);
   const [routeLoading, setRouteLoading] = useState(false);
   const [error, setError] = useState("");
+  const [placeSource, setPlaceSource] = useState("Geoapify");
+  const [usesCuratedPlaces, setUsesCuratedPlaces] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -73,6 +77,8 @@ export function NearbyPlacesExplorer({
         const data = (await response.json()) as PlacesResponse;
         if (!response.ok) throw new Error(data.error || "Unable to discover nearby places.");
         setPlaces(data.places ?? []);
+        setPlaceSource(data.provider ?? "Geoapify");
+        setUsesCuratedPlaces(Boolean(data.fallback));
       })
       .catch((failure) => {
         if (controller.signal.aborted) return;
@@ -138,7 +144,9 @@ export function NearbyPlacesExplorer({
         <div>
           <p className="event-kicker">NEARBY PLACES</p>
           <h2 id="nearby-places-heading">Explore around {origin.label}</h2>
-          <p>Viewpoints, parks and outdoor areas near your selected location.</p>
+          <p>{usesCuratedPlaces
+            ? "Known NSW observing places near your selected location."
+            : "Viewpoints, parks and outdoor areas near your selected location."}</p>
         </div>
         <div className="places-explorer__filters">
           <select
@@ -209,7 +217,7 @@ export function NearbyPlacesExplorer({
                     <Navigation size={16} /> Directions <ExternalLink size={13} />
                   </a>
                 </div>
-                <p className="event-footnote">Place and straight-line distance: Geoapify / map: © OpenStreetMap contributors / weather: Open-Meteo. Access, opening hours, safety and darkness are not verified.</p>
+                <p className="event-footnote">Place and straight-line distance: {placeSource} / map tiles: Esri and data providers / weather: Open-Meteo. Access, opening hours, safety and darkness are not verified.</p>
               </article>
             ) : (
               <div className="places-explorer__prompt">

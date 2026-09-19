@@ -179,6 +179,31 @@ test("Geoapify route results retain real road distance and duration", () => {
   assert.equal(nearby.parseGeoapifyRoute({ features: [] }), null);
 });
 
+test("weather forecast range follows the selected UTC and rejects distant dates", () => {
+  const now = new Date("2026-09-19T02:00:00.000Z");
+  assert.equal(providers.weatherForecastDays("2026-09-19T12:00:00.000Z", now), 2);
+  assert.equal(providers.weatherForecastDays("2026-09-26T12:00:00.000Z", now), 9);
+  assert.equal(providers.weatherForecastDays("2027-09-19T12:00:00.000Z", now), null);
+  assert.equal(providers.weatherForecastDays("2026-09-18T12:00:00.000Z", now), null);
+});
+
+test("curated observing places provide an honest no-key nearby fallback", () => {
+  const places = nearby.nearbyCuratedPlaces(
+    [
+      { id: "near", name: "Nearby Lookout", region: "Sydney", latitude: -33.78, longitude: 151.12 },
+      { id: "far", name: "Far Lookout", region: "Regional NSW", latitude: -31.28, longitude: 149.28 },
+    ],
+    -33.7738,
+    151.1126,
+    25,
+  );
+
+  assert.equal(places.length, 1);
+  assert.equal(places[0].name, "Nearby Lookout");
+  assert.equal(places[0].kind, "Observing place");
+  assert.ok(places[0].distanceMeters > 0 && places[0].distanceMeters < 25000);
+});
+
 test("journal imports preserve valid teammate entries and reject malformed data", () => {
   const entries = journal.validJournalEntries([
     {

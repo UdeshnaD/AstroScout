@@ -12,6 +12,14 @@ export type NearbyPlace = {
   country: string | null;
 };
 
+type CuratedPlace = {
+  id: string;
+  name: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+};
+
 type GeoapifyFeature = {
   geometry?: { coordinates?: unknown };
   properties?: {
@@ -54,6 +62,54 @@ function text(value: unknown) {
 
 function placeKind(categories: string[]) {
   return labels.find(([category]) => categories.includes(category))?.[1] ?? "Outdoor place";
+}
+
+function distanceBetweenMeters(
+  fromLatitude: number,
+  fromLongitude: number,
+  toLatitude: number,
+  toLongitude: number,
+) {
+  const radians = Math.PI / 180;
+  const latitudeDelta = (toLatitude - fromLatitude) * radians;
+  const longitudeDelta = (toLongitude - fromLongitude) * radians;
+  const a =
+    Math.sin(latitudeDelta / 2) ** 2 +
+    Math.cos(fromLatitude * radians) *
+      Math.cos(toLatitude * radians) *
+      Math.sin(longitudeDelta / 2) ** 2;
+  return 6371000 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+export function nearbyCuratedPlaces(
+  spots: CuratedPlace[],
+  latitude: number,
+  longitude: number,
+  radiusKm: number,
+  limit = 12,
+): NearbyPlace[] {
+  return spots
+    .map((spot) => ({
+      id: `curated-${spot.id}`,
+      name: spot.name,
+      address: `${spot.region}, NSW`,
+      latitude: spot.latitude,
+      longitude: spot.longitude,
+      distanceMeters: distanceBetweenMeters(
+        latitude,
+        longitude,
+        spot.latitude,
+        spot.longitude,
+      ),
+      categories: ["curated.observing_site"],
+      kind: "Observing place",
+      city: spot.region,
+      region: "NSW",
+      country: "Australia",
+    }))
+    .filter((spot) => spot.distanceMeters <= radiusKm * 1000)
+    .sort((left, right) => left.distanceMeters - right.distanceMeters)
+    .slice(0, limit);
 }
 
 export function parseNearbyPlaces(features: GeoapifyFeature[]): NearbyPlace[] {

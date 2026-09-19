@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { withPublicApi } from "@/lib/api-safety";
-import { parseNearbyPlaces, type NearbyPlace } from "@/lib/nearby-places";
+import {
+  nearbyCuratedPlaces,
+  parseNearbyPlaces,
+  type NearbyPlace,
+} from "@/lib/nearby-places";
+import { curatedNswSpots } from "@/data/spots";
 
 export const dynamic = "force-dynamic";
 
@@ -46,10 +51,18 @@ async function handleGet(request: Request) {
 
   const apiKey = process.env.GEOAPIFY_API_KEY?.trim();
   if (!apiKey) {
-    return NextResponse.json(
-      { error: "Nearby place discovery requires GEOAPIFY_API_KEY." },
-      { status: 503 },
-    );
+    return NextResponse.json({
+      places: nearbyCuratedPlaces(
+        curatedNswSpots,
+        latitude,
+        longitude,
+        Math.round(requestedRadius),
+      ),
+      provider: "Space Interpreter curated NSW catalogue",
+      fallback: true,
+      radiusKm: Math.round(requestedRadius),
+      origin: { latitude, longitude },
+    });
   }
 
   const radiusKm = Math.round(requestedRadius);

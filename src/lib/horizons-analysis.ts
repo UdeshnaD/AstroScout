@@ -318,6 +318,7 @@ export function analyseNight(
   });
   const best = bestWindow(points, true);
   const geometryOnly = bestWindow(points, false);
+  const hasForecast = points.some((point) => point.weather !== null);
   const later = Boolean(
     bestWindow(
       points.filter((p) => Date.parse(p.utc) > epoch),
@@ -355,7 +356,9 @@ export function analyseNight(
     reason: best
       ? "This period offers the best mix of darkness, object height, clear sky and calm wind."
       : geometryOnly
-        ? "The object reaches a good position, but the weather forecast does not support a recommended time."
+        ? hasForecast
+          ? "The object reaches a good position, but the weather forecast does not support a recommended time."
+          : "The object reaches a good position, but no weather forecast is available for the selected time."
         : "The object does not stay at least 20° high during full darkness. Bright planets and the Moon may still be visible in twilight.",
   };
 }

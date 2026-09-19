@@ -18,6 +18,12 @@ for (const width of [320, 390, 768, 1366]) {
       });
       expect(overflow, `${path} exceeds viewport`).toEqual([]);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+      if (path === "/places" && width <= 390) {
+        const nearbyList = page.locator(".places-explorer__list");
+        if (await nearbyList.count()) {
+          expect(await nearbyList.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+        }
+      }
       await page.screenshot({ path: testInfo.outputPath(`${path === "/" ? "home" : path.slice(1)}.png`), fullPage: true });
     }
     await page.getByRole("button", { name: "Open navigation", exact: true }).click();
@@ -27,6 +33,44 @@ for (const width of [320, 390, 768, 1366]) {
     await expect(page.locator(".event-drawer")).toHaveCount(0);
   });
 }
+
+test("places maps use keyless Esri tiles without direct OSM or CARTO tiles", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.route("**/api/**", (route) => {
+    if (route.request().url().includes("/api/places/nearby")) {
+      return route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({
+          provider: "Geoapify",
+          places: [{
+            id: "test-place",
+            name: "Test lookout",
+            address: "Sydney NSW",
+            latitude: -33.8,
+            longitude: 151.1,
+            distanceMeters: 1000,
+            categories: ["tourism.attraction.viewpoint"],
+            kind: "Viewpoint",
+            city: "Sydney",
+            region: "NSW",
+            country: "Australia",
+          }],
+        }),
+      });
+    }
+    return route.abort("failed");
+  });
+  await page.goto("/places");
+  await expect(page.locator(".leaflet-container")).toHaveCount(2, { timeout: 20000 });
+  await expect(page.locator(".leaflet-control-attribution").first()).toContainText("Esri");
+  await expect(page.getByText("API KEY REQUIRED")).toHaveCount(0);
+  await expect(page.locator('img[src*="tile.openstreetmap.org"]')).toHaveCount(0);
+  await expect(page.locator('img[src*="cartocdn.com"]')).toHaveCount(0);
+  await expect(page.locator('img[src*="server.arcgisonline.com"]')).not.toHaveCount(0);
+  expect(await page.locator(".places-explorer__list").evaluate(
+    (element) => element.scrollWidth <= element.clientWidth + 1,
+  )).toBe(true);
+});
 
 test("phone sky controls and night timeline remain usable with live data", async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });

@@ -1,4 +1,4 @@
-const cacheName = "space-interpreter-shell-v1";
+const cacheName = "space-interpreter-shell-v2";
 const appShell = [
   "/",
   "/places",

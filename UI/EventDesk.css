@@ -1622,6 +1622,13 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   color: #e4eee8;
   font-size: 10px;
 }
+.leaflet-popup-content {
+  color: var(--ink);
+  font-family: var(--font-interface), Arial, sans-serif;
+  line-height: 1.45;
+}
+.leaflet-popup-content strong { font-size: 13px; }
+.leaflet-popup-content div { color: var(--muted); font-size: 11px; }
 .jpl-grid-line { stroke: rgb(222 235 230 / 13%); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .jpl-horizon-line { stroke: #a5bbb2; stroke-width: 1.2; stroke-dasharray: 5 5; vector-effect: non-scaling-stroke; }
 .jpl-twenty-line { stroke: #75a793; stroke-width: 1; stroke-dasharray: 2 7; vector-effect: non-scaling-stroke; }
@@ -1896,20 +1903,19 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   .places-explorer__filters select { width: 100%; min-height: 44px; }
   .places-explorer__workspace { grid-template-columns: 1fr; }
   .places-explorer__list {
-    display: flex;
-    max-height: none;
-    overflow-x: auto;
+    display: block;
+    max-height: 340px;
+    overflow-x: hidden;
+    overflow-y: auto;
     border-right: 0;
     border-bottom: 1px solid var(--line);
-    scroll-snap-type: x proximity;
   }
   .places-explorer__list li {
-    flex: 0 0 min(82vw, 290px);
-    border-right: 1px solid #e6ece8;
-    scroll-snap-align: start;
+    width: 100%;
+    border-right: 0;
   }
-  .places-explorer__list li + li { border-top: 0; }
-  .places-explorer__list button { min-height: 104px; }
+  .places-explorer__list li + li { border-top: 1px solid #e6ece8; }
+  .places-explorer__list button { min-height: 88px; }
   .places-explorer__map-panel { grid-template-rows: 310px auto; }
   .places-map { height: 310px; }
   .places-explorer__detail,
@@ -2002,7 +2008,7 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 }
 
 /* Editorial hierarchy shared across the observing tools. */
-.night-scene-heading { display: flex; justify-content: space-between; align-items: end; gap: 24px; margin: 36px 0 24px; }
+.night-scene-heading { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px; margin: 36px 0 24px; }
 .night-scene-heading h3 { margin: 0 0 12px; font-size: clamp(28px, 3vw, 40px); }
 .night-scene-heading p { color: #bab9b2; font-size: 15px; margin: 0; }
 .night-scene-heading button { border: 0; border-bottom: 1px solid #b8a47c; padding: 8px 0; background: transparent; color: #e5d2a5; font-size: 14px; cursor: pointer; }

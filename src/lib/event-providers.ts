@@ -446,7 +446,26 @@ const fields = {
   humidity: "relative_humidity_2m",
   weatherCode: "weather_code",
 } as const;
-export function openMeteoUrl(location: EventLocation) {
+export function weatherForecastDays(utc: string, now = new Date()) {
+  const selected = new Date(utc);
+  if (!Number.isFinite(selected.getTime()) || !Number.isFinite(now.getTime()))
+    return null;
+  const selectedDay = Date.UTC(
+    selected.getUTCFullYear(),
+    selected.getUTCMonth(),
+    selected.getUTCDate(),
+  );
+  const currentDay = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+  );
+  const dayOffset = Math.round((selectedDay - currentDay) / 86400000);
+  if (dayOffset < 0 || dayOffset > 15) return null;
+  return Math.min(16, Math.max(2, dayOffset + 2));
+}
+
+export function openMeteoUrl(location: EventLocation, forecastDays = 2) {
   const url = new URL("https://api.open-meteo.com/v1/forecast");
   url.search = new URLSearchParams({
     latitude: String(location.latitude),
@@ -455,7 +474,7 @@ export function openMeteoUrl(location: EventLocation) {
     hourly: Object.values(fields).join(","),
     timezone: "GMT",
     timeformat: "unixtime",
-    forecast_days: "2",
+    forecast_days: String(forecastDays),
     wind_speed_unit: "kmh",
     precipitation_unit: "mm",
     temperature_unit: "celsius",
@@ -532,9 +551,22 @@ export function parseEventWeather(
 }
 export async function getEventWeather(
   location: EventLocation,
+  utc = new Date().toISOString(),
 ): Promise<SourceResult<EventWeather>> {
   const requestedAt = new Date().toISOString();
-  const url = openMeteoUrl(location);
+  const forecastDays = weatherForecastDays(utc, new Date(requestedAt));
+  if (forecastDays === null) {
+    return {
+      status: "unavailable",
+      source: "Open-Meteo API",
+      requestedAt,
+      receivedAt: requestedAt,
+      data: null,
+      error:
+        "No Open-Meteo forecast exists for the selected time. Forecast weather is available only from today through the next 15 days.",
+    };
+  }
+  const url = openMeteoUrl(location, forecastDays);
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {

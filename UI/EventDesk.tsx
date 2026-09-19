@@ -38,6 +38,7 @@ import {
 } from "@/components/dashboard/LocationSearch";
 import { eventTargets, mqLocation } from "@/lib/event-types";
 import { currentPlanningEpoch } from "@/lib/planning-time";
+import { forecastAt } from "@/lib/horizons-analysis";
 import {
   objectGuidance,
   smartphonePhotographyGuide,
@@ -533,7 +534,7 @@ export function EventDesk({
   const rise = scanEventTime(positions?.series[target], "r", timezone);
   const transit = scanEventTime(positions?.series[target], "t", timezone);
   const set = scanEventTime(positions?.series[target], "s", timezone);
-  const currentWeather = weather?.data?.current;
+  const selectedWeather = utc ? forecastAt(weather?.data, utc) : null;
   const searchValue: LocationPreset = {
     label: locationName,
     latitude: location.latitude,
@@ -977,23 +978,23 @@ export function EventDesk({
                 <div className="event-section-heading">
                   <div>
                     <p className="event-kicker">03 / WEATHER</p>
-                    <h2>Local forecast</h2>
+                    <h2>Forecast for selected time</h2>
                   </div>
                   <Cloud size={19} />
                 </div>
                 {weatherLoading ? (
                   <p className="event-loading"><Loader2 className="spin" size={18} /> Loading Open-Meteo…</p>
-                ) : currentWeather ? (
+                ) : selectedWeather ? (
                   <div className="event-weather-metrics">
-                    <div><span>Cloud</span><strong>{metric(currentWeather.cloudCover, "%", 0)}</strong></div>
-                    <div><span>Visibility</span><strong>{metric(currentWeather.visibility === null ? null : currentWeather.visibility / 1000, " km", 1)}</strong></div>
-                    <div><span>Rain</span><strong>{metric(currentWeather.precipitation, " mm", 1)}</strong></div>
-                    <div><span>Wind</span><strong>{metric(currentWeather.wind, " km/h", 1)}</strong></div>
-                    <div><span>Temperature</span><strong>{metric(currentWeather.temperature, "°C", 1)}</strong></div>
-                    <div><span>Humidity</span><strong>{metric(currentWeather.humidity, "%", 0)}</strong></div>
+                    <div><span>Cloud</span><strong>{metric(selectedWeather.cloudCover, "%", 0)}</strong></div>
+                    <div><span>Visibility</span><strong>{metric(selectedWeather.visibility === null ? null : selectedWeather.visibility / 1000, " km", 1)}</strong></div>
+                    <div><span>Rain</span><strong>{metric(selectedWeather.precipitation, " mm", 1)}</strong></div>
+                    <div><span>Wind</span><strong>{metric(selectedWeather.wind, " km/h", 1)}</strong></div>
+                    <div><span>Temperature</span><strong>{metric(selectedWeather.temperature, "°C", 1)}</strong></div>
+                    <div><span>Humidity</span><strong>{metric(selectedWeather.humidity, "%", 0)}</strong></div>
                   </div>
                 ) : (
-                  <p className="event-error">We could not load the local weather: {weather?.error}</p>
+                  <p className="event-warning">Weather unavailable for this selected time. {weather?.error ?? "Open-Meteo did not return a matching hourly forecast."}</p>
                 )}
               </section>
             </div>

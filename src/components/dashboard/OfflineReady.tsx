@@ -11,8 +11,24 @@ export function OfflineReady() {
     update();
     window.addEventListener("online", update);
     window.addEventListener("offline", update);
-    if (process.env.NODE_ENV === "production" && "serviceWorker" in navigator)
-      void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+    if ("serviceWorker" in navigator) {
+      if (process.env.NODE_ENV === "production") {
+        void navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      } else {
+        // Production workers on localhost can otherwise keep serving an old build.
+        void navigator.serviceWorker.getRegistrations().then((registrations) =>
+          Promise.all(registrations.map((registration) => registration.unregister())),
+        );
+        if ("caches" in window)
+          void caches.keys().then((keys) =>
+            Promise.all(
+              keys
+                .filter((key) => key.startsWith("space-interpreter-") || key.startsWith("astroscout-"))
+                .map((key) => caches.delete(key)),
+            ),
+          );
+      }
+    }
     return () => {
       window.removeEventListener("online", update);
       window.removeEventListener("offline", update);
