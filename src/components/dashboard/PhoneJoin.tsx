@@ -79,7 +79,7 @@ export function PhoneJoin() {
         )}
         <ol>
           <li><span>1</span> Scan the QR code with your camera.</li>
-          <li><span>2</span> Allow location access, or search for a place.</li>
+          <li><span>2</span> Keep Macquarie University selected for the event.</li>
           <li><span>3</span> Choose a planet and explore tonight’s window.</li>
         </ol>
         <div className="phone-join__actions">

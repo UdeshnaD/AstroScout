@@ -82,7 +82,7 @@ export function withPublicApi(handler: (request: Request) => Promise<Response>) 
       }
       if (shared && !shared.allowed) return unavailable(429, "Too many requests. Please wait before trying again.", shared.retryAfter);
       const response = await handler(request);
-      response.headers.set("Cache-Control", "no-store");
+      if (!response.headers.has("Cache-Control")) response.headers.set("Cache-Control", "no-store");
       response.headers.set("X-Content-Type-Options", "nosniff");
       return response;
     } catch {

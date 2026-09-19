@@ -22,7 +22,12 @@ async function handleGet(request: Request) {
     );
     return NextResponse.json(snapshot, {
       status: available ? 200 : 503,
-      headers: { "Cache-Control": "no-store" },
+      headers: available
+        ? {
+            "Cache-Control": "public, max-age=0, must-revalidate",
+            "Vercel-CDN-Cache-Control": "public, s-maxage=300",
+          }
+        : { "Cache-Control": "no-store" },
     });
   } catch (error) {
     return NextResponse.json(

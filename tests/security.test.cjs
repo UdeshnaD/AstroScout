@@ -3,6 +3,13 @@ const assert = require("node:assert/strict");
 const load = require("./helpers/load-ts.cjs");
 const { localRateLimit, clientKey, withPublicApi } = load("src/lib/api-safety.ts");
 const { publicSiteOrigin } = load("src/lib/public-site.ts");
+const { currentPlanningEpoch } = load("src/lib/planning-time.ts");
+
+test("automatic planning times share the current five-minute UTC epoch", () => {
+  assert.equal(currentPlanningEpoch(new Date("2026-09-19T09:43:51.721Z")), "2026-09-19T09:40:00.000Z");
+  assert.equal(currentPlanningEpoch(new Date("2026-09-19T09:45:00.000Z")), "2026-09-19T09:45:00.000Z");
+  assert.throws(() => currentPlanningEpoch(Number.NaN), /valid time/);
+});
 
 test("rate counters reject excess requests and reset after expiry", () => {
   assert.equal(localRateLimit("unit-window", 2, 1000).allowed, true);
@@ -41,6 +48,18 @@ test("public API hides unexpected errors and disables response caching", async (
   assert.equal(response.headers.get("Retry-After"), "10");
   assert.equal(response.headers.get("Cache-Control"), "no-store");
   assert.equal((await response.text()).includes("secret-token"), false);
+});
+
+test("public API preserves an explicit Vercel edge-cache policy", async () => {
+  const route = withPublicApi(async () => Response.json({ ok: true }, {
+    headers: {
+      "Cache-Control": "public, max-age=0, must-revalidate",
+      "Vercel-CDN-Cache-Control": "public, s-maxage=300",
+    },
+  }));
+  const response = await route(new Request("http://localhost/api/event/weather"));
+  assert.equal(response.headers.get("Cache-Control"), "public, max-age=0, must-revalidate");
+  assert.equal(response.headers.get("Vercel-CDN-Cache-Control"), "public, s-maxage=300");
 });
 
 test("requests above concurrency capacity fail quickly and slots are released", async () => {

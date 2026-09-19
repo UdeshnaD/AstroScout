@@ -37,6 +37,7 @@ import {
   type LocationPreset,
 } from "@/components/dashboard/LocationSearch";
 import { eventTargets, mqLocation } from "@/lib/event-types";
+import { currentPlanningEpoch } from "@/lib/planning-time";
 import {
   objectGuidance,
   smartphonePhotographyGuide,
@@ -290,7 +291,7 @@ export function EventDesk({
     const time =
       requested && Number.isFinite(Date.parse(requested)) && requested.endsWith("Z")
         ? new Date(requested).toISOString()
-        : new Date().toISOString();
+        : currentPlanningEpoch();
     if (params.has("lat") && params.has("lon")) {
       const lat = Number(params.get("lat"));
       const lon = Number(params.get("lon"));
@@ -408,11 +409,11 @@ export function EventDesk({
   }, [location, utc, revision]);
 
   function refresh() {
-    const time = new Date().toISOString();
+    const time = currentPlanningEpoch();
     setUtc(time);
     setEpochInput(time.slice(0, -1));
     setRevision((value) => value + 1);
-    setNotice("Updated to the current time.");
+    setNotice("Updated to the current five-minute calculation epoch.");
   }
 
   function chooseLocation(selected: LocationPreset, updatePlaceOrigin = true) {

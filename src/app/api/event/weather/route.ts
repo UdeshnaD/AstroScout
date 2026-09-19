@@ -9,7 +9,12 @@ async function handleGet(request: Request) {
     );
     return NextResponse.json(result, {
       status: result.status === "available" ? 200 : 503,
-      headers: { "Cache-Control": "no-store" },
+      headers: result.status === "available"
+        ? {
+            "Cache-Control": "public, max-age=0, must-revalidate",
+            "Vercel-CDN-Cache-Control": "public, s-maxage=300",
+          }
+        : { "Cache-Control": "no-store" },
     });
   } catch (error) {
     return NextResponse.json(
