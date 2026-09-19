@@ -174,8 +174,8 @@ const pageCopy: Record<string, { eyebrow: string; title: string; intro: string }
   },
   "/observe": {
     eyebrow: "Can I see it?",
-    title: "Target readiness.",
-    intro: "Choose a target and equipment to get a clear, transparent planning score for this exact location and time.",
+    title: "Viewing conditions.",
+    intro: "Choose a target and equipment to compare the factors that matter for this exact location and time.",
   },
   "/join": {
     eyebrow: "Join Astronomy Night",
@@ -220,6 +220,7 @@ export function EventDesk({
       : "Custom observing location",
   );
   const [timezone, setTimezone] = useState("Australia/Sydney");
+  const [selectedBortle, setSelectedBortle] = useState<number>();
   const [placeOrigin, setPlaceOrigin] = useState<LocationPreset>({
     label:
       initialLocation.latitude === mqLocation.latitude &&
@@ -314,7 +315,13 @@ export function EventDesk({
         const sharedLocationName =
           params.get("location")?.trim().slice(0, 80) ||
           "Shared observing location";
+        const sharedBortle = Number(params.get("bortle"));
         setLocationName(sharedLocationName);
+        setSelectedBortle(
+          Number.isInteger(sharedBortle) && sharedBortle >= 1 && sharedBortle <= 9
+            ? sharedBortle
+            : undefined,
+        );
         setTimezone(deviceTimezone());
         setPlaceOrigin({
           label: sharedLocationName,
@@ -322,6 +329,10 @@ export function EventDesk({
           longitude: lon,
           elevation: elev,
           timezone: deviceTimezone(),
+          bortle:
+            Number.isInteger(sharedBortle) && sharedBortle >= 1 && sharedBortle <= 9
+              ? sharedBortle
+              : undefined,
         });
       } else {
         setFormError("The shared location is invalid, so Macquarie University remains selected.");
@@ -437,6 +448,7 @@ export function EventDesk({
     setLongitude(String(selected.longitude));
     setElevation(String(selectedElevation));
     setLocationName(selected.label);
+    setSelectedBortle(selected.bortle);
     setTimezone(selected.timezone || deviceTimezone());
     if (updatePlaceOrigin) {
       setPlaceOrigin({
@@ -509,6 +521,7 @@ export function EventDesk({
       return;
     }
     setLocation({ latitude: lat, longitude: lon, elevation: elev });
+    setSelectedBortle(undefined);
     setLocationName(
       lat === mqLocation.latitude && lon === mqLocation.longitude
         ? "Macquarie University"
@@ -545,6 +558,7 @@ export function EventDesk({
     longitude: location.longitude,
     elevation: location.elevation,
     timezone,
+    bortle: selectedBortle,
   };
   const exactSearchIsSelected =
     location.latitude === placeOrigin.latitude &&
@@ -739,6 +753,7 @@ export function EventDesk({
                   longitude: spot.longitude,
                   elevation: 0,
                   timezone: deviceTimezone(),
+                  bortle: spot.bortle,
                 };
                 chooseLocation(selected);
                 const query = new URLSearchParams({
@@ -746,6 +761,7 @@ export function EventDesk({
                   lon: String(spot.longitude),
                   elevation: "0",
                   location: spot.name,
+                  bortle: String(spot.bortle),
                 });
                 router.push(`/?${query.toString()}`);
               }}
@@ -810,7 +826,15 @@ export function EventDesk({
         )}
 
         {pathname === "/observe" && (
-          <ReadinessGuide target={target} position={body} sunAltitude={positions?.objects.sun?.data?.altitude} weather={weather?.data} onTarget={setTarget} />
+          <ReadinessGuide
+            target={target}
+            position={body}
+            sunAltitude={positions?.objects.sun?.data?.altitude}
+            moon={positions?.objects.moon?.data}
+            weather={weather?.data}
+            bortle={selectedBortle}
+            onTarget={setTarget}
+          />
         )}
 
         {pathname === "/" && (

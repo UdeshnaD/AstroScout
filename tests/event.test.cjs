@@ -37,6 +37,7 @@ const night = load("src/lib/horizons-analysis.ts");
 const nearby = load("src/lib/nearby-places.ts");
 const journal = load("src/lib/journal.ts");
 const guidance = load("src/lib/object-guidance.ts");
+const targetReadiness = load("src/lib/target-readiness.ts");
 const utc = "2026-09-08T10:00:00.000Z";
 
 test("Horizons requests use the observer's exact coordinates and UTC", () => {
@@ -177,6 +178,43 @@ test("Geoapify route results retain real road distance and duration", () => {
     { distanceMeters: 24310.5, durationSeconds: 1982.4 },
   );
   assert.equal(nearby.parseGeoapifyRoute({ features: [] }), null);
+});
+
+test("target readiness uses target-specific equipment, moonlight and curated Bortle data", () => {
+  const position = {
+    target: "milky-way-core",
+    name: "Milky Way Core",
+    altitude: 45,
+    magnitude: null,
+    moonSeparation: 30,
+  };
+  const moon = { altitude: 50, illumination: 95 };
+  const weather = { cloudCover: 10, precipitation: 0, visibility: 20000, wind: 5 };
+  const base = { target: "milky-way-core", position, sunAltitude: -20, weather, moon, bortle: 3 };
+  const eye = targetReadiness.calculateTargetReadiness({ ...base, equipment: "eye" });
+  const scope = targetReadiness.calculateTargetReadiness({ ...base, equipment: "scope" });
+  const city = targetReadiness.calculateTargetReadiness({ ...base, equipment: "eye", bortle: 9 });
+  const moonDown = targetReadiness.calculateTargetReadiness({
+    ...base,
+    equipment: "eye",
+    moon: { altitude: -5, illumination: 95 },
+  });
+  assert.ok(eye.score > scope.score, "wide-field targets should favour naked-eye viewing over a telescope");
+  assert.ok(eye.score > city.score, "a darker curated site should improve a deep-sky score");
+  assert.ok(moonDown.score > eye.score, "a Moon below the horizon should remove moonlight interference");
+  assert.equal(eye.factors.find((factor) => factor.id === "bortle").detail, "Curated Bortle 3");
+});
+
+test("target readiness never recommends an object below the horizon", () => {
+  const assessment = targetReadiness.calculateTargetReadiness({
+    target: "jupiter",
+    position: { name: "Jupiter", altitude: -2, magnitude: -2.4, moonSeparation: 90 },
+    sunAltitude: -20,
+    weather: { cloudCover: 0, precipitation: 0, visibility: 20000, wind: 0 },
+    equipment: "scope",
+  });
+  assert.equal(assessment.score, 0);
+  assert.match(assessment.summary, /below the horizon/);
 });
 
 test("weather forecast range follows the selected UTC and rejects distant dates", () => {

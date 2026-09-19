@@ -218,13 +218,7 @@ export function SkyPositionPanel({
           }}
           onPointerCancel={() => { drag.current = null; }}
         >
-          <defs>
-            <radialGradient id="sky-dome" cx="50%" cy="45%">
-              <stop offset="0" stopColor="#263b43" />
-              <stop offset="1" stopColor="#0b1519" />
-            </radialGradient>
-          </defs>
-          <circle cx="400" cy="184" r="158" fill="url(#sky-dome)" className="sky-dome" />
+          <circle cx="400" cy="184" r="158" className="sky-dome" />
           {[0, 30, 60].map((altitude) => (
             <g key={altitude}>
               <circle

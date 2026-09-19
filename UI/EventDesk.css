@@ -356,7 +356,7 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
   stroke-dasharray: 3 7;
 }
 .sky-horizon-line { fill: none; stroke: #88a69a; stroke-width: 1.5; }
-.sky-dome { stroke: #3c5358; stroke-width: 1; }
+.sky-dome { fill: #101a1e; stroke: #3c5358; stroke-width: 1; }
 .sky-zenith { fill: #8ea29d; }
 .sky-zenith-label { fill: #8ea29d !important; font-size: 8px !important; letter-spacing: .12em; }
 .sky-cardinal { fill: #f1d494 !important; font-size: 14px !important; font-weight: 700; }
@@ -1809,6 +1809,27 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 .readiness-guide button { padding: 8px 11px; border: 1px solid var(--line); border-radius: 4px; background: #fff; color: var(--ink); }
 .readiness-guide button[aria-pressed="true"] { border-color: var(--forest); background: #eaf2ed; }
 .readiness-guide > strong { font: 500 clamp(42px, 7vw, 64px) / 1 var(--font-editorial), Georgia, serif; color: var(--forest); }
+.readiness-guide__intro { max-width: 68ch; margin-top: -8px; }
+.readiness-guide > .readiness-guide__factors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0;
+  margin: 22px 0 12px;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
+}
+.readiness-guide__factors > div {
+  display: grid;
+  align-content: start;
+  gap: 3px;
+  min-width: 0;
+  padding: 13px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
+.readiness-guide__factors span { color: var(--muted); font-size: 11px; }
+.readiness-guide__factors strong { color: var(--ink); font-size: 14px; }
+.readiness-guide__factors small { color: var(--muted); font-size: 10px; line-height: 1.35; }
 .preference-sliders { max-width: 680px; }
 .preference-sliders label { display: grid; gap: 6px; margin: 14px 0; color: var(--ink); font-size: 13px; }
 .preference-sliders label span { display: flex; justify-content: space-between; }
@@ -1872,6 +1893,7 @@ input:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
     padding: 12px 18px;
   }
   .passing-through, .readiness-guide, .preference-sliders, .astro-calendar { padding: 18px; }
+  .readiness-guide > .readiness-guide__factors { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .event-header nav {
     order: 2;
     width: 100%;

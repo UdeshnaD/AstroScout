@@ -10,6 +10,7 @@ export type LocationPreset = {
   longitude: number;
   elevation?: number;
   timezone?: string;
+  bortle?: number;
 };
 
 export const locationPresets: LocationPreset[] = [
