@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   Check,
   Cloud,
@@ -209,6 +209,7 @@ export function EventDesk({
   initialUtc,
 }: { initialLocation?: EventLocation; initialUtc?: string } = {}) {
   const pathname = usePathname();
+  const router = useRouter();
   const copy = pageCopy[pathname] ?? pageCopy["/"];
   const [now, setNow] = useState("");
   const [location, setLocation] = useState<EventLocation>(initialLocation);
@@ -310,10 +311,13 @@ export function EventDesk({
         setLatitude(String(lat));
         setLongitude(String(lon));
         setElevation(String(elev));
-        setLocationName("Shared observing location");
+        const sharedLocationName =
+          params.get("location")?.trim().slice(0, 80) ||
+          "Shared observing location";
+        setLocationName(sharedLocationName);
         setTimezone(deviceTimezone());
         setPlaceOrigin({
-          label: "Shared observing location",
+          label: sharedLocationName,
           latitude: lat,
           longitude: lon,
           elevation: elev,
@@ -727,7 +731,25 @@ export function EventDesk({
               weatherLoading={weatherLoading}
               onSelect={(selected) => chooseLocation(selected, false)}
             />
-            <CuratedSpotsMap />
+            <CuratedSpotsMap
+              onSelect={(spot) => {
+                const selected = {
+                  label: spot.name,
+                  latitude: spot.latitude,
+                  longitude: spot.longitude,
+                  elevation: 0,
+                  timezone: deviceTimezone(),
+                };
+                chooseLocation(selected);
+                const query = new URLSearchParams({
+                  lat: String(spot.latitude),
+                  lon: String(spot.longitude),
+                  elevation: "0",
+                  location: spot.name,
+                });
+                router.push(`/?${query.toString()}`);
+              }}
+            />
           </>
         )}
 

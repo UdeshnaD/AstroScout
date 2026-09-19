@@ -70,6 +70,14 @@ test("places maps use keyless Esri tiles without direct OSM or CARTO tiles", asy
   expect(await page.locator(".places-explorer__list").evaluate(
     (element) => element.scrollWidth <= element.clientWidth + 1,
   )).toBe(true);
+
+  const curatedMap = page.getByRole("region", { name: "Map of 24 curated NSW observing spots" });
+  const observatoryHill = curatedMap.getByRole("button", { name: "Select Observatory Hill" });
+  await observatoryHill.focus();
+  await observatoryHill.press("Enter");
+  await page.getByRole("button", { name: "View tonight from here" }).click();
+  await expect(page).toHaveURL(/\/?\?lat=-33\.8599&lon=151\.2042/);
+  await expect(page.getByText("Observatory Hill", { exact: true }).first()).toBeVisible();
 });
 
 test("phone sky controls and night timeline remain usable with live data", async ({ page }, testInfo) => {
